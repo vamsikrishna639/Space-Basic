@@ -113,6 +113,12 @@
 | GET | `/consent/me` | auth (own) | – | `200 { current: { policyVersion, acceptedAt } \| null, history: [{ policyVersion, acceptedAt, withdrawnAt }] }` |
 | POST | `/consent/withdraw` | auth (own) | `{ confirm: true }` | `204`. Every session is revoked and the action audited. The next sign-in needs the box ticked again |
 
+**Built behaviour (Consent module, 2026-11-08):**
+- **`GET /consent/me`:** `history` items are `{ policyVersion, acceptedAt, withdrawnAt, source: 'signin' | 'reconsent' }`, newest first. The IP address and user agent are kept as DPDPA evidence but never returned.
+- **Withdraw:** every active record gets `withdrawnAt` (records are never deleted), every session is revoked (`consent_withdrawn`), the refresh cookie is cleared, and `consent.withdraw` is audited with counts. The access token stops working at once.
+- **Signing in again** after a withdrawal, or after a new policy version, records `source: 'reconsent'`.
+- **`POST /auth/refresh`** answers `403 CONSENT_REQUIRED` (cookie cleared, session revoked as `consent_required`) when the user has no active consent for the current policy version. After a version bump, users are sent back to sign-in within one access-token lifetime (15 min).
+
 ## Hostel (`/hostel`)
 
 | Method | Path | Permission | Request | Response |

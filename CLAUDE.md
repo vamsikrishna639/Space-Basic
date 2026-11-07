@@ -4,7 +4,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
 
 ## Status
 
-- **Current phase (2026-11-08):** Phase 1, step 5 (backend modules). Steps 2–4 are written in `docs/architecture.md`, `docs/schemas.md` and `docs/api.md` (go mode, see `docs/decisions.md`). Modules built and tested: **Auth**, **Users/Profile** (waiting at its checkpoint). Next module: Consent. No `client/` code yet. The workflow below is superseded by go mode with runnable checkpoints (`docs.md`, "Go mode and checkpoints").
+- **Current phase (2026-11-08):** Phase 1, step 5 (backend modules). Steps 2–4 are written in `docs/architecture.md`, `docs/schemas.md` and `docs/api.md` (go mode, see `docs/decisions.md`). Modules built and tested: **Auth**, **Users/Profile**, **Consent** (waiting at its checkpoint). Next module: Hostel/Floor/Room. No `client/` code yet. The workflow below is superseded by go mode with runnable checkpoints (`docs.md`, "Go mode and checkpoints").
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture

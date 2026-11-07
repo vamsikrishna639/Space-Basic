@@ -46,6 +46,8 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | U | **Rooms in user management:** only students have a room. Bed capacity (`room.beds`) is enforced on create, import and move. Removing a user's `student` role also removes them from their room |
 | 2026-11-08 | U | **`mess_staff` is not assignable** in Phase 1 (create, import or role change give 400). It becomes assignable when the Mess module is built |
 | 2026-11-08 | G | **CSV import** goes through the API (`POST /users/import`) with the admin's credentials from `SB_ADMIN_EMAIL` and `SB_ADMIN_PASSWORD` (environment only). Signing in records consent, so the script needs an explicit `--accept-privacy-policy` flag. The CSV parser is in-house, so there's no new dependency |
+| 2026-11-08 | G | **Consent is re-checked at token refresh**, not on every request. No active consent for the current policy version ends the session with `403 CONSENT_REQUIRED`, and the client returns to sign-in, where the consent box records it again. Withdrawal revokes every session at once. After a policy-version bump the delay is at most one 15-minute access token |
+| 2026-11-08 | G | **Consent records are kept** (withdrawal sets `withdrawnAt`). A sign-in after an earlier record is stored as `reconsent`. The refresh-cookie helpers moved to `core/security/cookies.ts` so consent withdrawal can clear the cookie |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 
