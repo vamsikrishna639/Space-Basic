@@ -8,3 +8,4 @@ export * from './schemas/common';
 export * from './schemas/auth';
 export * from './schemas/users';
 export * from './schemas/consent';
+export * from './schemas/hostel';
