@@ -11,7 +11,8 @@
     "start": "node dist/server.js",
     "test": "jest --runInBand",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "seed": "tsx --conditions=source src/scripts/seed.ts"
+    "seed": "tsx --conditions=source src/scripts/seed.ts",
+    "import-users": "tsx --conditions=source src/scripts/import-users.ts"
   },
   "dependencies": {
     "@spacebasic/shared": "*",
