@@ -6,6 +6,11 @@ import { InstitutionModel } from '../institutions/institution.model';
 import { HostelModel, RoomModel } from '../hostel/hostel.models';
 import { currentConsent } from '../consent/consent.service';
 
+/** The `?v=` changes with every upload, so the client knows when to fetch the photo again. */
+export function avatarUrlFor(avatar: { updatedAt: Date }): string {
+  return `/api/v1/users/me/avatar?v=${avatar.updatedAt.getTime()}`;
+}
+
 /** GET /users/me and the `user` of every AuthResult (shared/src/schemas/users.ts). */
 export async function buildMe(institutionId: Types.ObjectId, userId: Types.ObjectId): Promise<Me> {
   const user = await UserModel.findOne({ _id: userId, institutionId }).lean();
@@ -26,7 +31,7 @@ export async function buildMe(institutionId: Types.ObjectId, userId: Types.Objec
     phone: user.phone ?? null,
     roles: user.roles,
     room: room && hostel ? { hostelName: hostel.name, code: room.code, display: roomDisplay(hostel.name, room.code) } : null,
-    avatarUrl: user.avatar ? `/api/v1/users/me/avatar?v=${user.avatar.updatedAt.getTime()}` : null,
+    avatarUrl: user.avatar ? avatarUrlFor(user.avatar) : null,
     institution: {
       id: String(institution._id),
       name: institution.name,
