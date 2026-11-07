@@ -8,19 +8,11 @@ import { errors } from '../../core/http/errors';
 import { validate, valid } from '../../core/middleware/validate';
 import { authenticate } from '../../core/middleware/auth';
 import type { Limiters } from '../../core/middleware/rateLimit';
+import { clearRefreshCookie, setRefreshCookie } from '../../core/security/cookies';
 import * as auth from './auth.service';
-
-const COOKIE_PATH = '/api/v1/auth';
 
 function meta(req: Request): auth.RequestMeta {
   return { ip: req.ip, userAgent: req.get('user-agent') ?? undefined, requestId: req.requestId };
-}
-
-function setRefreshCookie(res: Response, token: string, expires: Date) {
-  res.cookie(REFRESH_COOKIE, token, { httpOnly: true, secure: env.COOKIE_SECURE, sameSite: 'lax', path: COOKIE_PATH, expires });
-}
-function clearRefreshCookie(res: Response) {
-  res.clearCookie(REFRESH_COOKIE, { httpOnly: true, secure: env.COOKIE_SECURE, sameSite: 'lax', path: COOKIE_PATH });
 }
 
 /** CSRF defence for the cookie-authenticated endpoints: custom header + Origin allow-list. */
@@ -82,6 +74,8 @@ export function authRouter(limiters: Limiters): Router {
       }
       if (outcome.kind === 'race') throw errors.refreshRace(); // keep the cookie: the other tab set a new one
       clearRefreshCookie(res);
+      // No active consent for the current policy (a new version, or withdrawn): sign in again with the box ticked.
+      if (outcome.kind === 'consent_required') throw errors.consentRequired();
       throw errors.unauthenticated();
     } catch (e) { next(e); }
   });

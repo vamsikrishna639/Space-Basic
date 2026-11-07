@@ -2,7 +2,7 @@ import { Schema, model, type Types } from 'mongoose';
 import { tenantScope } from '../../core/db/tenant';
 
 // Refresh-token sessions (tenant-scoped; looked up by token hash via a documented unscoped query).
-export type RevokeReason = 'logout' | 'reuse_detected' | 'password_changed' | 'password_reset' | 'consent_withdrawn' | 'disabled' | 'admin';
+export type RevokeReason = 'logout' | 'reuse_detected' | 'password_changed' | 'password_reset' | 'consent_withdrawn' | 'consent_required' | 'disabled' | 'admin';
 export interface Session {
   _id: Types.ObjectId;
   institutionId: Types.ObjectId;

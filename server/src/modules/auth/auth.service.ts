@@ -9,7 +9,7 @@ import { newRefreshToken, sha256, signAccessToken } from '../../core/security/to
 import { deliveryFor } from '../../providers/otp';
 import { UserModel, type User } from '../users/user.model';
 import { buildMe } from '../users/me.service';
-import { recordConsentAtSignIn } from '../consent/consent.service';
+import { currentConsent, recordConsentAtSignIn } from '../consent/consent.service';
 import { OtpCodeModel, SessionModel, type OtpPurpose, type RevokeReason, type Session } from './auth.models';
 
 export const REFRESH_SLIDING_MS = 30 * 24 * 3600 * 1000; // 30 days, extended on each use
@@ -159,6 +159,7 @@ export type RefreshOutcome =
   | { kind: 'ok'; issued: IssuedSession }
   | { kind: 'race' }
   | { kind: 'invalid' }
+  | { kind: 'consent_required' }
   | { kind: 'reuse'; session: Session };
 
 export async function refresh(refreshToken: string, meta: RequestMeta): Promise<RefreshOutcome> {
@@ -188,6 +189,12 @@ export async function refresh(refreshToken: string, meta: RequestMeta): Promise<
   if (!user) {
     await SessionModel.updateOne({ _id: session._id, institutionId: session.institutionId }, { $set: { revokedAt: now, revokedReason: 'disabled' } });
     return { kind: 'invalid' };
+  }
+  // DPDPA: no active consent for the current policy version (bumped, or withdrawn elsewhere) ends the session.
+  // Checked here rather than on every request: access tokens live 15 minutes, and withdrawal revokes at once.
+  if (!(await currentConsent({ institutionId: session.institutionId, userId: session.userId }))) {
+    await SessionModel.updateOne({ _id: session._id, institutionId: session.institutionId }, { $set: { revokedAt: now, revokedReason: 'consent_required' } });
+    return { kind: 'consent_required' };
   }
 
   // rotate atomically: only one request can rotate a given token

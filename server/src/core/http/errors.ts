@@ -24,7 +24,7 @@ export const errors = {
   invalidCredentials: () => new AppError(401, 'INVALID_CREDENTIALS', INVALID_CREDENTIALS_MESSAGE),
   refreshRace: () => new AppError(401, 'REFRESH_RACE', 'Please try again.'),
   forbidden: (message = "You don't have access to this.") => new AppError(403, 'FORBIDDEN', message),
-  consentRequired: () => new AppError(403, 'CONSENT_REQUIRED', 'Tick the consent box to continue.'),
+  consentRequired: () => new AppError(403, 'CONSENT_REQUIRED', 'Please sign in again and tick the consent box to continue.'),
   notFound: (message = 'Not found.') => new AppError(404, 'NOT_FOUND', message),
   conflict: (message: string, fields?: Record<string, string>) => new AppError(409, 'CONFLICT', message, fields),
   rateLimited: (retryAfterSeconds: number) =>
