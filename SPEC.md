@@ -1,6 +1,6 @@
 # Space Basic: College Hostel Management System (PWA)
 
-This is docs.md, the original project specification, updated with the decisions made since. Project rules and decisions also live in `CLAUDE.md` and `docs/decisions.md`.
+This is SPEC.md, the original project specification, updated with the decisions made since. Project rules and decisions also live in `CLAUDE.md` and `docs/decisions.md`.
 
 **Precedence when sources disagree (highest first):** the user's latest chat instructions, `docs/decisions.md`, `CLAUDE.md`, then this file. Screenshots and assets live in `./reference-ui/`.
 
@@ -135,7 +135,7 @@ Phase 1 module order: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notificat
 
 ### Go mode and checkpoints
 1. Steps 2, 3 and 4: write `docs/architecture.md`, `docs/schemas.md` and `docs/api.md` in one go and continue.
-2. Decide anything that has a default in CLAUDE.md or SPEC.md, note it in `docs/decisions.md`, and continue.
+2. Decide anything that has a default in `CLAUDE.md`, `docs/decisions.md` or this file, note it in `docs/decisions.md`, and continue.
 3. Stop and ask ONLY if: something costs money; a secret or account is needed from me (MongoDB URI, Gmail credentials); an asset is missing and can't be derived; a screen would need new visuals not covered by the ComingSoon rule; or a visual diff is above the agreed limit and can't be fixed.
 4. After every big change, make the app runnable and STOP for my reply. Each checkpoint gives: one command from the project root that starts client and server (with URLs); seeded fake test users (student, warden, institution admin) with their logins; email + password login working locally, with OTPs printed in the server console; a short "what to try" list; and a summary (built, tests passed, flagged items, what doesn't work yet). Don't start the next module until I reply "continue" or give feedback.
 

@@ -1,6 +1,6 @@
 # Decisions log
 
-**Precedence, highest first:** the user's latest chat instructions, then this file, then `CLAUDE.md`, then `docs.md` (the spec).
+**Precedence, highest first:** the user's latest chat instructions, then this file, then `CLAUDE.md`, then `SPEC.md` (the spec).
 
 Dates are when the decision was made. **U** = decided by the user. **G** = decided in go mode under a default; the user reviews these later.
 
