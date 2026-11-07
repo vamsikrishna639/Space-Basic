@@ -52,6 +52,10 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | U | **Room beds can't drop below the room's active occupants** (`409`) |
 | 2026-11-08 | U | **No rename or delete** of hostels or floors, and no change to a floor's room range, in Phase 1 |
 | 2026-11-08 | G | **Room generation is idempotent** and only fills missing numbers. Hostel reads are for wardens and admins; students see only their own room through `/users/me` |
+| 2026-11-08 | G | **`requireModule(key)`** (`core/middleware/module.ts`) gates registry modules, starting with Notifications. It needs the module `live` in `shared/modules.ts` and enabled for the institution; otherwise `404`. Users, Consent and Hostel are core, not registry modules, so they aren't gated |
+| 2026-11-08 | G | **Notification titles and deep links** come from one map per type in `shared/schemas/notifications.ts`, matching the screenshot text. Every new dev-server start tops up seed data that newer modules add (only where missing; existing records are never changed) |
+| 2026-11-08 | U | **No "mark all as read" and no Web Push** in Phase 1 (neither is in the screenshots) |
+| 2026-11-08 | U | **QR libraries:** free, open-source ones are pre-approved; each is named with its licence in the dependency table below (`qrcode` and `qr-scanner`, both MIT) |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 

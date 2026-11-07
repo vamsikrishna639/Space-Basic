@@ -156,6 +156,17 @@ A student's own room is in `GET /users/me`.
 | GET | `/notifications/unread-count` | `notifications:read` | – | `200 { count }`. The client shows "99+" above 99 |
 | POST | `/notifications/:id/read` | `notifications:mark_read` (own) | – | `204` (idempotent) |
 
+**Built behaviour (Notifications module, 2026-11-08):**
+- **Items:** `{ id, type, title, body|null, link: { module, refId|null }|null, readAt|null, createdAt }`.
+  - `type` is one of `attendance_marked`, `announcement_new`, `leave_submitted`, `leave_partially_approved` and `leave_approved`.
+  - Titles are exactly as in the screenshot: "Attendance Marked", "👋 New Announcement", "Leave Request Submitted", "Leave Partially Approved" and "Great News: Leave Approved".
+  - `link.module` is `attendance`, `announcements` or `leave`. Modules that aren't live open ComingSoon on the client.
+- **Paging and access:** sorted by `createdAt` then `_id`, newest first, with an opaque cursor. Only the caller's own notifications are visible.
+- **Mark read:** keeps the first `readAt`. Someone else's notification, or another institution's, gives `404` and stays unread.
+- **Module gate:** the whole router sits behind `requireModule('notifications')`, so it answers `404` when the module is switched off for the institution.
+- **For other modules:** `createNotification({ institutionId, userId, type, body?, refId? })` fills in the title and deep link. QR/Attendance calls it after a successful scan.
+- **Dev seed:** six FAKE samples per dev user, covering every type, spread over the three days before the seed runs (never in the future), with the two oldest already read. They're added only for users with none, on first start or at the next `npm run dev`.
+
 ## Attendance (`/attendance`)
 
 | Method | Path | Permission | Request | Response |
