@@ -11,6 +11,7 @@ import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { consentRouter } from './modules/consent/consent.routes';
 import { hostelRouter } from './modules/hostel/hostel.routes';
+import { notificationsRouter } from './modules/notifications/notifications.routes';
 
 /** Build the Express app (no listen; Supertest uses this directly). Request pipeline: docs/architecture.md §3. */
 export function createApp() {
@@ -34,6 +35,7 @@ export function createApp() {
   api.use('/users', usersRouter());
   api.use('/consent', consentRouter());
   api.use('/hostel', hostelRouter());
+  api.use('/notifications', notificationsRouter());
   app.use('/api/v1', api);
 
   app.use(notFound);
