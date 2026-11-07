@@ -1,10 +1,12 @@
 import mongoose from 'mongoose';
-import { roomCodeFor, type Role } from '@spacebasic/shared';
+import { roomCodeFor, type NotificationType, type Role } from '@spacebasic/shared';
 import { env } from '../config/env';
 import { hashPassword } from '../core/security/password';
 import { InstitutionModel } from '../modules/institutions/institution.model';
 import { FloorModel, HostelModel, RoomModel } from '../modules/hostel/hostel.models';
 import { UserModel } from '../modules/users/user.model';
+import { NotificationModel } from '../modules/notifications/notification.model';
+import { createNotification } from '../modules/notifications/notifications.service';
 
 /**
  * DEVELOPMENT SEED: FAKE data only (docs/schemas.md §3). Refuses to run in production.
@@ -27,8 +29,10 @@ const FLOORS = [
 export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void> {
   if (env.isProd) throw new Error('Refusing to seed: NODE_ENV=production');
   if (opts.reset) await mongoose.connection.dropDatabase();
-  if (await InstitutionModel.exists({ slug: 'presidency-university' })) {
-    console.log('seed: demo institution already exists (use `npm run seed -- --reset` to start over)');
+  const existing = await InstitutionModel.findOne({ slug: 'presidency-university' }, { _id: 1 }).lean();
+  if (existing) {
+    const added = await seedDevNotifications(existing._id);
+    console.log(`seed: demo institution already exists${added ? `; added sample notifications for ${added} user(s)` : ''} (use \`npm run seed -- --reset\` to start over)`);
     return;
   }
 
@@ -55,7 +59,43 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
       roomId: u.roomCode ? roomIds.get(u.roomCode) : null,
     });
   }
-  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users`);
+  await seedDevNotifications(institutionId);
+  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users, sample notifications`);
+}
+
+/**
+ * FAKE sample notifications of every Phase 1 type (SPEC.md Phase 1 scope: only "Attendance Marked" is created
+ * by the system; the leave and announcement ones exist as dev samples until those modules are built).
+ * Added only for dev users who have none yet, so re-running the seed is safe. Returns how many users got them.
+ */
+export async function seedDevNotifications(institutionId: mongoose.Types.ObjectId): Promise<number> {
+  const day = 24 * 3600 * 1000;
+  const at = (daysAgo: number, h: number, m: number) => {
+    const d = new Date(Date.now() - daysAgo * day);
+    d.setHours(h, m, 0, 0);
+    return d;
+  };
+  // Spread over yesterday and the two days before (never in the future, whatever time the seed runs);
+  // the two from three days ago are already read.
+  const samples: { type: NotificationType; at: Date; read: boolean; body: string }[] = [
+    { type: 'attendance_marked', at: at(1, 19, 24), read: false, body: 'Your attendance for tonight was recorded at the West block.' },
+    { type: 'announcement_new', at: at(1, 18, 5), read: false, body: 'Hostel day is on Saturday. Details are on the notice board.' },
+    { type: 'leave_approved', at: at(2, 16, 40), read: false, body: 'Your leave from 28 Oct to 30 Oct was approved.' },
+    { type: 'leave_partially_approved', at: at(2, 11, 12), read: false, body: 'Your warden approved your leave. It now needs the office.' },
+    { type: 'attendance_marked', at: at(3, 21, 2), read: true, body: 'Your attendance for tonight was recorded at the West block.' },
+    { type: 'leave_submitted', at: at(3, 9, 30), read: true, body: 'Your leave request was sent for approval.' },
+  ];
+  let users = 0;
+  for (const u of DEV_USERS) {
+    const user = await UserModel.findOne({ institutionId, email: u.email }, { _id: 1 }).lean();
+    if (!user || (await NotificationModel.exists({ institutionId, userId: user._id }))) continue;
+    for (const s of samples) {
+      const n = await createNotification({ institutionId, userId: user._id, type: s.type, body: s.body, createdAt: s.at });
+      if (s.read) await NotificationModel.updateOne({ institutionId, _id: n.id }, { $set: { readAt: s.at } });
+    }
+    users++;
+  }
+  return users;
 }
 
 export function printDevUsers(): void {

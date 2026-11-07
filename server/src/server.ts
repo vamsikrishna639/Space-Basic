@@ -9,10 +9,12 @@ async function main() {
   const uri = await connectDb();
   console.log(`db: connected (${uri === devDbUri() ? 'local dev database' : 'MONGODB_URI'})`);
 
-  // Development with the local dev DB: seed FAKE demo data on first start.
-  if (env.NODE_ENV === 'development' && uri === devDbUri() && (await InstitutionModel.estimatedDocumentCount()) === 0) {
+  // Development with the local dev DB: seed FAKE demo data on first start. On later starts the seed only tops
+  // up what newer modules add (e.g. sample notifications); it never changes existing records.
+  if (env.NODE_ENV === 'development' && uri === devDbUri()) {
+    const firstStart = (await InstitutionModel.estimatedDocumentCount()) === 0;
     await seedDevData();
-    printDevUsers();
+    if (firstStart) printDevUsers();
   }
 
   const server = createApp().listen(env.PORT, () => {
