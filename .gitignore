@@ -1,0 +1,35 @@
+# --- secrets ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# --- personal data (never commit) ---
+# Real screenshot data used by local-only visual tests
+client/tests/fixtures/private/
+# Reference screenshots contain a real name, phone number and email.
+# Only the redacted copies and the brand assets are committed.
+reference-ui/*.png
+!reference-ui/assets/
+!reference-ui/redacted/
+
+# --- build / deps ---
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# --- tooling output ---
+tools/ui-analysis/out/
+test-results/
+playwright-report/
+client/tests/visual/__output__/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+*.log
