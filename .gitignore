@@ -35,3 +35,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 *.log
+
+# --- local dev database (mongodb-memory-server data dir) ---
+server/.data/

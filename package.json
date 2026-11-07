@@ -1,0 +1,26 @@
+{
+  "name": "spacebasic",
+  "private": true,
+  "description": "Space Basic: college hostel management PWA (monorepo)",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build -w shared && npm run build -w server && npm run build -w client",
+    "test": "npm test -w server && npm test -w client --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "seed": "npm run seed -w server"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "esbuild@0.28.2": true,
+    "mongodb-memory-server@11.3.0": true,
+    "@parcel/watcher": false
+  }
+}
