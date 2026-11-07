@@ -227,7 +227,7 @@ The colour always comes from theme tokens.
 
 Sheet: `out/linux/icon-cutouts.png` (screenshot / traced SVG / diff). **Approved 2026-11-07, with the QR re-trace.** The final check is the Docker visual regression on each screen.
 
-**Camera glyph:** `camera.svg` replaces the raster `icon-camera-badge.png` in the badge component, in the same 14 px box at the same centre. The PNG is kept for reference only.
+**Camera glyph:** `camera.svg` replaces the earlier raster cut-out in the badge component, in the same 14 px box at the same centre. The raster PNG was deleted on 2026-11-07, once a search found nothing left referencing it.
 
 ### Why each cut-out was needed
 
@@ -362,7 +362,7 @@ The badge is a **separate element** over the avatar, at its bottom-right.
 | Ring | 5.95 → 1.98, card colour | **2 px border, `var(--surface-card)`**: #181B24 dark, #FFFFFF light |
 | Badge outer box | 78.1 → 26.03 | 26 × 26 |
 | Badge centre − avatar centre | (+72.0, +72.1) → (+24.01, +24.04) | `right: -4px; bottom: -4px` (centre at +24, +24) |
-| Camera glyph | Ink 35 × 27 → 11.67 × 9.0. Offset from the badge centre (+0.34, −0.01) | `reference-ui/assets/icon-camera-badge.png`, 42 × 42 white + alpha |
+| Camera glyph | Ink 35 × 27 → 11.67 × 9.0. Offset from the badge centre (+0.34, −0.01) | `reference-ui/assets/icons/cutout/camera.svg` in a 14 × 14 box, `color: #fff`. The offset is built into the SVG |
 
 **About the glyph.** It is the real icon from the screenshot, not Lucide or Tabler: white on blue, unblended to white plus transparency, in a 14 CSS px box. It is cropped centred on the badge, so the measured offset is built into the image.
 
@@ -370,8 +370,8 @@ The badge is a **separate element** over the avatar, at its bottom-right.
 
 | Region | Mismatch |
 |---|---|
-| Avatar + badge (228 × 228 device px) | **1.80%** |
-| Badge only (84 × 84) | 8.42% |
+| Avatar + badge (228 × 228 device px) | **1.76%** (with `camera.svg`; 1.80% with the earlier raster glyph) |
+| Badge only (84 × 84) | 8.16% (8.42% raster) |
 
 What's left is the rim and glyph edges, because the component's clean values put the badge 0.16 CSS px from the measured centre. The disc colour, ring, glyph shape and the whole avatar interior match.
 
@@ -386,3 +386,33 @@ Sheet: `camera-badge.png`.
 | Profile avatar | Centre (68.82, 144.47) from the top of the screenshot |
 | Tab-bar avatar, inactive | Artwork diameter 21.7, with a 1 px #3F424B border (about 24 total) |
 | Tab-bar avatar, active | Ring in the active tab colour. To be measured at the tab-bar step |
+
+## 8. Reproducing these numbers
+
+Every committed script runs in Playwright's Linux image. Run them from the repository root:
+
+```
+node tools/ui-analysis/run-in-docker.mjs src/<script>.ts
+```
+
+Each one reads the gitignored reference screenshots, which are mounted into the container, never copied. Review sheets and JSON go to `tools/ui-analysis/out/linux/`.
+
+| Script | Reproduces | Writes committed files? |
+|---|---|---|
+| `fontfit.ts` | §2 type scale: font comparison, size, weight, tracking. `FONT_ONLY="Plus Jakarta Sans"` limits it to the chosen font | No |
+| `wordmark.ts` | §3 logo-pill geometry, wordmark fit, pill / logo-mark / wordmark mismatch | No |
+| `logo-colours.ts` | §3 screenshot vs supplied-file logo colours | No |
+| `logo-transparent.ts` | §3 `logo-spacebasic-transparent.png` | **Yes**. Byte-identical on re-run |
+| `icons.ts` | §4 Lucide and Tabler tables (`LIB=lucide` or `LIB=tabler`) | No |
+| `icons-multi.ts` | §4 Lucide / Phosphor / Heroicons comparison and the Phosphor decision | No |
+| `trace-icons.ts` | §4 the 17 cut-out SVGs, with thresholds pinned in `FIXED_T` | **Yes**. Byte-identical on re-run |
+| `avatar-measure.ts` | §5 / §7 Profile avatar circle and Home tab-bar avatar geometry | No |
+| `avatar-v2.ts` | §5 `avatar-default.png` | **Yes**. Byte-identical on re-run |
+| `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
+
+Shared modules:
+- `lib.ts`: PNG, ink, diff and browser helpers
+- `icon-specs.ts`: icon crop boxes
+- `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
+
+One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`.
