@@ -23,6 +23,8 @@ coverage/
 
 # --- tooling output ---
 tools/ui-analysis/out/
+# one-off debug probes (kept locally, not part of the reproducible tooling)
+tools/ui-analysis/scratch/
 test-results/
 playwright-report/
 client/tests/visual/__output__/
