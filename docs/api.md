@@ -132,6 +132,22 @@
 
 A student's own room is in `GET /users/me`.
 
+**Built behaviour (Hostel module, 2026-11-08):**
+- **Access:** reads need `hostel:read` (wardens and admins). Students get `403`; their room comes with `/users/me`.
+- **`GET /hostel/rooms`:**
+  - Rows are `{ code, number, floorCode, hostelCode, beds, occupants }`. `occupants` counts active users only.
+  - Optional `?hostel=W` and `?floor=CS` filters; an unknown hostel or floor is `404`.
+  - Sorted by room code, with an opaque cursor; `limit` is at most 50.
+- **Creating:**
+  - Codes are upper-cased. Hostel codes are 1–6 letters or digits, and floor codes are 2 letters.
+  - A floor code is unique across the whole institution, so room codes like `CS240` stay unambiguous (`409`).
+  - `order` defaults to the next position.
+  - `POST /hostel/floors` returns `201` with the floor and `roomCount: 0`.
+- **Generate** inserts only the missing room numbers, with `beds` from the floor's `bedsPerRoom`. Running it again returns `{ created: 0 }`. It needs the floor in the named hostel (`404` otherwise).
+- **`PATCH /hostel/rooms/:code`** returns the `RoomSummary`. `beds` is 1–12 and can't go below the current occupants (`409`).
+- **Audit:** `hostel.create`, `floor.create`, `rooms.generate` (only when rooms were created) and `room.update` (beds from and to).
+- **Other institutions:** their rooms and floors are `404` and never listed.
+
 ## Notifications (`/notifications`)
 
 | Method | Path | Permission | Request | Response |

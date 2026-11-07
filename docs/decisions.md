@@ -48,6 +48,10 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | G | **CSV import** goes through the API (`POST /users/import`) with the admin's credentials from `SB_ADMIN_EMAIL` and `SB_ADMIN_PASSWORD` (environment only). Signing in records consent, so the script needs an explicit `--accept-privacy-policy` flag. The CSV parser is in-house, so there's no new dependency |
 | 2026-11-08 | G | **Consent is re-checked at token refresh**, not on every request. No active consent for the current policy version ends the session with `403 CONSENT_REQUIRED`, and the client returns to sign-in, where the consent box records it again. Withdrawal revokes every session at once. After a policy-version bump the delay is at most one 15-minute access token |
 | 2026-11-08 | G | **Consent records are kept** (withdrawal sets `withdrawnAt`). A sign-in after an earlier record is stored as `reconsent`. The refresh-cookie helpers moved to `core/security/cookies.ts` so consent withdrawal can clear the cookie |
+| 2026-11-08 | U | **Floor codes are unique across an institution**, not only within a hostel (checked in the service; the documented index is unchanged). Room codes (floor code + number) are unique per institution, so two hostels with a "CS" floor would make `CS240` ambiguous |
+| 2026-11-08 | U | **Room beds can't drop below the room's active occupants** (`409`) |
+| 2026-11-08 | U | **No rename or delete** of hostels or floors, and no change to a floor's room range, in Phase 1 |
+| 2026-11-08 | G | **Room generation is idempotent** and only fills missing numbers. Hostel reads are for wardens and admins; students see only their own room through `/users/me` |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 
