@@ -78,6 +78,33 @@
 | PATCH | `/users/:id` | `users:update` | `{ fullName?, email?, phone?, roomCode?, status? }` | `200 UserSummary` (disabling revokes sessions) |
 | PATCH | `/users/:id/roles` | `users:assign_role` | `{ roles }` | `200 UserSummary` · `403` granting `super_admin` |
 
+**`UserSummary`:** `{ id, fullName, email|null, phone|null, roles, status, room: { code, display }|null, hasAvatar, hasPassword, createdAt }`. It never contains the password hash.
+
+**Built behaviour (Users/Profile module, 2026-11-08):**
+- **Avatar:**
+  - The upload is a raw body. The bytes are checked against the declared type (PNG, JPEG or WebP magic numbers), so a mismatch gets `415`.
+  - Authentication runs before any bytes are read.
+  - Replacing a photo deletes the old one, so each user has at most one stored avatar.
+  - `GET` answers with `Cache-Control: private, no-cache` and a sha256 `ETag`, and gives `304` on `If-None-Match`. The client fetches it with its Bearer token and shows it through a blob URL, because an `<img>` can't send the token.
+- **List:**
+  - Sorted by name, with an opaque cursor.
+  - `q` searches the name (contains), the email (prefix), the phone (3 or more digits, contains) and the exact room code. Regex characters are treated literally.
+  - Wardens get students only (`?role=` other than `student` is `403`).
+  - `super_admin` users are left out unless the caller is `super_admin`.
+- **Create and import:**
+  - Roles are limited to `student`, `warden`, `institution_admin` and `super_admin`. `mess_staff` comes with the Mess module.
+  - `roomCode` is for students only. The room must exist (`400`) and have a free bed (`409`).
+  - Email and phone are checked across all institutions (`409` with `fields`).
+  - Import handles rows one at a time, so capacity and duplicate checks see the earlier rows. The result's `row` is 1-based.
+- **Update:**
+  - `null` clears `email`, `phone` or `roomCode`, but one of email or phone must remain.
+  - Disabling a user revokes all of their sessions.
+  - An admin can't disable themself, edit a `super_admin`, or change their own roles.
+  - A user with no `student` role leaves their room.
+  - Another institution's user gives `404`.
+- **Audit:** `user.create`, `user.import` (counts only), `user.update` (field names, not values), `user.disable`, `user.enable` and `user.role_change` (from and to).
+- **CSV import script:** `npm run import-users -w server -- <file.csv> --accept-privacy-policy [--api <base>]`. It reads `SB_ADMIN_EMAIL` and `SB_ADMIN_PASSWORD` from the environment, signs in, posts batches that fit both the 500-row and 100 kB limits, prints skipped rows with their CSV line numbers, and signs out. Columns: `fullName,email,phone,roles,roomCode,password`, with roles separated by `|`. A fake example is in `server/src/scripts/users.example.csv`.
+
 ## Consent (`/consent`)
 
 | Method | Path | Permission | Request | Response |

@@ -40,6 +40,12 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | G | **Jest + MongoDB driver 7.8:** the test DB helper passes `runtimeAdapters: { os }` to `mongoose.connect`. The driver otherwise loads `os` with a dynamic `import()`, which Jest's CommonJS sandbox rejects; the driver swallows the error and sends an empty handshake, so every test timed out. Tests only; plain Node is unaffected |
 | 2026-11-08 | G | **Dev OTP default:** in development, when `OTP_PROVIDER` is absent entirely, codes print to the server console. An explicit empty value still means password-only. Production never gets a default |
 | 2026-11-08 | G | **`npm run dev`** skips the client until `client/package.json` exists (backend-only checkpoints) |
+| 2026-11-08 | G | **Assets** live in `server/src/modules/assets/` (model and service shared by avatars and, later, the institution logo). Uploads are checked by magic bytes, not just the declared Content-Type. The avatar is served `private, no-cache` with an ETag; the client fetches it with the Bearer token and shows a blob URL |
+| 2026-11-08 | U | **Warden visibility:** wardens list all students of their institution. Phase 1 has one hostel and wardens aren't assigned to hostels, so "students in their hostel" becomes the same set. A per-hostel warden assignment can narrow it later without an API change |
+| 2026-11-08 | U | **`super_admin` users are hidden** from institution user lists and can't be edited by institution admins. Admins can't disable themselves or change their own roles (no self-lockout) |
+| 2026-11-08 | U | **Rooms in user management:** only students have a room. Bed capacity (`room.beds`) is enforced on create, import and move. Removing a user's `student` role also removes them from their room |
+| 2026-11-08 | U | **`mess_staff` is not assignable** in Phase 1 (create, import or role change give 400). It becomes assignable when the Mess module is built |
+| 2026-11-08 | G | **CSV import** goes through the API (`POST /users/import`) with the admin's credentials from `SB_ADMIN_EMAIL` and `SB_ADMIN_PASSWORD` (environment only). Signing in records consent, so the script needs an explicit `--accept-privacy-policy` flag. The CSV parser is in-house, so there's no new dependency |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 
