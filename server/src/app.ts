@@ -9,6 +9,7 @@ import { sanitize } from './core/middleware/sanitize';
 import { createLimiters } from './core/middleware/rateLimit';
 import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { consentRouter } from './modules/consent/consent.routes';
 
 /** Build the Express app (no listen; Supertest uses this directly). Request pipeline: docs/architecture.md §3. */
 export function createApp() {
@@ -30,6 +31,7 @@ export function createApp() {
   api.get('/health', (_req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ status: 'ok', time: new Date().toISOString() }); });
   api.use('/auth', authRouter(limiters));
   api.use('/users', usersRouter());
+  api.use('/consent', consentRouter());
   app.use('/api/v1', api);
 
   app.use(notFound);
