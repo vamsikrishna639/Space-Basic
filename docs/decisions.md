@@ -56,6 +56,8 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | G | **Notification titles and deep links** come from one map per type in `shared/schemas/notifications.ts`, matching the screenshot text. Every new dev-server start tops up seed data that newer modules add (only where missing; existing records are never changed) |
 | 2026-11-08 | U | **No "mark all as read" and no Web Push** in Phase 1 (neither is in the screenshots) |
 | 2026-11-08 | U | **QR libraries:** free, open-source ones are pre-approved; each is named with its licence in the dependency table below (`qrcode` and `qr-scanner`, both MIT) |
+| 2026-11-08 | U | **Double-scan guard (approved):** a second scan of the same student within 5 minutes answers `409 ALREADY_SCANNED` instead of logging twice (the Entry Pass QR refreshes every 10 s, so a double tap would otherwise use a new token). Replay protection is still the unique `jti` |
+| 2026-11-08 | G | **QR tokens** use their own audience (`spacebasic-qr`) and secret, 5 s clock tolerance, and reject any claimed life over 15 s. Expired and invalid codes get different messages. The scan rate limit is per scanner (user), not per IP. `GET /attendance?date=` uses the institution's time zone, computed with `Intl` (no date library). The QR/Attendance backend needs no new dependency; `qrcode` and `qr-scanner` arrive with the client |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 

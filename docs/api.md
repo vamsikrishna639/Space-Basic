@@ -178,6 +178,24 @@ A student's own room is in `GET /users/me`.
 
 The QR token is a JWT signed with `QR_TOKEN_SECRET`. Claims: `{ sub: studentId, inst, jti, iat, exp: iat + 15 s }`. It contains no personal data.
 
+**Built behaviour (QR/Attendance module, 2026-11-08):**
+- **Gate and caching:** the whole router sits behind `requireModule('attendance')`, and every response is `no-store`. `GET /attendance/me` needs `attendance:read:own` (students); `GET /attendance` needs `attendance:read` (wardens and admins).
+- **Token:**
+  - HS256 with issuer `spacebasic` and audience `spacebasic-qr`, which is different from access tokens. Verification allows 5 s of clock skew.
+  - A token claiming more than 15 s of life is rejected.
+  - The payload is only `sub, inst, jti, iat, exp, iss, aud`.
+- **Scan errors:**
+  - `400 VALIDATION_ERROR` with `fields.token` set to "This QR code has expired. Ask the student to show it again." or "This is not a valid SpaceBasic QR code.".
+  - `404` "No student found for this QR code." for another institution's pass, a disabled user or a non-student.
+  - `409 ALREADY_SCANNED` for a replayed token (the unique `jti`), or the same student scanned again within 5 minutes ("{name} was marked a moment ago.").
+- **Scan success:**
+  - `201 { student: { fullName, room|null }, scannedAt, kind: 'attendance' }`.
+  - Writes the attendance log and an "Attendance Marked" notification (body "Scanned by {scanner}.", `link.refId` = the log id), and audits `attendance.scan`.
+  - Limited to 120 scans a minute per scanner (keyed by user, not IP).
+- **`GET /attendance`:**
+  - Returns `{ date, items: [{ student: { id, fullName }, room|null, scannedAt, kind, scannedByName }], nextCursor }`.
+  - `date` defaults to today in the institution's time zone, and the day runs from local midnight to local midnight (DST-safe). An impossible date such as `2026-02-30` is `400`.
+
 ## Support (`/support`)
 
 | Method | Path | Permission | Request | Response |
