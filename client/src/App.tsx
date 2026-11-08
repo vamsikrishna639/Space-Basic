@@ -14,6 +14,8 @@ import { CommonQuestions, ContactUs } from './screens/support/SupportLists';
 import { ComingSoon } from './screens/app/ComingSoon';
 import { Profile } from './screens/profile/Profile';
 import { EntryPass } from './screens/profile/EntryPass';
+import { ChangePassword, PrivacyConsent } from './screens/profile/AccountScreens';
+import { Settings } from './screens/settings/Settings';
 import { ChooseArea, NoAccess } from './screens/app/ChooseArea';
 import { AdminHome, ADMIN_NAV, WardenHome } from './screens/staff/StaffHomes';
 import { StaffSoon } from './screens/staff/StaffLayout';
@@ -93,9 +95,11 @@ const router = createBrowserRouter([
           { path: '/support/contact', element: <ContactUs /> },
           // My Profile rows whose screens come at later checkpoints (docs/not-from-reference.md).
           { path: '/profile/information', element: <ComingSoon title="My Information" /> },
-          { path: '/profile/password', element: <ComingSoon title="Change Password" /> },
-          { path: '/profile/privacy', element: <ComingSoon title="Privacy & Consent" /> },
-          { path: '/settings', element: <ComingSoon title="Settings" /> },
+          { path: '/profile/password', element: <ChangePassword /> },
+          { path: '/profile/privacy', element: <PrivacyConsent /> },
+          { path: '/settings', element: <Settings /> },
+          { path: '/settings/accessibility', element: <ComingSoon title="Accessibility" /> },
+          { path: '/settings/connection', element: <ComingSoon title="Check connection" /> },
           { path: '/about', element: <ComingSoon title="About" /> },
           { path: '/support/faqs', element: <CommonQuestions /> },
           { path: '/m/:module', element: <ModuleScreen /> },

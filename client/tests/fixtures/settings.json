@@ -1,0 +1,44 @@
+{
+  "//": "Visual-test fixture for settings-*.png: FAKE device ID (16 hex, like the screenshot's) and FAKE model (same length and maker prefix); both regions are masked. The exact values live in private/settings.json (gitignored).",
+  "me": {
+    "id": "000000000000000000000001",
+    "fullName": "ARJUN KUMAR RAJU",
+    "firstName": "ARJUN",
+    "email": "Arjunkumarrao1@example.com",
+    "phone": "+919000000001",
+    "roles": [
+      "student"
+    ],
+    "room": {
+      "hostelName": "West",
+      "code": "CS240",
+      "display": "West CS240"
+    },
+    "avatarUrl": null,
+    "institution": {
+      "id": "000000000000000000000002",
+      "name": "Presidency University",
+      "logoUrl": "/api/v1/institutions/000000000000000000000002/logo?v=1",
+      "timezone": "Asia/Kolkata",
+      "enabledModules": [
+        "notifications",
+        "support",
+        "attendance",
+        "leave",
+        "tickets",
+        "announcements",
+        "mess"
+      ]
+    },
+    "consent": {
+      "policyVersion": "2026-11-01",
+      "acceptedAt": "2026-11-03T10:00:00.000Z"
+    }
+  },
+  "deviceId": "0123456789abcdef",
+  "device": {
+    "platform": "Android",
+    "platformVersion": "16.0.0",
+    "model": "RMX0000"
+  }
+}

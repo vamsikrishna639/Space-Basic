@@ -9,7 +9,7 @@ import { ConsentModel } from '../consent/consent.model';
 import { UserModel } from '../users/user.model';
 import { AuditModel } from '../../core/audit/audit';
 import { TenantScopeError } from '../../core/db/tenant';
-import { REFRESH_RACE_GRACE_MS } from './auth.service';
+import { REFRESH_REUSE_GRACE_MS } from './auth.service';
 
 useTestDb();
 
@@ -155,21 +155,54 @@ describe('POST /auth/refresh (rotation + reuse detection)', () => {
     expect((await refresh(c2)).status).toBe(200);
   });
 
-  it('treats a second refresh with the same token within the grace window as a race, not theft', async () => {
-    await setup();
+  it('a cut-off rotation: the immediately previous token works ONCE more within 10 s, with a new cookie', async () => {
+    const { student } = await setup();
+    const c1 = refreshCookie(await login())!;
+    await refresh(c1); // its answer (c2) never reaches the browser: the page load was cut off
+    const again = await refresh(c1);
+    expect(again.status).toBe(200);
+    const c3 = refreshCookie(again)!;
+    expect(c3).not.toBe(c1);
+    expect((await refresh(c3)).status).toBe(200); // the session carries on from the new cookie
+    // c1 is now older than the immediately previous token: using it again is reuse
+    const reuse = await refresh(c1);
+    expect(reuse.status).toBe(401);
+    const s = await SessionModel.findOne({ institutionId: student.institutionId, userId: student._id }).lean();
+    expect(s?.revokedReason).toBe('reuse_detected');
+  });
+
+  it('a token two rotations back is reuse even inside the 10 s window', async () => {
+    const { student } = await setup();
     const c1 = refreshCookie(await login())!;
     const c2 = refreshCookie(await refresh(c1))!;
-    const race = await refresh(c1);
-    expect(race.status).toBe(401);
-    expect(race.body.error.code).toBe('REFRESH_RACE');
-    expect((await refresh(c2)).status).toBe(200); // session still alive
+    refreshCookie(await refresh(c2));
+    expect((await refresh(c1)).status).toBe(401);
+    const s = await SessionModel.findOne({ institutionId: student.institutionId, userId: student._id }).lean();
+    expect(s?.revokedReason).toBe('reuse_detected');
+  });
+
+  it('two refreshes with the same token at the same moment both succeed (one rotates, the other rotates again)', async () => {
+    await setup();
+    const c1 = refreshCookie(await login())!;
+    const [a, b] = await Promise.all([refresh(c1), refresh(c1)]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+  });
+
+  it('signing out with a cookie left behind by a cut-off rotation still ends the session', async () => {
+    const { student } = await setup();
+    const c1 = refreshCookie(await login())!;
+    const c2 = refreshCookie(await refresh(c1))!;
+    expect((await request(app).post('/api/v1/auth/logout').set('Cookie', `sb_rt=${c1}`).set('X-SB-Client', '1').set('Origin', ORIGIN)).status).toBe(204);
+    expect((await refresh(c2)).status).toBe(401);
+    const s = await SessionModel.findOne({ institutionId: student.institutionId, userId: student._id }).lean();
+    expect(s?.revokedReason).toBe('logout');
   });
 
   it('revokes the whole session when an old refresh token is reused (after the grace window)', async () => {
     const { student } = await setup();
     const c1 = refreshCookie(await login())!;
     const c2 = refreshCookie(await refresh(c1))!;
-    await SessionModel.updateMany({ institutionId: student.institutionId, userId: student._id }, { $set: { rotatedAt: new Date(Date.now() - REFRESH_RACE_GRACE_MS - 1000) } });
+    await SessionModel.updateMany({ institutionId: student.institutionId, userId: student._id }, { $set: { rotatedAt: new Date(Date.now() - REFRESH_REUSE_GRACE_MS - 1000) } });
     const reuse = await refresh(c1);
     expect(reuse.status).toBe(401);
     expect(String(reuse.headers['set-cookie'])).toMatch(/sb_rt=;/); // cookie cleared

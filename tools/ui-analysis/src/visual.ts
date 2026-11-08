@@ -68,6 +68,17 @@ for (const spec of SCREENS.filter((s) => !only || only.has(s.id))) {
   if (spec.time) await page.clock.setFixedTime(new Date(spec.time));
   const fixture = spec.fixture ? loadFixture(spec.fixture) : null;
   if (fixture) await mockApi(page, fixture.data, spec);
+  // Settings: the device as the phone reports it (User-Agent Client Hints), and this install's stored values.
+  const dev = fixture?.data.device;
+  if (dev) {
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setUserAgentOverride', {
+      userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+      userAgentMetadata: { platform: dev.platform, platformVersion: dev.platformVersion, model: dev.model, mobile: true, architecture: '', brands: [{ brand: 'Chromium', version: '140' }], fullVersion: '140.0.0.0' },
+    });
+  }
+  const stored: Record<string, string> = { ...spec.localStorage, ...(fixture?.data.deviceId ? { 'sb.deviceId': fixture.data.deviceId } : {}) };
+  if (Object.keys(stored).length) await page.addInitScript((entries: Record<string, string>) => { for (const [k, v] of Object.entries(entries)) localStorage.setItem(k, v); }, stored);
   await page.goto(base + spec.route, { waitUntil: 'networkidle' });
   const vars: Record<string, string> = { '--app-height': `${appHeightCss.toFixed(4)}px`, ...spec.cssVars };
   await page.addStyleTag({ content: `:root { ${Object.entries(vars).map(([k, v]) => `${k}: ${v};`).join(' ')} }` });
@@ -127,7 +138,11 @@ process.exit(worst > CEILING ? 1 : 0);
 
 // ---- API fixtures ----------------------------------------------------------------------------------------
 // A fixture is { me, unreadCount?, logoFile?, notifications? }. The private copy (gitignored) has the screenshot's exact data.
-interface Fixture { me: Record<string, unknown> & { institution: { logoUrl: string | null } }; unreadCount?: number; logoFile?: string; notifications?: unknown[] }
+interface Fixture {
+  me: Record<string, unknown> & { institution: { logoUrl: string | null } }; unreadCount?: number; logoFile?: string; notifications?: unknown[];
+  /** Settings: the install's device ID and the device's client hints. */
+  deviceId?: string; device?: { platform: string; platformVersion: string; model: string };
+}
 function loadFixture(name: string): { data: Fixture; private: boolean } {
   const priv = path.join(PRIVATE, `${name}.json`);
   const file = fs.existsSync(priv) ? priv : path.join(ROOT, 'client/tests/fixtures', `${name}.json`);

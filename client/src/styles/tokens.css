@@ -125,6 +125,20 @@
   --ring-track: #20222e;
   --qr-card: #ffffff;
   --qr-card-ring: transparent;
+  /* Settings (§15) */
+  --header-divider: rgb(237 238 243 / 0.086);
+  --card-shadow: 0 0 transparent;
+  --seg-track: #20242f;
+  --seg-pill: #363a46;
+  --seg-pill-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+  --seg-sep: #3a3e49;
+  --seg-text: #edeef3;
+  --seg-on-text: #edeef3;
+  --beta-bg: #1c2448;
+  --beta-text: #9eb5fb;
+  --toggle-on: #4a5ce6;
+  --toggle-off: #3a3e49;        /* provisional: no "off" in the screenshots */
+  --toggle-knob-shadow: -1px 1px 4px rgb(0 0 0 / 0.28);
 }
 
 /* Light: page, card, border and text are measured on settings-light.png. The rest is PROVISIONAL until a light
@@ -132,12 +146,12 @@
 :root[data-theme='light'] {
   --app-bg: #f5f6fa;
   --surface-card: #ffffff;
-  --card-border: #eeeff4;
+  --card-border: #eeeef0;       /* card ring and row lines, settings-light.png */
   --text-1: #13161f;
   --text-2: #6d717d;
   --text-section: #6d717d;      /* provisional */
   --divider: #e8e7ec;           /* provisional */
-  --tile-bg: #eceefb;           /* provisional */
+  --tile-bg: #f1f1fb;           /* Settings link tiles (settings-light.png) */
   --accent: #384bd5;            /* provisional (the brand primary) */
   --tabbar-bg: #ffffff;         /* provisional */
   --tabbar-border: #e8e7ec;     /* provisional */
@@ -147,7 +161,7 @@
   --badge-text: #1a121d;
   --avatar-ring: #e8e7ec;       /* provisional */
   --chip-shadow: rgb(19 22 31 / 0.08); /* provisional */
-  --chevron: #b4b8c3;           /* provisional */
+  --chevron: #c2c2c2;           /* Settings link rows (settings-light.png) */
   --dot-unread: #4a5ce6;
   --promo-bg: linear-gradient(140deg, #4457e1 0%, #4a5ce6 55.5%, #3e50da 100%); /* provisional (same as dark) */
   --promo-glow: 0 8px 32px rgb(74 92 230 / 0.22); /* provisional */
@@ -157,12 +171,26 @@
   --qr-tile: #4a5ce6;
   --qr-text-2: #555b6e;         /* provisional */
   --qr-chevron: #8e95cc;        /* provisional */
-  --danger: #d6385a;            /* provisional */
-  --danger-tile: #fde8ec;       /* provisional */
+  --danger: #f55b73;            /* Clear stored data icon (settings-light.png) */
+  --danger-tile: #ffeded;       /* its tile (settings-light.png) */
   --camera-badge: #4a5ce6;
   --scrim: rgb(0 0 0 / 0.4);    /* provisional (as dark) */
   --sheet-close-bg: #eef0f5;    /* provisional */
   --ring-track: #e8e7ec;        /* provisional */
   --qr-card: #ffffff;
   --qr-card-ring: #e8e7ec;      /* provisional: a white card on a white sheet needs an edge */
+  /* Settings (§15), measured on settings-light.png */
+  --header-divider: rgb(19 22 31 / 0.072);
+  --card-shadow: 0 16px 40px rgb(19 22 31 / 0.062);
+  --seg-track: #f7f8fc;
+  --seg-pill: #ffffff;
+  --seg-pill-shadow: 0 2px 6px rgb(19 22 31 / 0.08);
+  --seg-sep: #e2e4ea;           /* provisional: hidden in the screenshot (Light selected) */
+  --seg-text: #13161f;
+  --seg-on-text: #384bd5;
+  --beta-bg: #eaf0ff;
+  --beta-text: #2e4aa3;
+  --toggle-on: #384bd5;
+  --toggle-off: #d5d8e0;        /* provisional */
+  --toggle-knob-shadow: -1px 1px 4px rgb(19 22 31 / 0.22); /* falls to the lower left */
 }

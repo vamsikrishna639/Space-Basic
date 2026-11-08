@@ -1,12 +1,26 @@
 /* Standard in-app header, measured on settings-dark.png: back chevron (CaretLeft bold 18.01, ink from x 20),
  * title 22/500 (ink from x 55), 1 px divider at 100 px from the top of the screen (status bar included). */
 .header {
-  position: relative;
+  position: sticky;
+  z-index: 5;
+  top: 0;
   display: flex;
   align-items: center;
   height: calc(var(--safe-top) + 74px);
-  padding-top: var(--safe-top);
-  box-shadow: inset 0 -1px 0 var(--divider);
+  padding-top: calc(var(--safe-top) + 6px); /* caret and title centred 3 px under the bar's middle (settings visual test) */
+  background: var(--app-bg);
+}
+
+/* The 1 px line at y 100 -> 101 lies OVER whatever scrolls under it: the text colour at ~8.6 % (dark) / 7.2 %
+ * (light), fitted on settings-dark.png and settings-light.png where it crosses the page and a card's edge. */
+.header::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--header-divider);
+  content: '';
 }
 
 .back {

@@ -15,11 +15,14 @@ import settings from '@assets/icons/cutout/settings.svg?raw';
 import infoCircle from '@assets/icons/cutout/info-circle.svg?raw';
 import logout from '@assets/icons/cutout/logout.svg?raw';
 import camera from '@assets/icons/cutout/camera.svg?raw';
+import accessibility from '@assets/icons/cutout/accessibility.svg?raw';
+import gauge from '@assets/icons/cutout/gauge.svg?raw';
+import trash from '@assets/icons/cutout/trash.svg?raw';
 
 const ICONS = {
   'bed-welcome': bedWelcome, 'utensils-crossed': utensilsCrossed, 'question-circle': questionCircle, video,
   'bed-room': bedRoom, phone, 'qr-code': qrCode, user, key, 'shield-check': shieldCheck, settings,
-  'info-circle': infoCircle, logout, camera,
+  'info-circle': infoCircle, logout, camera, accessibility, gauge, trash,
 } as const;
 export type CutoutName = keyof typeof ICONS;
 

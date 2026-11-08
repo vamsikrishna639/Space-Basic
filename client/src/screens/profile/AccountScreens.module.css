@@ -1,0 +1,207 @@
+/* Change Password, Privacy & Consent (no screenshots: docs/not-from-reference.md). In-app tokens, Settings cards. */
+.screen {
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px var(--in-gutter) 0;
+}
+
+.card {
+  padding: 16px 17px;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), var(--card-shadow);
+}
+
+.cardTitle {
+  margin: 0 0 6px;
+  color: var(--text-1);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.text {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.field + .field {
+  margin-top: 14px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--seg-track);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.input:focus-visible {
+  box-shadow: inset 0 0 0 1.333px var(--accent);
+}
+
+.input[aria-invalid='true'] {
+  box-shadow: inset 0 0 0 1.333px var(--danger);
+}
+
+.fieldError,
+.formError {
+  margin: 6px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.formError {
+  margin: 0;
+  font-size: 13px;
+}
+
+.hint {
+  margin: 12px 0 0;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 16.333px;
+}
+
+.showToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.primary,
+.danger,
+.secondary {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--toggle-on);
+  color: #ffffff;
+}
+
+.primary:disabled,
+.danger:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.danger {
+  background: var(--danger-tile);
+  color: var(--danger);
+}
+
+.secondary {
+  background: var(--tile-bg);
+  color: var(--text-1);
+}
+
+.facts {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+
+.facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.facts dt {
+  color: var(--text-2);
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--text-1);
+  font-weight: 500;
+  text-align: right;
+}
+
+.history {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+.history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-1);
+}
+
+.confirm {
+  width: min(320px, calc(100vw - 32px));
+  padding: 20px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-1);
+}
+
+.confirm::backdrop {
+  background: var(--scrim);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.actions button {
+  min-height: 40px;
+  font-size: 14px;
+}

@@ -72,8 +72,18 @@ async function toError(res: Response): Promise<ApiError> {
 // ---- refresh (deduplicated: several requests can hit an expired token at once) --------------------------
 let refreshing: Promise<AuthResult> | null = null;
 
+/**
+ * One refresh at a time across every tab of this browser (Web Locks API; decisions.md 2026-11-09): the next tab
+ * waits, then sends the cookie the first one received. Where the API is missing, the server's 10 s grace for the
+ * previous token covers the overlap.
+ */
+function oneAtATime<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+  return locks ? locks.request('sb-refresh', fn) : fn();
+}
+
 export function refreshSession(): Promise<AuthResult> {
-  refreshing ??= (async () => {
+  refreshing ??= oneAtATime(async () => {
     try {
       for (let attempt = 0; ; attempt++) {
         const res = await send('/auth/refresh', { method: 'POST', headers: { [CLIENT_HEADER]: '1' } });
@@ -83,7 +93,7 @@ export function refreshSession(): Promise<AuthResult> {
           return result;
         }
         const err = await toError(res);
-        // Two tabs refreshed with the same cookie at once: the other one won; try once more with the new cookie.
+        // Rare since the 10 s grace and the cross-tab lock: another request rotated at the same moment; try once more.
         if (err.code === 'REFRESH_RACE' && attempt === 0) { await wait(300); continue; }
         setAccessToken(null);
         throw err;
@@ -91,7 +101,7 @@ export function refreshSession(): Promise<AuthResult> {
     } finally {
       refreshing = null;
     }
-  })();
+  });
   return refreshing;
 }
 

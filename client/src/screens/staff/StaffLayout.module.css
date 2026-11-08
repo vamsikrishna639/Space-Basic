@@ -162,8 +162,25 @@
   background: var(--tile-bg);
 }
 
-.signOut {
+.menuGroup + .signOut,
+.menuSub + .signOut {
+  /* a hairline above Sign out, like the one above "Switch to": the 44 px rows otherwise read as an empty gap */
   margin-top: 6px;
+  position: relative;
+}
+
+.menuGroup + .signOut::before,
+.menuSub + .signOut::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--card-border);
+}
+
+.signOut {
   color: var(--danger);
 }
 

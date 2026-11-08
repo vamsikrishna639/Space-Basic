@@ -17,7 +17,12 @@ import { signInLimits } from '../../core/middleware/rateLimit';
 
 export const REFRESH_SLIDING_MS = 30 * 24 * 3600 * 1000; // 30 days, extended on each use
 export const REFRESH_ABSOLUTE_MS = 90 * 24 * 3600 * 1000; // hard limit
-export const REFRESH_RACE_GRACE_MS = 15_000; // two tabs refreshing at once is not token theft
+/**
+ * The immediately previous refresh token is accepted once more for this long after a rotation (decisions.md
+ * 2026-11-09, approved): a page load cut off after the server rotated the token leaves the browser with the old
+ * cookie. Using it rotates normally; using it again, or any older token, is reuse and revokes the session.
+ */
+export const REFRESH_REUSE_GRACE_MS = 10_000;
 const LOGIN_FAIL_WINDOW_MS = 15 * 60_000;
 
 export interface RequestMeta { ip?: string; userAgent?: string; requestId?: string }
@@ -174,26 +179,26 @@ export type RefreshOutcome =
   | { kind: 'consent_required' }
   | { kind: 'reuse'; session: Session };
 
-export async function refresh(refreshToken: string, meta: RequestMeta): Promise<RefreshOutcome> {
+export async function refresh(refreshToken: string, meta: RequestMeta, attempt = 0): Promise<RefreshOutcome> {
   const hash = sha256(refreshToken);
   const now = new Date();
-  const session = await SessionModel.findOne({ currentHash: hash })
+  let session = await SessionModel.findOne({ currentHash: hash })
     .select('+currentHash +previousHashes')
     .setOptions({ unscoped: 'auth: refresh token lookup by hash' });
 
   if (!session) {
-    const reused = await SessionModel.findOne({ previousHashes: hash })
-      .select('+previousHashes')
+    const older = await SessionModel.findOne({ previousHashes: hash })
+      .select('+currentHash +previousHashes')
       .setOptions({ unscoped: 'auth: refresh token reuse detection' });
-    if (!reused) return { kind: 'invalid' };
-    if (reused.revokedAt) return { kind: 'invalid' };
-    const last = reused.previousHashes[reused.previousHashes.length - 1];
-    if (last === hash && reused.rotatedAt && now.getTime() - reused.rotatedAt.getTime() < REFRESH_RACE_GRACE_MS) {
-      return { kind: 'race' }; // another tab rotated this token a moment ago: not theft
+    if (!older || older.revokedAt) return { kind: 'invalid' };
+    const last = older.previousHashes[older.previousHashes.length - 1];
+    const inGrace = last === hash && !!older.rotatedAt && now.getTime() - older.rotatedAt.getTime() < REFRESH_REUSE_GRACE_MS;
+    if (!inGrace) {
+      await SessionModel.updateOne({ _id: older._id, institutionId: older.institutionId }, { $set: { revokedAt: now, revokedReason: 'reuse_detected' } });
+      await audit({ institutionId: older.institutionId, actorId: older.userId, action: 'session.reuse_detected', targetType: 'session', targetId: older._id, requestId: meta.requestId });
+      return { kind: 'reuse', session: older.toObject() };
     }
-    await SessionModel.updateOne({ _id: reused._id, institutionId: reused.institutionId }, { $set: { revokedAt: now, revokedReason: 'reuse_detected' } });
-    await audit({ institutionId: reused.institutionId, actorId: reused.userId, action: 'session.reuse_detected', targetType: 'session', targetId: reused._id, requestId: meta.requestId });
-    return { kind: 'reuse', session: reused.toObject() };
+    session = older; // the immediately previous token, a moment after its rotation: rotate again from the current one
   }
 
   if (session.revokedAt || session.expiresAt <= now || session.absoluteExpiresAt <= now) return { kind: 'invalid' };
@@ -209,20 +214,27 @@ export async function refresh(refreshToken: string, meta: RequestMeta): Promise<
     return { kind: 'consent_required' };
   }
 
-  // rotate atomically: only one request can rotate a given token
+  // Rotate atomically from the session's CURRENT token (whichever token was presented): only one request can win.
+  const current = session.currentHash;
   const next = newRefreshToken();
   const expiresAt = new Date(Math.min(now.getTime() + REFRESH_SLIDING_MS, session.absoluteExpiresAt.getTime()));
   const rotated = await SessionModel.updateOne(
-    { _id: session._id, institutionId: session.institutionId, currentHash: hash, revokedAt: null },
-    { $set: { currentHash: sha256(next), rotatedAt: now, lastUsedAt: now, expiresAt }, $push: { previousHashes: { $each: [hash], $slice: -20 } } },
+    { _id: session._id, institutionId: session.institutionId, currentHash: current, revokedAt: null },
+    { $set: { currentHash: sha256(next), rotatedAt: now, lastUsedAt: now, expiresAt }, $push: { previousHashes: { $each: [current], $slice: -20 } } },
   );
-  if (rotated.modifiedCount !== 1) return { kind: 'race' };
+  if (rotated.modifiedCount !== 1) {
+    // Another request rotated this session at the same moment: look again once (this token is now the previous one).
+    return attempt === 0 ? refresh(refreshToken, meta, 1) : { kind: 'race' };
+  }
   return { kind: 'ok', issued: { result: await authResult(user, session._id), refreshToken: next, expiresAt } };
 }
 
 export async function logout(refreshToken: string | undefined): Promise<void> {
   if (!refreshToken) return;
-  await SessionModel.updateOne({ currentHash: sha256(refreshToken), revokedAt: null }, { $set: { revokedAt: new Date(), revokedReason: 'logout' } })
+  // The current token, or an older one of the same session (a cookie left behind by a cut-off rotation): signing
+  // out with it still ends the session.
+  const hash = sha256(refreshToken);
+  await SessionModel.updateOne({ $or: [{ currentHash: hash }, { previousHashes: hash }], revokedAt: null }, { $set: { revokedAt: new Date(), revokedReason: 'logout' } })
     .setOptions({ unscoped: 'auth: logout by refresh token hash' });
 }
 

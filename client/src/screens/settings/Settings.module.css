@@ -1,0 +1,368 @@
+/*
+ * Settings (reference-ui/settings-dark.png at the top, settings-light.png scrolled to the end, 298.667 px;
+ * docs/ui-measurements.md §15). CSS px from the top of the screen, status bar included; the header is 0 -> 100.
+ * Text placement: cap top = line top + 5.333 (14/20), 5.0 (13/19.333), 4.0 (12/16.333), 3.333 (10.25/14),
+ * measured in the Linux image (scratch/pjs-metrics.ts).
+ */
+.screen {
+  padding-bottom: calc(9.333px + var(--safe-bottom)); /* the page ends 24 px under the last card */
+}
+
+.body {
+  padding: 0 var(--in-gutter);
+}
+
+/* Cards: 16 -> 344, radius 20 (corner fit 19.75), 1 px ring; light cards also cast a soft shadow (fitted). */
+.card {
+  margin-top: 16px;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), var(--card-shadow);
+}
+
+/* ---- About this app: card 100 -> 522.667 ---- */
+.about {
+  margin-top: 0;
+  padding: 16.667px 17px 4.333px; /* 1 px ring + 16: lines run 33 -> 327; bottom ring 521.667 -> 522.667 */
+}
+
+/* "ABOUT THIS APP" 10.25 / 700 / +0.13em, cap top 119.67 */
+.cardLabel {
+  margin: 0 0 9.333px;
+  color: var(--text-section);
+  font-size: 10.25px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.rows {
+  margin: 0;
+}
+
+/* 44 px rows with a 1 px line between them (x 33 -> 327): 11 above the 20 px line, 13 below. */
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0 13px;
+}
+
+.row + .row {
+  padding-top: 12px;
+  box-shadow: inset 0 1px 0 var(--card-border);
+}
+
+.rowLabel {
+  flex: none;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+.rowValue {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: right;
+}
+
+/* IDs: 13 / 400, tabular digits, secondary. The Web bundle wraps after a hyphen onto a 19.333 px line. */
+.mono {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: right;
+}
+
+.bundleRow .mono {
+  max-width: 176px;
+  margin: 0.333px 0 0.333px;
+  line-height: 19.333px;
+}
+
+/* ---- Appearance, Haptic feedback, Sounds: card 538.667 -> 825.333 ---- */
+.prefs {
+  overflow: hidden;
+}
+
+.appearance {
+  padding: 13.667px 17px 12px;
+}
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.title {
+  color: var(--text-1);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+/* BETA: 38.9 x 17 pill (x 121.4 -> 160.3 after "Appearance"), its top 1 px under the title's line box;
+ * 10.22 / 600 / +0.045em, text 6 px in. */
+.beta {
+  display: inline-grid;
+  align-self: flex-start;
+  place-items: center;
+  height: 17px;
+  margin: 1px 0 0 6px;
+  padding: 0 5.933px 0 6px;
+  border-radius: 999px;
+  background: var(--beta-bg);
+  color: var(--beta-text);
+  font-size: 10.22px;
+  font-weight: 600;
+  letter-spacing: 0.045em;
+  line-height: 17px;
+}
+
+.sub {
+  margin: 1px 0 0;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16.333px;
+}
+
+/* System | Light | Dark: track 33 -> 327 x 601.667 -> 649.667, 4 / 6 px padding, segments 95.333 x 36. */
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  height: 48px;
+  margin-top: 12px;
+  padding: 6px 4px;
+  border-radius: 999px;
+  background: var(--seg-track);
+}
+
+.segment {
+  position: relative;
+  z-index: 0;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--seg-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+/* The raised pill: the segment inset 2 px left and right (229.667 -> 321 for Dark). */
+.segment.on::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0 2px;
+  border-radius: 999px;
+  background: var(--seg-pill);
+  box-shadow: var(--seg-pill-shadow);
+  content: '';
+}
+
+.segment.on {
+  color: var(--seg-on-text);
+}
+
+/* 1 x 26 px line at the left edge of a segment, between two unselected ones. */
+.segment.sep::after {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  width: 1px;
+  height: 26px;
+  background: var(--seg-sep);
+  content: '';
+}
+
+/* Toggle rows: a 1 px line across the card, then 13.333 / 12.333 px; text column ends at x 260. */
+.toggleRow {
+  position: relative;
+  padding: 14.667px 84px 12px 17px; /* the text column ends at x 260: 16 px before the switch */
+  box-shadow: inset 0 1px 0 var(--card-border);
+}
+
+.toggleRow:last-child {
+  padding-bottom: 13px; /* the card's bottom ring: 824.333 -> 825.333 */
+}
+
+.toggleText {
+  flex: 1;
+  min-width: 0;
+}
+
+.toggleSub {
+  margin-top: 2px;
+}
+
+/* Switch: 51 x 31, knob 24 white, 3 px from the end; on = the brand blue of each theme. */
+.switch {
+  position: absolute;
+  top: 25.333px; /* 687 -> 718 in a row from 661.667 */
+  right: 17px;
+  width: 51px;
+  height: 31px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--toggle-off);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.switchOn {
+  background: var(--toggle-on);
+}
+
+.knob {
+  position: absolute;
+  top: 3.5px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: var(--toggle-knob-shadow);
+  transition: transform 160ms ease;
+}
+
+.switchOn .knob {
+  transform: translateX(21px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .knob {
+    transition: none;
+  }
+}
+
+/* ---- Accessibility, Check connection, Clear stored data: card 841.333 -> 1074.667, rows 77 ---- */
+.links {
+  padding: 1.333px 0 1px;
+}
+
+.link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 77px;
+  padding: 11px 40px 12.667px 17px; /* tile at x 33; text ends by x 304 */
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.link + .link {
+  box-shadow: inset 0 1px 0 var(--card-border);
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin: 1.667px 12px 0 0; /* centred on the 77 px row, not its padded box (11 / 12.667) */
+  border-radius: 12px;
+  background: var(--tile-bg);
+  color: var(--accent);
+}
+
+.dangerTile {
+  background: var(--danger-tile);
+  color: var(--danger);
+}
+
+.linkText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.linkSub {
+  margin-top: 0.667px;
+}
+
+/* CaretRight bold 14.77, ink 6 x 10.67 ending at x 322, centred on the row (as My Profile) */
+.chevron {
+  position: absolute;
+  top: calc(50% - 7.385px);
+  right: 17.933px;
+  color: var(--chevron);
+}
+
+/* ---- "Clear stored data?" (no screenshot: plain, existing tokens) ---- */
+.confirm {
+  width: min(320px, calc(100vw - 32px));
+  padding: 20px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-1);
+}
+
+.confirm::backdrop {
+  background: var(--scrim);
+}
+
+.confirmTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.confirmText {
+  margin: 8px 0 20px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirmCancel,
+.confirmDanger {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.confirmCancel {
+  background: var(--tile-bg);
+  color: var(--text-1);
+}
+
+.confirmDanger {
+  background: var(--danger-tile);
+  color: var(--danger);
+}

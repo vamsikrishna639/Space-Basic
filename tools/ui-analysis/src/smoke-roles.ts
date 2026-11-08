@@ -132,8 +132,8 @@ try {
     await page.waitForURL('**/choose');
     check(true, '"Switch role" opens "Continue as"');
     await page.getByRole('heading', { name: 'Continue as' }).waitFor();
-    // (No reload right before this full load: two back-to-back page loads can drop the rotated refresh cookie; see
-    // docs/decisions.md 2026-11-09, flagged.)
+    // A reload straight into another page load (this used to sign the user out; fixed 2026-11-09).
+    await page.reload({ waitUntil: 'commit' });
     await page.goto(`${BASE}/`);
     await page.waitForURL((u) => u.pathname !== '/', { timeout: 10_000 }).catch(() => undefined);
     check(path(page) === '/home', `and the last choice (Student) is what the next visit opens (${path(page)})`);

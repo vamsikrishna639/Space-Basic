@@ -37,6 +37,8 @@ export interface ScreenSpec {
   /** API fixture: client/tests/fixtures/private/<name>.json if present (exact screenshot data), else
    * client/tests/fixtures/<name>.json (fake data of the same length, with `fakeMasks` applied). */
   fixture?: string;
+  /** localStorage entries set before the app starts (e.g. the Appearance choice). */
+  localStorage?: Record<string, string>;
   /** Mocked GET /attendance/qr-token: this token (FAKE, unsigned), 10 s cycle. */
   qrToken?: string;
   /** Fixed clock to set once the page has loaded (ISO), e.g. to put a countdown where the screenshot shows it. */
@@ -303,6 +305,67 @@ export const SCREENS: ScreenSpec[] = [
       { name: 'countdown', rect: [360, 1890, 380, 110], zoom: true },
       { name: 'ring', rect: [365, 1900, 90, 90], zoom: true },
       { name: 'footer', rect: [80, 2030, 925, 65] },
+    ],
+  },
+  {
+    // Settings at the top, Dark chosen. Device ID and model come from the fixture (FAKE in the committed one, masked).
+    id: 'settings-dark',
+    ref: 'settings-dark.png',
+    route: '/settings',
+    ...IN_APP,
+    colorScheme: 'dark',
+    time: '2026-11-03T11:21:00+05:30',
+    timezone: 'Asia/Kolkata',
+    fixture: 'settings',
+    localStorage: { 'sb.appearance': 'dark' },
+    fakeMasks: [
+      { name: 'model value', rect: [770, 1225, 215, 50] },
+      { name: 'device ID value', rect: [595, 1355, 390, 55] },
+    ],
+    regions: [
+      { name: 'header', rect: [0, 0, 1080, 200] },
+      { name: 'ABOUT THIS APP', rect: [95, 245, 320, 40] },
+      { name: 'row labels', rect: [95, 330, 400, 1200] },
+      { name: 'row values', rect: [560, 330, 430, 1200] },
+      { name: 'web bundle', rect: [470, 480, 520, 130], zoom: true },
+      { name: 'card 1 bottom', rect: [0, 1440, 1080, 60] },
+      { name: 'appearance + BETA', rect: [95, 1545, 400, 75], zoom: true },
+      { name: 'appearance sub', rect: [95, 1620, 880, 55] },
+      { name: 'segmented', rect: [95, 1695, 900, 160], zoom: true },
+      { name: 'full-width line', rect: [0, 1870, 1080, 25] },
+      { name: 'haptic text', rect: [95, 1925, 650, 175] },
+      { name: 'haptic toggle', rect: [820, 1945, 170, 110], zoom: true },
+      { name: 'sounds + BETA', rect: [95, 2160, 400, 70] },
+    ],
+  },
+  {
+    // The same page in Light, scrolled to the end (298.667 px).
+    id: 'settings-light',
+    ref: 'settings-light.png',
+    route: '/settings',
+    ...IN_APP,
+    colorScheme: 'light',
+    time: '2026-11-03T11:23:00+05:30',
+    timezone: 'Asia/Kolkata',
+    fixture: 'settings',
+    localStorage: { 'sb.appearance': 'light' },
+    scrollY: 'end',
+    fakeMasks: [
+      { name: 'model value', rect: [770, 322, 215, 50] },
+      { name: 'device ID value', rect: [595, 460, 390, 55] },
+    ],
+    regions: [
+      { name: 'header over content', rect: [0, 0, 1080, 230], zoom: true },
+      { name: 'card 1 end + shadow', rect: [0, 520, 1080, 110] },
+      { name: 'appearance + BETA', rect: [95, 650, 400, 75] },
+      { name: 'segmented', rect: [95, 800, 900, 150], zoom: true },
+      { name: 'toggle text', rect: [95, 1030, 650, 400] },
+      { name: 'toggles', rect: [820, 1050, 170, 360], zoom: true },
+      { name: 'gap between cards (shadow)', rect: [0, 1460, 1080, 80], zoom: true },
+      { name: 'link tiles', rect: [95, 1580, 130, 590], zoom: true },
+      { name: 'link text', rect: [245, 1565, 700, 600] },
+      { name: 'chevrons', rect: [930, 1610, 70, 470] },
+      { name: 'last card end', rect: [0, 2190, 1080, 60] },
     ],
   },
 ];
