@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { roomCodeFor, type NotificationType, type Role } from '@spacebasic/shared';
+import { roomCodeFor, type FaqCategory, type NotificationType, type Role, type SupportContactGroup } from '@spacebasic/shared';
 import { env } from '../config/env';
 import { hashPassword } from '../core/security/password';
 import { InstitutionModel } from '../modules/institutions/institution.model';
@@ -7,6 +7,7 @@ import { FloorModel, HostelModel, RoomModel } from '../modules/hostel/hostel.mod
 import { UserModel } from '../modules/users/user.model';
 import { NotificationModel } from '../modules/notifications/notification.model';
 import { createNotification } from '../modules/notifications/notifications.service';
+import { FaqModel, SupportContactModel } from '../modules/support/support.models';
 
 /**
  * DEVELOPMENT SEED: FAKE data only (docs/schemas.md §3). Refuses to run in production.
@@ -32,7 +33,13 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
   const existing = await InstitutionModel.findOne({ slug: 'presidency-university' }, { _id: 1 }).lean();
   if (existing) {
     const added = await seedDevNotifications(existing._id);
-    console.log(`seed: demo institution already exists${added ? `; added sample notifications for ${added} user(s)` : ''} (use \`npm run seed -- --reset\` to start over)`);
+    const support = await seedDevSupport(existing._id);
+    const topUps = [
+      added ? `sample notifications for ${added} user(s)` : '',
+      support.contacts ? `${support.contacts} support contacts` : '',
+      support.faqs ? `${support.faqs} FAQs` : '',
+    ].filter(Boolean);
+    console.log(`seed: demo institution already exists${topUps.length ? `; added ${topUps.join(', ')}` : ''} (use \`npm run seed -- --reset\` to start over)`);
     return;
   }
 
@@ -60,7 +67,8 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
     });
   }
   await seedDevNotifications(institutionId);
-  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users, sample notifications`);
+  await seedDevSupport(institutionId);
+  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users, sample notifications, support contacts and FAQs`);
 }
 
 /**
@@ -96,6 +104,40 @@ export async function seedDevNotifications(institutionId: mongoose.Types.ObjectI
     users++;
   }
   return users;
+}
+
+/**
+ * FAKE Help-screen content: hostel office and SpaceBasic contacts, and a few FAQs per category (one of them an
+ * unpublished draft, which students never see). Each part is added only when the institution has none yet.
+ */
+export async function seedDevSupport(institutionId: mongoose.Types.ObjectId): Promise<{ contacts: number; faqs: number }> {
+  const contacts: { group: SupportContactGroup; label: string; phone: string | null; email: string | null; hours: string | null }[] = [
+    { group: 'hostel_office', label: 'West block warden office', phone: '+919000000101', email: 'west.office@example.com', hours: 'Mon–Sat, 9 AM – 6 PM' },
+    { group: 'hostel_office', label: 'Hostel reception', phone: '+919000000102', email: null, hours: 'Open 24 hours' },
+    { group: 'spacebasic', label: 'SpaceBasic support', phone: null, email: 'support@spacebasic.example', hours: 'Mon–Fri, 10 AM – 6 PM' },
+  ];
+  const faqs: { category: FaqCategory; question: string; answer: string; published?: boolean }[] = [
+    { category: 'leave', question: 'How do I apply for leave?', answer: 'Open Leave Manager from Home, or tap "Apply for leave" under Quick Actions, and fill in your dates and reason.' },
+    { category: 'leave', question: 'Who approves my leave?', answer: 'Your warden approves it first, and then the hostel office. You get a notification at each step.' },
+    { category: 'tickets', question: 'How do I report a problem in my room?', answer: 'Raise a ticket from Home with a short description. The hostel office will update you as it is fixed.' },
+    { category: 'announcements', question: 'Where can I see hostel announcements?', answer: 'Open Announcements from Home. New announcements also appear in Notifications.' },
+    { category: 'signing_in', question: 'I forgot my password. What do I do?', answer: 'On the sign-in screen, tap "Forgot password?" and follow the steps. You can also ask for a one-time code by email.' },
+    { category: 'signing_in', question: 'Why can I not sign up myself?', answer: 'Your college registers every resident. If you cannot sign in, contact your hostel office.' },
+    { category: 'other', question: 'When is the mess menu updated?', answer: 'Draft answer, not published yet.', published: false },
+  ];
+  let addedContacts = 0;
+  let addedFaqs = 0;
+  if (!(await SupportContactModel.exists({ institutionId }))) {
+    const order = { hostel_office: 0, spacebasic: 0 };
+    await SupportContactModel.insertMany(contacts.map((c) => ({ institutionId, ...c, order: ++order[c.group] })));
+    addedContacts = contacts.length;
+  }
+  if (!(await FaqModel.exists({ institutionId }))) {
+    const order: Partial<Record<FaqCategory, number>> = {};
+    await FaqModel.insertMany(faqs.map((f) => ({ institutionId, ...f, published: f.published ?? true, order: (order[f.category] = (order[f.category] ?? 0) + 1) })));
+    addedFaqs = faqs.length;
+  }
+  return { contacts: addedContacts, faqs: addedFaqs };
 }
 
 export function printDevUsers(): void {
