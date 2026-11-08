@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { Request, Response } from 'express';
+import express, { type Request, type Response } from 'express';
 import type { Types } from 'mongoose';
 import { AVATAR_MAX_BYTES, IMAGE_CONTENT_TYPES, type ImageContentType } from '@spacebasic/shared';
 import { AppError, errors } from '../../core/http/errors';
@@ -12,6 +12,13 @@ export function sniffImageType(data: Buffer): ImageContentType | null {
   if (data.length >= 12 && data.toString('latin1', 0, 4) === 'RIFF' && data.toString('latin1', 8, 12) === 'WEBP') return 'image/webp';
   return null;
 }
+
+/**
+ * Raw image body for uploads (avatars, institution logos), mounted only AFTER authentication and permission
+ * checks. Every content type is read as bytes so checkImageUpload can answer 415 (not a JSON parse error);
+ * JSON bodies were already parsed by the global parser and are rejected there too.
+ */
+export const rawImage = express.raw({ type: () => true, limit: AVATAR_MAX_BYTES });
 
 const unsupported = () =>
   new AppError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Choose a PNG, JPEG or WebP image.');

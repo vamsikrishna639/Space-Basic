@@ -5,6 +5,7 @@ import { UserModel } from './user.model';
 import { InstitutionModel } from '../institutions/institution.model';
 import { HostelModel, RoomModel } from '../hostel/hostel.models';
 import { currentConsent } from '../consent/consent.service';
+import { logoUrlFor } from '../institutions/institutions.service';
 
 /** The `?v=` changes with every upload, so the client knows when to fetch the photo again. */
 export function avatarUrlFor(avatar: { updatedAt: Date }): string {
@@ -35,7 +36,7 @@ export async function buildMe(institutionId: Types.ObjectId, userId: Types.Objec
     institution: {
       id: String(institution._id),
       name: institution.name,
-      logoUrl: institution.logo ? `/api/v1/institutions/${institution._id}/logo?v=${institution.logo.updatedAt.getTime()}` : null,
+      logoUrl: institution.logo ? logoUrlFor(institution._id, institution.logo) : null,
       timezone: institution.timezone,
       enabledModules: institution.enabledModules,
     },

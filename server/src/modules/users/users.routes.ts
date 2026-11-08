@@ -1,24 +1,17 @@
-import express, { Router, type RequestHandler } from 'express';
+import { Router, type RequestHandler } from 'express';
 import {
-  AVATAR_MAX_BYTES, assignRolesBodySchema, createUserBodySchema, importUsersBodySchema, listUsersQuerySchema,
+  assignRolesBodySchema, createUserBodySchema, importUsersBodySchema, listUsersQuerySchema,
   updateUserBodySchema, userIdParamsSchema,
 } from '@spacebasic/shared';
 import { errors } from '../../core/http/errors';
 import { authenticate, requirePermission } from '../../core/middleware/auth';
 import { validate, valid } from '../../core/middleware/validate';
-import { checkImageUpload, deleteAssets, replaceAsset, sendAsset } from '../assets/asset.service';
+import { checkImageUpload, deleteAssets, rawImage, replaceAsset, sendAsset } from '../assets/asset.service';
 import { avatarUrlFor, buildMe } from './me.service';
 import { UserModel } from './user.model';
 import * as users from './users.service';
 
 const noStore: RequestHandler = (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); };
-
-/**
- * Raw image body for avatar uploads, read only AFTER authentication and permission checks.
- * Every content type is read as bytes so checkImageUpload can answer 415 (not a JSON parse error);
- * JSON bodies were already parsed by the global parser and are rejected there too.
- */
-const rawImage = express.raw({ type: () => true, limit: AVATAR_MAX_BYTES });
 
 export function usersRouter(): Router {
   const r = Router();

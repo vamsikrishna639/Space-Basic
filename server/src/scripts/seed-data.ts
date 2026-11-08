@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import mongoose from 'mongoose';
 import { roomCodeFor, type FaqCategory, type NotificationType, type Role, type SupportContactGroup } from '@spacebasic/shared';
 import { env } from '../config/env';
@@ -8,6 +10,7 @@ import { UserModel } from '../modules/users/user.model';
 import { NotificationModel } from '../modules/notifications/notification.model';
 import { createNotification } from '../modules/notifications/notifications.service';
 import { FaqModel, SupportContactModel } from '../modules/support/support.models';
+import { setLogo } from '../modules/institutions/institutions.service';
 
 /**
  * DEVELOPMENT SEED: FAKE data only (docs/schemas.md §3). Refuses to run in production.
@@ -34,7 +37,9 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
   if (existing) {
     const added = await seedDevNotifications(existing._id);
     const support = await seedDevSupport(existing._id);
+    const logo = await seedDevLogo(existing._id);
     const topUps = [
+      logo ? 'the institution logo' : '',
       added ? `sample notifications for ${added} user(s)` : '',
       support.contacts ? `${support.contacts} support contacts` : '',
       support.faqs ? `${support.faqs} FAQs` : '',
@@ -68,7 +73,8 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
   }
   await seedDevNotifications(institutionId);
   await seedDevSupport(institutionId);
-  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users, sample notifications, support contacts and FAQs`);
+  await seedDevLogo(institutionId);
+  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users, logo, sample notifications, support contacts and FAQs`);
 }
 
 /**
@@ -138,6 +144,16 @@ export async function seedDevSupport(institutionId: mongoose.Types.ObjectId): Pr
     addedFaqs = faqs.length;
   }
   return { contacts: addedContacts, faqs: addedFaqs };
+}
+
+/** The supplied Presidency University logo (reference-ui/assets, committed; used as-is), only if none is set. */
+export const DEV_LOGO_FILE = path.resolve(__dirname, '../../../reference-ui/assets/logo-presidency.png');
+
+export async function seedDevLogo(institutionId: mongoose.Types.ObjectId): Promise<boolean> {
+  const inst = await InstitutionModel.findById(institutionId, { logo: 1 }).lean();
+  if (!inst || inst.logo || !fs.existsSync(DEV_LOGO_FILE)) return false;
+  await setLogo(institutionId, { data: fs.readFileSync(DEV_LOGO_FILE), contentType: 'image/png' }, { actorId: null });
+  return true;
 }
 
 export function printDevUsers(): void {
