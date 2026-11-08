@@ -4,7 +4,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-08, end of session):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Current phase (2026-11-08, Entry Pass checkpoint):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
 - **Done:**
   - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, and the password rule (a password can't be the account's email or phone, on create, import, change and reset). **151 Jest tests.**
   - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
@@ -18,23 +18,24 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
     | Notifications | `/notifications` | 0.90% |
     | Help, plus Contact us and Common questions | `/support`, `/support/contact`, `/support/faqs` | 0.98% (sub-screens: no screenshot) |
     | My Profile, top / scrolled | `/profile` | 1.14% / 1.11% |
+    | Entry Pass (QR sheet over My Profile) | `/profile/entry-pass` | 0.70% (QR data modules masked: they change with every token) |
 
     Screens and states without a screenshot are listed in `docs/not-from-reference.md`.
-  - **My Profile** has the sticky header and card, the camera-badge photo upload and the real **Sign Out**. **It is NOT committed yet** (the user's next commit). Its rows (QR, My Information, Change Password, Privacy & Consent, Settings, About) open ComingSoon for now.
-  - **Functional tests:** client unit tests (26), `tools/ui-analysis/src/smoke-signin.ts` (against a running `npm run dev`: sign-in, Home, Notifications, Help, My Profile, Sign Out), `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself; at most 5 codes an hour per address).
+  - **My Profile** has the sticky header and card, the camera-badge photo upload and the real **Sign Out**. "Show my QR code" opens the **Entry Pass**; the other rows (My Information, Change Password, Privacy & Consent, Settings, About) open ComingSoon for now.
+  - **Entry Pass** (2026-11-08, **not committed yet**): a native `<dialog>` routed as a child of `/profile`; QR drawn with `qrcode` exactly as the screenshot's (canvas 512 px, margin 1, shown at 199.333 × 199); ring drains over the 10 s cycle, label rounds up. **The QR token is no longer a JWT**: a 96-character HMAC token so the QR is always version 6-M like the screenshot (`docs/decisions.md` "Compact QR token", flagged for the user's review).
+  - **Functional tests:** client unit tests (30), `tools/ui-analysis/src/smoke-signin.ts` (against a running `npm run dev`: sign-in, Home, Notifications, Help, My Profile, the Entry Pass with a real warden scan of the shown code, Sign Out; it signs in about 7 times, and sign-in allows 20 per 15 minutes per IP, so space out repeated runs), `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself; at most 5 codes an hour per address).
   - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
 - **Next, in order (checkpoint after each group):**
-  1. **Entry Pass** (`reference-ui/QR_entry-pass.png`, strict): the QR bottom sheet over My Profile, opened by the profile's "Show my QR code" row (today `/profile/entry-pass`, a ComingSoon placeholder). Uses the QR/Attendance API already built. It needs the approved `qrcode` (MIT) in `client/`; it isn't installed yet (it's in the dependency table in `docs/decisions.md`).
-  2. **Settings** (`settings-dark.png`, `settings-light.png`, strict), and the supporting flows **Change Password** and **Privacy & Consent** (no screenshots: build plainly, list them in `docs/not-from-reference.md`; the backend exists).
-  3. **Staff screens** (free design; scope and rules under "Decisions already made"): warden first, then admin. The warden scanner needs `qr-scanner` (MIT, approved, not installed yet).
+  1. **Settings** (`settings-dark.png`, `settings-light.png`, strict), and the supporting flows **Change Password** and **Privacy & Consent** (no screenshots: build plainly, list them in `docs/not-from-reference.md`; the backend exists).
+  2. **Staff screens** (free design; scope and rules under "Decisions already made"): warden first, then admin. The warden scanner needs `qr-scanner` (MIT, approved, not installed yet).
 - **Open items (waiting on the user):**
-  - Light-theme **Home** and **Profile** screenshots. Until then the light Home tokens, the camera-badge ring on a light card, and the light colours on Notifications, Help and My Profile are provisional.
+  - Light-theme **Home** and **Profile** screenshots. Until then the light Home tokens, the camera-badge ring on a light card, and the light colours on Notifications, Help, My Profile and the Entry Pass are provisional.
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
 - **Session notes (2026-11-08):**
   - Visual tests need Docker Desktop; starting it is fine.
   - The dev student's seeded notifications have all been read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up; the smoke test tolerates an empty unread badge).
   - Before a smoke run, make sure ports 5173 / 4000 / 27027 are free, or reuse the running stack; on Windows stop the stack with `taskkill /PID <root> /T /F`.
-  - Every decision made this session is in `docs/decisions.md` (latest rows: profile avatar on the device grid, sticky profile top, photo upload, the git rule, the Help arrow).
+  - Every decision made this session is in `docs/decisions.md` (latest rows: the compact QR token, the QR drawn like the screenshot's, the Entry Pass dialog and timing, its visual-test masks, the smoke-test "Unread" fix).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture

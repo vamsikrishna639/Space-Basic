@@ -70,12 +70,25 @@ My Profile matches `07-profile.png` (1.14%) and `07-profile(1).png` (1.11%). Not
 
 | What | Where | How it's built | Replace when |
 |---|---|---|---|
-| Rows that open **ComingSoon** for now | "Show my QR code" (Entry Pass, next checkpoint), My Information (Phase 1 placeholder), Change Password and Privacy & Consent (supporting flows, a later checkpoint), Settings (its own checkpoint), About (no screenshot) | The shared ComingSoon screen with the row's title | Each screen as it's built |
+| Rows that open **ComingSoon** for now | My Information (Phase 1 placeholder), Change Password and Privacy & Consent (supporting flows, a later checkpoint), Settings (its own checkpoint), About (no screenshot) | The shared ComingSoon screen with the row's title | Each screen as it's built |
 | **Photo upload** states | Camera badge | No preview or progress UI: the new photo appears when the upload ends. A refused file (type, size) shows the API's message in small danger-coloured text under the avatar | A screenshot of an upload |
 | **Sign Out** confirmation | Sign Out row | None: it signs out at once, as the screenshot offers no dialog | A screenshot of a confirm step, if there is one |
 | A user **without a room**, phone or email | Profile card | That line is left out | A screenshot of such a profile |
 | Long names and emails | Profile card | One line, cut with "…" | A screenshot with a long value |
 | **Light** My Profile | Light theme | Settings-light colours; Sign Out pink, its tile, the QR panel's subtitle and chevron colours are provisional | A light Profile screenshot |
+
+## Entry Pass (step 6, seventh checkpoint, 2026-11-08)
+
+The Entry Pass matches `QR_entry-pass.png` (0.70%). Not in the screenshot:
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| **Opening and closing** | The sheet | Slides up from the bottom while the scrim fades in (280 ms); the X, Escape, Android back and a tap on the dimmed profile slide it down. No animation with reduced motion | A recording of the real sheet |
+| **First code loading** | Sheet just opened | The white card is empty and the countdown row is blank until the first code arrives (normally well under a second) | A screenshot of that moment |
+| **Can't refresh** | Countdown row | When no valid code is on screen (offline, server waking up), the card is empty and the row reads "Can't refresh your pass. Trying again…" (14 / 400, secondary); it keeps retrying every 2 s | A screenshot of the offline state |
+| **Pass not available** | Countdown row | A refusal from the server (for example the attendance module switched off) reads "Your entry pass isn't available. Ask your hostel office." and stops retrying | A screenshot of that state |
+| A student **without a room** | Under the name | The room line is left out | A screenshot of such a pass |
+| **Light** Entry Pass | Light theme | White sheet (`--surface-card`), the same scrim; close disc #EEF0F5, ring track #E8E7EC and a 2 device px #E8E7EC ring around the white QR card (a white card on a white sheet needs an edge) are provisional | A light Entry Pass screenshot |
 
 | Entry point | Plan |
 |---|---|

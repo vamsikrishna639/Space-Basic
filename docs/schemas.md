@@ -151,7 +151,7 @@ Phase 1 implements the collections in §1. §2 lists the later collections, so P
 | `institutionId`, `studentId`, `scannedBy` | ObjectId, required | |
 | `scannedAt` | Date, required | |
 | `kind` | `'attendance'` (Phase 1); later `'amenity'` \| `'checkin'` | |
-| `jti` | String, required | The QR token id. **Unique**, which provides the replay protection |
+| `jti` | String, required | The QR token id (10 random bytes, base64url). **Unique**, which provides the replay protection |
 
 **Indexes:** `{ jti: 1 }` unique, `{ institutionId: 1, studentId: 1, scannedAt: -1 }`, `{ institutionId: 1, scannedAt: -1 }`.
 

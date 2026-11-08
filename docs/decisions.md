@@ -106,6 +106,13 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | G | **Photo upload** through the camera badge uses the existing `PUT /users/me/avatar` (raw bytes, PNG/JPEG/WebP ≤ 1 MB, no multipart). `apiUpload()` in the API client; `updateMe()` in the auth context refreshes both avatars at once |
 | 2026-11-08 | G | **The TEMPORARY Sign Out button is gone** (`SignOutButton.tsx` deleted): the real "Sign Out" row signs out and returns to Welcome |
 | 2026-11-08 | G | **Active My Profile tab** measured: 1.167 px #4A5CE6 ring, 1.5 px gap, 1.5 px outer ring. Row chevrons on Help and My Profile moved 0.333 px left (ink now ends at x 322, as measured) |
+| 2026-11-08 | G | **Compact QR token (flagged: replaces the built JWT).** The Entry Pass screenshot's QR is version 6-M (41 × 41 modules), which holds 85–106 bytes. The built QR JWT was ~290 characters, i.e. version 13 (69 × 69, modules 40 % smaller), so the pass could never look like the screenshot. The token is now `base64url(39-byte body).base64url(HMAC-SHA256)`, always 96 characters: body = format, student id, institution id, 10-byte random `jti`, `iat`. Same guarantees as before: bound to the student and institution, own secret, 15 s life (now implied by `iat`, so it can't be stretched), 5 s clock skew, single use through the unique `jti`, no personal data. The MAC is checked in constant time on its canonical encoding. `jsonwebtoken` stays for access tokens. Attendance tests updated (forged, wrong key, future `iat`, tampered body, non-canonical MAC, truncated) |
+| 2026-11-08 | G | **QR drawn like the screenshot's.** Every module edge of the screenshot's QR fits `qrcode`'s canvas renderer at 512 px with a 1-module margin, shown at 199.333 × 199 CSS px (rms 0.02 device px). The client draws it the same way (`entryPassQr.ts`), byte mode and level M forced, dark #141414 |
+| 2026-11-08 | G | **Entry Pass is a route and a native `<dialog>`**: `/profile/entry-pass` is a child of `/profile`, so My Profile stays rendered under the sheet. `showModal()` puts it above the tab bar and makes the page inert; Escape and Android's back gesture close it like the X does (slide down 280 ms; no animation with reduced motion). A tap on the dimmed profile closes it too (standard for sheets; not inferable from a still). First focus goes to the sheet itself, not the X, so no focus ring shows on open and a screen reader starts at "Entry Pass". The page behind doesn't scroll while it's open |
+| 2026-11-08 | G | **Entry Pass timing:** the ring drains continuously over `refreshAfterMs` (10 s) and the label is the seconds left rounded up, as measured (8.68 s left reads "9s"). Timing uses the phone's clock from when each code arrived, so server clock skew doesn't matter. The next code is fetched 0.8 s before the swap; failures retry every 2 s; a code is hidden 1 s before its 15 s life ends if nothing newer has arrived ("Can't refresh your pass. Trying again…"); a 4xx (pass not available to this account) stops retrying. The token lives only in the component's memory |
+| 2026-11-08 | G | **Entry Pass visual test:** the QR's data modules change with every token, so they're masked (three rectangles); the finder corners with their format bits, the card and padding are compared. The mocked token is FAKE and chosen to use mask 2 like the screenshot. A new `clockAfterLoad` spec option moves the fixed clock 1.32 s on after load, so the ring matches the screenshot's |
+| 2026-11-08 | G | **`QR_TOKEN_TTL_SECONDS` moved to `shared`** (the client needs it to stop showing an expiring code) |
+| 2026-11-08 | G | **Smoke-test fix:** `getByLabel('Unread')` also matched the tab-bar badge ("1 unread"), so with exactly one unread notification the "now read" checks failed. It's an exact match now. Found because the new Entry Pass check's scan creates a real "Attendance Marked" notification |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 
@@ -127,7 +134,7 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | react-router | MIT | client | Routing |
 | @fontsource-variable/plus-jakarta-sans | OFL-1.1 (font licence, free) | client | Font |
 | @phosphor-icons/react | MIT | client | Icon set |
-| qrcode | MIT | client | Entry Pass QR rendering |
+| qrcode | MIT | client | Entry Pass QR rendering. Installed 2026-11-08 (1.5.4). Its dependencies are MIT too: dijkstrajs (its segment optimiser), pngjs and yargs (Node and CLI only; checked absent from the client bundle) |
 | qr-scanner | MIT | client | Warden camera scanning |
 
 **Development only:**
@@ -143,6 +150,7 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | vite | MIT | client | Build and dev server |
 | @vitejs/plugin-react | MIT | client | React plugin for Vite |
 | vitest | MIT | client | Unit tests |
+| @types/qrcode | MIT | client | Types for qrcode (installed 2026-11-08) |
 | vite-plugin-pwa | MIT | client | Added at the PWA step |
 
 **Tools only (`tools/ui-analysis`, never shipped):** playwright (Apache-2.0), pixelmatch (ISC), pngjs (MIT), lucide-react (ISC), @tabler/icons-react (MIT; comparison only), @phosphor-icons/react (MIT), @heroicons/react (MIT), the @fontsource-variable comparison fonts (OFL-1.1), react and react-dom (MIT), and **potrace (GPL-2.0)**.

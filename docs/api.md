@@ -176,14 +176,21 @@ A student's own room is in `GET /users/me`.
 | GET | `/attendance/me` | `attendance:read` (own) | `?cursor=&limit=` | `200 { items: [{ scannedAt, kind, scannedByName }], nextCursor }` |
 | GET | `/attendance` | `attendance:read` (inst) | `?date=YYYY-MM-DD&cursor=&limit=` | `200 { items: [{ student, room, scannedAt, scannedByName }], nextCursor }` |
 
-The QR token is a JWT signed with `QR_TOKEN_SECRET`. Claims: `{ sub: studentId, inst, jti, iat, exp: iat + 15 s }`. It contains no personal data.
+The QR token is **not a JWT** (changed 2026-11-08, `docs/decisions.md` "Compact QR token"). It is always exactly 96 characters, so the Entry Pass QR is always version 6-M (41 × 41 modules), as in the screenshot:
+
+```
+base64url(body, 39 bytes) "." base64url(HMAC-SHA256(QR_TOKEN_SECRET, "spacebasic-qr/v1 " || body), 32 bytes)
+body = 0x01 (format) | sub: student ObjectId (12) | inst: institution ObjectId (12) | jti: random (10) | iat: uint32 BE seconds (4)
+```
+
+It contains no personal data. The expiry isn't carried: it is always `iat + 15 s`, so a token can't claim a longer life. Clients treat it as opaque.
 
 **Built behaviour (QR/Attendance module, 2026-11-08):**
 - **Gate and caching:** the whole router sits behind `requireModule('attendance')`, and every response is `no-store`. `GET /attendance/me` needs `attendance:read:own` (students); `GET /attendance` needs `attendance:read` (wardens and admins).
 - **Token:**
-  - HS256 with issuer `spacebasic` and audience `spacebasic-qr`, which is different from access tokens. Verification allows 5 s of clock skew.
-  - A token claiming more than 15 s of life is rejected.
-  - The payload is only `sub, inst, jti, iat, exp, iss, aud`.
+  - Signed with its own secret (`QR_TOKEN_SECRET`) and a context string, so an access token can never pass as one (or the other way round).
+  - Verification: exact length and shape, format byte, MAC compared in constant time on its canonical encoding (a second spelling of the same MAC is refused), then time: `iat` more than 5 s in the future is invalid, more than 15 + 5 s in the past is expired.
+  - The body is only `format, sub, inst, jti, iat`.
 - **Scan errors:**
   - `400 VALIDATION_ERROR` with `fields.token` set to "This QR code has expired. Ask the student to show it again." or "This is not a valid SpaceBasic QR code.".
   - `404` "No student found for this QR code." for another institution's pass, a disabled user or a non-student.

@@ -424,7 +424,7 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
-| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read), Help (contacts, FAQs) and My Profile (data, photo upload and removal, Sign Out) (not a visual test) | No |
+| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read), Help (contacts, FAQs), My Profile (data, photo upload and removal, Sign Out) and the Entry Pass (the canvas matches the issued token module by module, a warden scan of it, rotation, close and Escape) (not a visual test) | No |
 | `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
@@ -432,7 +432,7 @@ Shared modules:
 - `icon-specs.ts`: icon crop boxes
 - `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
 
-One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`.
+One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`.
 
 `fontfit.ts` reads the Settings device ID from the gitignored `tools/ui-analysis/private/screenshot-text.json` (`{ "deviceId": "..." }`); without it, those samples are skipped.
 
@@ -574,3 +574,26 @@ Two screenshots: `07-profile.png` (top) and `07-profile(1).png` (the same screen
 | Active My Profile tab | See §7 |
 
 **Visual result (Linux image, real DPR 3, 2026-11-08), private fixture (exact screenshot data).** My Profile **1.14%**, scrolled **1.11%**. Every region's box is within 1 device px; the name 0.23%, row icons 0.27%. What remains is text edges (chip 8.4%, labels) and the avatar's anti-aliased rim. With the committed fake fixture the name, phone and email are masked.
+
+## 14. Entry Pass (dark)
+
+`QR_entry-pass.png`: the sheet over My Profile (scrolled to the top). Measured with `probe.ts`, `fontfit.ts` (`q-*` samples; `q-name` reads the name from the gitignored `private/screenshot-text.json`) and the scratch probes `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts` and `qr-cols.ts`, then corrected from `visual.ts`. CSS px from the top of the screen (status bar included).
+
+| Element | Measurement |
+|---|---|
+| Scrim | Black at 40 % over My Profile: fitted per channel on 10 flat areas against `07-profile.png` (alpha 0.393 / 0.401 / 0.402, offset ≈ 0) (`--scrim`) |
+| Sheet | Top 311.97 → bottom of the screen (473.333 above the 14.667 px gesture bar), full width, top corners radius 20 (fit 19.95), #181B24 (`--surface-card`) |
+| "ENTRY PASS" | 9.85 / 700 / +0.155em, upper case, #8A909F, cap top 336.33, ink from x 20.67 |
+| Name | 20 / 500, upper case, #EDEEF3, cap top 355.67, ink from x 21 (as the profile name) |
+| Room | "West CS240" 13.75 / 500, #8B96FF (`--accent`), cap top 383, ink from x 20 |
+| Close | 36 × 36 disc at (310, 330), #20242F (`--sheet-close-bg`); Phosphor X bold 15.02 (§4), #A3A9B7, ink 10 × 10 centred |
+| QR card | 223.333 × 223 at (68.333, 418.667), white, radius 26 (corner fit 25.96), 12 px padding |
+| QR | **Version 6, error-correction level M, mask 2** (format bits read from the screenshot), 41 × 41 modules, dark modules #141414 on white. The module edges are not evenly spaced: most modules are 14.02 device px wide and every 11th (modules 9, 20, 31) is 12.80. That is `qrcode`'s canvas renderer: fitted on every edge of both timing patterns, **canvas 512 px, margin 1 module**, shown at **199.333 × 199** from (80.347, 430.641) (rms 0.019 / 0.007 device px; the next-best fits are far off). The browser smooths it when scaling, which gives the anti-aliased edges |
+| Token length | Version 6-M holds 85–106 bytes, so the original's payload is that long. Ours is always 96 characters (byte mode) → always version 6-M (`docs/decisions.md` "Compact QR token") |
+| Countdown | Ring 22.667 px box at (124.667, 670.333), circle r 10, stroke 2.667: track #20222E (`--ring-track`), arc #8B96FF with round caps, clockwise from 12 o'clock. Half-coverage ends at 320° and 353° at mid-radius; minus the caps (7.7° each) the arc runs 0° → 312.3°, i.e. **8.68 s of a 10 s cycle while the label says "9s"**: the ring drains continuously and the label rounds up |
+| "Expires in 9s" | "Expires in" 14 / 400 #A3A9B7, "9s" 13.75 / 500 #EDEEF3, cap top 676.67; ring and text centred together (ink 124.67 → 235.33, centre 180), ring-to-text gap 8.667 |
+| Footer | "Scanned for attendance, amenities and check-in." 13 / 400 #8A909F, centred, cap top 718 |
+
+**Font-fit crops.** The first `q-expires` and `q-seconds` crops were wrong: one cut the "n" off "in", the other started inside the "n". With clean crops (column ink runs: "in" ends at device x 651, "9s" spans 663 → 706) the fit is "Expires in" 14.01 / 400 (17.9 %) and "9s" 13.75 / 500 (6.8 %).
+
+**Visual result (Linux image, real DPR 3, 2026-11-08), private fixture.** Entry Pass **0.70%**. The QR's data modules depend on the token (new every 10 s), so they're masked in three rectangles; the three finder corners (with the format bits: the fixture token is a FAKE one chosen to use mask 2, like the screenshot), the card and its padding are compared: QR card 0.09 %, top-left corner 0.24 %, bottom-right corner 0.44 %, all boxes exact. The clock is set 1.32 s after the code arrives, so the ring ends at 312.5° (ring region 1.31 %). Every region's box is within 1 device px; what remains is text edges (room 13.6 %, "ENTRY PASS" 7.8 %).

@@ -70,7 +70,7 @@ npm workspaces (built into npm, no new tool) with three packages. TypeScript `st
 │     │  ├─ http/          # AppError types, central error handler, 404, requestId, async wrapper
 │     │  ├─ middleware/    # authenticate, requireRole/requirePermission, requireModule, validate(zod), tenant, rateLimit presets, sanitize
 │     │  ├─ db/            # mongoose connection, tenantScope plugin, audit-log writer
-│     │  └─ security/      # tokens (access JWT, refresh, QR), hashing (bcrypt, HMAC), cookie options
+│     │  └─ security/      # tokens (access JWT, refresh, compact HMAC QR token), hashing (bcrypt, HMAC), cookie options
 │     ├─ modules/          # ONE FOLDER PER MODULE
 │     │  ├─ auth/          # login (password/OTP), refresh, logout, forgot/reset, change password
 │     │  ├─ users/         # me, profile, avatar upload
@@ -300,23 +300,24 @@ If its status is `coming_soon`, the entry point opens the shared **ComingSoon** 
   - OS, OS version and model come from UA Client-Hints where available, otherwise "Unknown".
   - The device ID is random per install, stored locally.
 - **QR (Entry Pass):**
-  - The client requests a fresh signed token every 10 s and renders it with a QR library.
-  - The countdown ring is driven by the token's `exp`.
-  - The token is never cached or persisted, and the QR is cleared when the sheet closes and on logout.
+  - The client requests a fresh signed token every 10 s (just before the code on screen is due) and draws it with `qrcode` on a canvas, exactly as the screenshot was drawn (`docs/ui-measurements.md` §14).
+  - The countdown ring and "Expires in Ns" run on the client's clock from when each code arrived (`refreshAfterMs`), so server clock skew doesn't matter. A code is hidden 1 s before its 15 s life ends if no new one has arrived.
+  - The token is never cached or persisted (component memory only), and the QR is gone when the sheet closes and on logout.
 
 ## 9. QR attendance flow
 
 ```
 student Entry Pass                        server                                warden scanner
- GET /attendance/qr-token  ─────────▶  sign { sub, inst, jti, iat, exp = iat+15 s }   (QR_TOKEN_SECRET, HS256)
- ◀── { token, expiresAt }               (no personal data in the token)
- render QR; refresh every 10 s
+ GET /attendance/qr-token  ─────────▶  pack { sub, inst, jti, iat } (39 bytes) + HMAC-SHA256 (QR_TOKEN_SECRET)
+ ◀── { token, expiresAt, refreshAfterMs }  96 characters, no personal data; expiry is always iat + 15 s
+ draw QR (version 6-M); refresh every 10 s
                                                                  camera → decode → POST /attendance/scan { token }
-                                        verify signature + exp (≤15 s, small clock skew)
+                                        verify MAC (canonical encoding) + iat (life 15 s, 5 s clock skew)
                                         token.inst == warden's institution (else 404)
-                                        jti unused? insert into used_qr_tokens (unique jti, TTL 2 min)
-                                          duplicate → 409 "already scanned" (replay blocked)
-                                        create AttendanceLog { inst, student, scannedBy, at, kind }
+                                        same student scanned < 5 min ago → 409 "marked a moment ago"
+                                        insert AttendanceLog with the token's jti (unique index)
+                                          duplicate jti → 409 "already scanned" (replay blocked)
+                                          (the log is { inst, student, scannedBy, at, kind, jti })
                                         createNotification(student, 'attendance_marked')
                                         audit entry
                                         ◀──────────────────────────────────── 201 { student name, room } for the warden UI
@@ -341,7 +342,7 @@ Nothing is installed until you approve. Each one is confirmed again at the modul
 | server | `express` | MIT | Required stack |
 | server | `mongoose` | MIT | Required stack |
 | server | `zod` | MIT | Approved |
-| server | `jsonwebtoken` | MIT | Access and QR JWTs |
+| server | `jsonwebtoken` | MIT | Access JWTs (the QR token is a compact HMAC token, not a JWT: decisions.md 2026-11-08) |
 | server | `bcrypt` | MIT | Password hashing, as the prompt specifies (native build, which Render supports) |
 | server | `helmet`, `express-rate-limit`, `cors`, `cookie-parser` | MIT | Security requirements. NoSQL sanitising is a small in-house middleware, because `express-mongo-sanitize` is unmaintained and breaks on Express 5 |
 | server | `nodemailer` | MIT-0 | `gmail-smtp` provider, **local development only**. `gmail-api` uses plain `fetch` (OAuth2 refresh → Gmail REST), so no `googleapis` dependency |
@@ -350,7 +351,7 @@ Nothing is installed until you approve. Each one is confirmed again at the modul
 | client | `react`, `react-dom`, `react-router` | MIT | Required stack plus routing |
 | client | `@fontsource-variable/plus-jakarta-sans` | OFL-1.1 | Approved |
 | client | `@phosphor-icons/react` | MIT | Approved |
-| client | `qrcode` | MIT | QR rendering (approved in principle) |
+| client | `qrcode` | MIT | Entry Pass QR rendering (installed 2026-11-08, 1.5.4) |
 | client | `qr-scanner` (nimiq) | MIT | Warden camera scanning. Uses the native BarcodeDetector where available, with a WebAssembly/worker fallback |
 | client (dev) | `vite`, `@vitejs/plugin-react`, `typescript` | MIT | Required stack |
 | client (dev) | `vitest` | MIT | Client logic tests (Q5) |
