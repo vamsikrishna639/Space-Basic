@@ -4,9 +4,9 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-09, Settings checkpoint):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Current phase (2026-11-09, end of session):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
 - **Done:**
-  - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, and the password rule (a password can't be the account's email or phone, on create, import, change and reset), the compact QR token (approved 2026-11-09 with tests per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, refused in production). **172 Jest tests.**
+  - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, the password rule (not the account's email or phone; create, import, change, reset), the compact 96-character HMAC QR token (approved, a test per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, `npm run dev:relaxed`; refused in production). **175 Jest tests.**
   - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
 
     | Screen | Route | Visual |
@@ -20,27 +20,26 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
     | My Profile, top / scrolled | `/profile` | 1.14% / 1.11% |
     | Entry Pass (QR sheet over My Profile) | `/profile/entry-pass` | 0.70% (QR data modules masked: they change with every token) |
     | Settings, dark (top) / light (scrolled to the end) | `/settings` | 0.93% / 1.04% |
-    | Change Password, Privacy & Consent | `/profile/password`, `/profile/privacy` | no screenshot |
+    | Change Password, Privacy & Consent | `/profile/password`, `/profile/privacy` | no screenshot (plain) |
 
-    Screens and states without a screenshot are listed in `docs/not-from-reference.md`.
-  - **My Profile** has the sticky header and card, the camera-badge photo upload and the real **Sign Out**. "Show my QR code" opens the **Entry Pass**; the other rows (My Information, Change Password, Privacy & Consent, Settings, About) open ComingSoon for now.
-  - **Entry Pass** (2026-11-08): a native `<dialog>` routed as a child of `/profile`; QR drawn with `qrcode` exactly as the screenshot's (canvas 512 px, margin 1, shown at 199.333 × 199); ring drains over the 10 s cycle, label rounds up. **The QR token is no longer a JWT**: a 96-character HMAC token so the QR is always version 6-M like the screenshot (approved by the user 2026-11-09).
-  - **Role routing + plain staff homes** (2026-11-09): one app per role (`client/src/auth/areas.ts`): students `/home`, wardens `/warden`, admins `/admin`; cross-role URLs redirect to the user's own app; staff have no tab bar. Two roles: "Continue as" (`/choose`), remembered per user on the device, switch from the staff account menu or the "Switch role" row (multi-role students only) in My Profile. Server role separation is tested in `server/src/test/role-separation.test.ts`. Staff section pages are "Coming soon" until groups (b) and (c).
-  - **Functional tests:** client unit tests (35); `tools/ui-analysis/src/smoke-signin.ts`, `smoke-roles.ts` and `smoke-otp.ts`. They start the dev stack themselves with relaxed sign-in limits (`dev-stack.ts`), or `smoke-signin`/`smoke-roles` reuse a running one (start it with `npm run dev:relaxed` for repeated runs). `smoke-otp` needs the ports free.
+    Screens and states without a screenshot are listed in `docs/not-from-reference.md`. My Profile's My Information and About rows, and Settings' Accessibility and Check connection rows, open ComingSoon.
+  - **Role routing and plain staff homes:** one app per role (`client/src/auth/areas.ts`): students `/home`, wardens `/warden`, admins `/admin`; cross-role URLs redirect to the user's own app; staff have no tab bar. Two roles: "Continue as" (`/choose`), remembered per user on the device; switch from the staff account menu or the "Switch role" row (multi-role accounts only) in My Profile. Server role separation: `server/src/test/role-separation.test.ts`. Staff section pages are "Coming soon".
+  - **Reload sign-out fix (approved):** for 10 s after a rotation the immediately previous refresh token works once more; the client refreshes one tab at a time (Web Locks). `/auth/logout` accepts an older token of the session.
+  - **Tests:** server 175/175; client unit tests 40/40; `smoke-settings.ts` and `smoke-roles.ts` pass after the last changes. **Not re-run since the last changes: `smoke-signin.ts` and `smoke-otp.ts`.** The smoke scripts start the dev stack themselves with relaxed sign-in limits (`tools/ui-analysis/src/dev-stack.ts`), or `smoke-signin` / `smoke-roles` / `smoke-settings` reuse a running one (start it with `npm run dev:relaxed`); `smoke-otp` needs the ports free.
   - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
-  - **Settings, Change Password, Privacy & Consent** (2026-11-09, **not committed yet**), plus the reload sign-out fix (10 s grace for the previous refresh token, one refresh at a time across tabs).
-- **Next, in order (user plan 2026-11-09; stop only at these checkpoints):**
-  1. **Admin users screens** (free design, desktop-friendly, admins only, functional tests): users list with search, add and edit user, accept a user and assign a room (room picker showing free beds, enforced server-side), disable user, CSV import. No student self-signup in this phase. CHECKPOINT.
-  2. **Deployment:** Vercel (client), Render (server), MongoDB Atlas. In the repo: `vercel.json` with the `/api` rewrite, Render build/start commands, health check, the production env var list in `.env.example` and the README; verify both builds from a clean clone. Then walk the user through creating the Atlas cluster and setting env vars one step at a time; never ask for a secret. CHECKPOINT.
-  3. **Postponed until after deployment:** the warden scanner and other warden screens (`qr-scanner`, MIT, approved, not installed), admin hostel structure, support content and audit log.
+- **Next, in this order (user plan 2026-11-09):**
+  1. **(a) Admin users screens** (free design, desktop-friendly, admins only, functional tests): users list and search, add and edit, accept a user and assign a room (room picker showing free beds, enforced server-side), disable, CSV import. No student self-signup in this phase. Then **CHECKPOINT**.
+  2. **(b) Deployment** on Vercel (client), Render (server) and MongoDB Atlas. In the repo: `vercel.json` with the `/api` rewrite, Render build and start commands, health check, the production env var list in `.env.example` and the README; verify both builds from a clean clone. Then walk the user through creating the Atlas cluster and setting the environment variables, one step at a time; never ask for a secret. Then **CHECKPOINT**.
+  - **Postponed until after deployment:** the warden scanner and other warden screens (`qr-scanner`, MIT, approved, not installed yet), and the rest of the admin screens (hostel structure, support content, audit log).
 - **Open items (waiting on the user):**
-  - Light-theme **Home** and **Profile** screenshots. Until then the light Home tokens, the camera-badge ring on a light card, and the light colours on Notifications, Help, My Profile and the Entry Pass are provisional.
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
-- **Session notes (2026-11-08):**
-  - Visual tests need Docker Desktop; starting it is fine.
-  - The dev student's seeded notifications have all been read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up; the smoke test tolerates an empty unread badge).
+- **Session notes:**
+  - Visual tests need Docker Desktop; starting it is fine. `npm run test:visual` builds with the screenshot's sample build stamp (`scripts/visual-build.mjs`).
+  - Light colours not measured on a screenshot (light Home tokens, the camera-badge ring on a light card, parts of the light Notifications, Help, My Profile and Entry Pass) remain provisional; the light card, tile, chevron and danger colours are now measured on `settings-light.png`.
+  - Seeded dev notifications get read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up).
   - Before a smoke run, make sure ports 5173 / 4000 / 27027 are free, or reuse the running stack; on Windows stop the stack with `taskkill /PID <root> /T /F`.
-  - Every decision made this session is in `docs/decisions.md` (latest rows, 2026-11-09: the refresh grace fix, the new plan, Settings values and visual stamping, the shared header, measured light tokens, haptics/sounds, Clear stored data, Change Password and Privacy & Consent).
+  - Two-role dev user (student + warden): `devika.menon@example.com` / `Both@2026`.
+  - Every decision is in `docs/decisions.md` (latest rows, 2026-11-09: the refresh grace fix, the new plan, Settings values and visual stamping, the shared header, measured light tokens, haptics/sounds, Clear stored data, Change Password and Privacy & Consent).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture
