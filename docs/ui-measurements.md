@@ -425,6 +425,7 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
 | `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev` (not a visual test) | No |
+| `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
 - `lib.ts`: PNG, ink, diff and browser helpers

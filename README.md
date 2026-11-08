@@ -49,6 +49,8 @@ npm run test:visual -- welcome       # one or more screen ids, comma-separated
 
 With `npm run dev` running, `node tools/ui-analysis/src/smoke-signin.ts` signs in through the UI as the seeded fake users (consent gate, wrong password, Home data, reload, ComingSoon, sign-out). It uses the host's Playwright Chromium and checks behaviour only.
 
+`node tools/ui-analysis/src/smoke-otp.ts` checks the one-time-code sign-in (SMS, WhatsApp, email) and Forgot password the same way. It starts `npm run dev` itself, because the codes only print in the server console, so stop any running dev server first. The API allows 5 codes an hour per address, so it can run only a few times an hour; the reset puts the student's seeded password back.
+
 ### Private data
 
 The reference screenshots and `client/tests/fixtures/private/` contain real personal data. Both are gitignored.
