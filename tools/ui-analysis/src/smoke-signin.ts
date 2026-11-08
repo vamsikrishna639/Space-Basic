@@ -85,6 +85,30 @@ if (unreadBefore === 0) {
   await page.locator('li').first().waitFor();
   check(await page.getByLabel('Unread').count() === unreadBefore - 1, 'read state survives a reload (stored on the server)');
 }
+// Help (Support tab): Contact us and Common questions load from the API
+await page.getByRole('link', { name: 'Support' }).click();
+await page.waitForURL('**/support');
+await page.getByRole('heading', { level: 1, name: 'Help' }).waitFor();
+await page.getByRole('link', { name: /Contact us/ }).click();
+await page.waitForURL('**/support/contact');
+await page.getByRole('heading', { level: 2, name: 'Hostel office' }).waitFor({ timeout: 15_000 });
+const tel = await page.locator('a[href^="tel:"]').first().getAttribute('href');
+check(tel === 'tel:+919000000101', `Contact us lists the hostel office with a tel: link (${tel})`);
+check((await page.getByRole('heading', { level: 2, name: 'SpaceBasic' }).count()) === 1, 'Contact us lists SpaceBasic contacts');
+check((await page.getByText('+91 90000 00101').count()) === 1, 'phone numbers show as +91 98765 43210');
+await page.getByRole('button', { name: 'Back' }).click();
+await page.waitForURL('**/support');
+await page.getByRole('link', { name: /Common questions/ }).click();
+await page.waitForURL('**/support/faqs');
+await page.getByRole('heading', { level: 2, name: 'Leave' }).waitFor({ timeout: 15_000 });
+const answer = page.getByText('Your warden approves it first');
+check(!(await answer.isVisible()), 'an answer is hidden until its question is opened');
+await page.getByText('Who approves my leave?').click();
+check(await answer.isVisible(), 'opening a question shows its answer');
+check((await page.getByText('When is the mess menu updated?').count()) === 0, 'unpublished FAQs are not shown');
+await page.getByRole('button', { name: 'Back' }).click();
+await page.waitForURL('**/support');
+
 await page.getByRole('link', { name: 'Home' }).click();
 await page.waitForURL('**/home');
 

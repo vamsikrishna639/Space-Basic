@@ -38,6 +38,8 @@ You are a senior full-stack engineer. Build "Space Basic", a complete College Ho
 
 ## PIXEL-PERFECT UI CONSTRAINT (highest priority, overrides any design preference)
 
+**Scope (user decision, 2026-11-08):** this constraint applies to STUDENT screens only. Warden and institution_admin screens are free design: see "Staff screens (free design)" below.
+
 The UI must be an exact visual replica of the screenshots in ./reference-ui/.
 Not "similar", not "inspired by", not "improved". Identical.
 
@@ -106,9 +108,21 @@ The app will be built and deployed in phases. Phase 1 covers ONLY the screens I 
    - Settings > "Clear stored data" in Phase 1: build the row exactly as in the screenshot. Its action signs the user out and clears cached files and saved data, with a plain confirm dialog using the existing components. "Check connection" and "Accessibility" open the ComingSoon placeholder.
 2. Third Quick Action chip (cut off as "Bo…" on Home): render it as "Book meal" with the same chip style, opening the Mess Manager ComingSoon screen. Keep the label in one config constant so I can change it in one place later.
 3. Supporting flows that must exist for the supplied screens to work but have no screenshot (OTP entry, Forgot password, Change Password, Privacy & Consent, My Information is NOT included): build them with the same tokens and components, as plainly as possible, and list each one in `docs/not-from-reference.md` so I can send the real screenshots later. Do not stop and ask.
-4. In Phase 1 the roles needed are `student`, `warden` (for scanning QR codes and marking attendance) and `institution_admin` (to pre-register users, rooms and basic content). Define the full role list in the schema but only implement what Phase 1 uses.
+4. (For screens, superseded on 2026-11-08 by "Staff screens (free design)".) In Phase 1 the roles needed are `student`, `warden` (for scanning QR codes and marking attendance) and `institution_admin` (to pre-register users, rooms and basic content). Define the full role list in the schema but only implement what Phase 1 uses.
 5. Phase 1 backend modules: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support (contacts and FAQ read endpoints), Settings-related endpoints only if needed. Later phases add Leave, Tickets, Announcements, Mess, then the rest. Design schemas and the API plan so these can be added without breaking changes (versioned `/api/v1`, module-per-folder).
-6. All the other rules (pixel-perfect, security, visual regression, runnable checkpoints) still apply in full to everything built in Phase 1.
+6. All the other rules (pixel-perfect, security, visual regression, runnable checkpoints) still apply in full to every student screen built in Phase 1. Staff screens follow "Staff screens (free design)".
+
+### Staff screens (free design; user decision, 2026-11-08)
+1. The pixel-perfect rule applies to student screens only.
+2. Warden and institution_admin screens are designed freely, with no reference screenshots:
+   - Reuse the existing tokens, Plus Jakarta Sans, icons and shared components, in light and dark.
+   - Admin screens must work well on desktop widths as well as phones. Warden screens are phone-first.
+   - Each role lands on its own home after sign-in. Staff don't get student screens and students never get staff screens. The server rules stay as they are.
+   - Functional tests only (no visual diff tests for staff screens). Every staff screen is listed in `docs/not-from-reference.md` as "free design".
+3. Scope:
+   - Warden: QR scanner, today's attendance list, student and room lookup.
+   - Admin: summary home, users (search, add, edit, roles, CSV import), hostel structure with rooms and beds, support contacts and FAQs, audit log view.
+4. Order: finish the remaining student screens first (Support, My Profile with the real Sign Out, Entry Pass, Settings), then build the staff screens. Stop at a checkpoint after each group.
 
 ## DECISIONS ALREADY MADE
 - TypeScript strict on client, server and shared; zod for validation; npm workspaces.
@@ -116,7 +130,7 @@ The app will be built and deployed in phases. Phase 1 covers ONLY the screens I 
 - Icons: Phosphor is the single set (MIT, per-icon imports). The 16 icons it can't match, plus the camera glyph, are potrace-traced SVG cut-outs (see `docs/ui-measurements.md`). Not Tabler.
 - Default avatar: `reference-ui/assets/avatar-default.png` (cropped from the Profile screenshot), used on the Home tab bar, Profile card and Entry Pass. The camera badge is a SEPARATE component on the Profile card only (22 px blue disc #4A5CE6, 2 px ring in `var(--surface-card)`, right/bottom -4px, white camera glyph from `reference-ui/assets/icons/cutout/camera.svg` in a 14 px box; the light-card ring colour is provisional until a light Profile screenshot is supplied; tapping it opens photo upload). The avatar renders at exactly 66 CSS px with no border-radius (the file is already a circle), and an uploaded photo replaces it.
 - Themes: auth screens light; in-app dark and light, chosen in Settings > Appearance.
-- Phase 1 only: supplied screens, with ComingSoon placeholders for the rest. No admin screens (institution admins use seed/CSV scripts plus the API). The warden scanner is one plain camera screen. QR generator and scanner libraries must be free and open source; name them in `docs/decisions.md`.
+- Phase 1 only: supplied screens, with ComingSoon placeholders for the rest. Staff (warden and admin) screens are free design (see "Staff screens (free design)"); the seed and CSV import scripts stay. QR generator and scanner libraries must be free and open source; name them in `docs/decisions.md`.
 - Tests: mongodb-memory-server for the backend, vitest on the client, Playwright visual tests in Docker.
 
 ## WORKFLOW (GO MODE with runnable checkpoints)

@@ -3,8 +3,10 @@
 // assets, inlined at build time.
 import bedWelcome from '@assets/icons/cutout/bed-welcome.svg?raw';
 import utensilsCrossed from '@assets/icons/cutout/utensils-crossed.svg?raw';
+import questionCircle from '@assets/icons/cutout/question-circle.svg?raw';
+import video from '@assets/icons/cutout/video.svg?raw';
 
-const ICONS = { 'bed-welcome': bedWelcome, 'utensils-crossed': utensilsCrossed } as const;
+const ICONS = { 'bed-welcome': bedWelcome, 'utensils-crossed': utensilsCrossed, 'question-circle': questionCircle, video } as const;
 export type CutoutName = keyof typeof ICONS;
 
 export function CutoutIcon({ name, size, className }: { name: CutoutName; size: number; className?: string }) {

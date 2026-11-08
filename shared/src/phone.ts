@@ -14,6 +14,11 @@ export function normalizePhone(input: string): string | null {
   return null;
 }
 
+/** "+919876543210" -> "+91 98765 43210"; other numbers are shown as stored. */
+export function displayPhone(e164: string): string {
+  return e164.startsWith('+91') && e164.length === 13 ? `+91 ${formatIndianMobile(e164.slice(3))}` : e164;
+}
+
 /** "9876543210" -> "98765 43210" (display format used on the sign-in screen). */
 export function formatIndianMobile(digits: string): string {
   const d = digits.replace(/\D/g, '').slice(0, 10);

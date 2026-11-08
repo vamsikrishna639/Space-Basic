@@ -1,24 +1,26 @@
 # CLAUDE.md
 
-Space Basic is a college hostel management PWA. The UI must be a **pixel-identical replica** of the screenshots in `reference-ui/`. That rule overrides every design preference.
+Space Basic is a college hostel management PWA. **Student screens** must be a **pixel-identical replica** of the screenshots in `reference-ui/`. That rule overrides every design preference. Warden and admin screens are free design (see "Decisions already made").
 
 ## Status
 
 - **Current phase (2026-11-08):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded).
-- **Done and committed:**
+- **Done and committed (pushed by the user to the private `origin`):**
   - Backend, all Phase 1 modules: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, plus the institution logo endpoints (`GET /institutions/:id/logo`, `PUT /institutions/current/logo`). 150 Jest tests.
   - Frontend: `client/` workspace, tokens (light auth; dark and light in-app), font, shared components, **Welcome**, **Sign in** (Email, Mobile), **Home**, tab bar, `ComingSoon`. Email + password sign-in works end to end (session restore on reload, sign-out from a TEMPORARY button on the My Profile placeholder).
   - **One-time codes and Forgot password** (committed 2026-11-08): `/sign-in/code` (SMS, WhatsApp, email), `/forgot-password`, `/forgot-password/code`. No screenshots: listed in `docs/not-from-reference.md`.
-  - Tests: `npm run test:visual` (Docker, real DPR 3): Welcome 0.93%, Sign in Mobile 1.28%, Sign in Email 1.59%, Home 1.34% (1.32% after the uncommitted badge fix). `tools/ui-analysis/src/smoke-signin.ts` (signs in through the UI against `npm run dev`). `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself and reads the console codes; max 5 codes an hour per address).
+  - Tests: `npm run test:visual` (Docker, real DPR 3): Welcome 0.93%, Sign in Mobile 1.28%, Sign in Email 1.59%, Home 1.32%, Notifications 0.90%, Help 0.98% (uncommitted). `tools/ui-analysis/src/smoke-signin.ts` (signs in through the UI against `npm run dev`). `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself and reads the console codes; max 5 codes an hour per address).
+  - **Password rule** on change and reset (create/import already had it): `passwordIsIdentity()` in `shared`. 151 Jest tests.
+  - **Notifications** screen (`/notifications`), the shared unread count, and the corrected tab-bar badge. `smoke-signin.ts` also covers the list and mark-as-read. (The user committed this with the password rule as `d365dd1`.)
   - Git history was rewritten (approved) to remove the screenshot owner's name and device ID; the scan of every ref is clean.
 - **Built, NOT committed yet (checkpoint 2026-11-08, waiting on the user's "continue"):**
-  - **Password rule** on change and reset (create/import already had it): `passwordIsIdentity()` in `shared`. 151 Jest tests.
-  - **Notifications** screen (`/notifications`), the shared unread count, and the corrected tab-bar badge. Visual: Notifications **0.90%**, Home now **1.32%**. `smoke-signin.ts` also covers the list and mark-as-read.
-- **Next:** Support (Help), My Profile (with the real Sign Out), Entry Pass, Settings.
+  - **Help** (Support tab, `/support`, **0.98%**) and its sub-screens `/support/contact` and `/support/faqs` (no screenshots; listed in `docs/not-from-reference.md`). `smoke-signin.ts` covers both.
+  - The staff-screens decision recorded in `CLAUDE.md`, `SPEC.md` and `docs/decisions.md`.
+- **Next:** student screens: My Profile (with the real Sign Out), Entry Pass, Settings. Then the staff screens (free design). Checkpoint after each group.
 - **Open items (waiting on the user):**
   - Light-theme **Home** and **Profile** screenshots (light Home tokens and the camera-badge ring are provisional).
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
-  - **Push to GitHub:** `vamsikrishna639/Space-Basic` exists and is **PRIVATE** (checked with `gh`, 2026-11-08). The user pushes it themselves; Claude doesn't push.
+  - **Push to GitHub:** `origin` is `vamsikrishna639/Space-Basic`, **PRIVATE**. The user pushes; Claude never pushes.
   - Light-theme **Notifications** screenshot (its chevron colour is provisional).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
@@ -32,7 +34,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
   9. Security
   10. Deploy
 - **Never build more than one step at a time.**
-- **Phase 1 scope:** only the supplied screens plus the minimum supporting flows. Unsupplied modules (Leave, Tickets, Announcements, Mess, My Information, Accessibility, Check connection) open a shared `ComingSoon` screen. Any screen built without a reference is listed in `docs/not-from-reference.md`.
+- **Phase 1 scope:** the supplied (student) screens plus the minimum supporting flows, then the free-design staff screens (see "Decisions already made"). Unsupplied modules (Leave, Tickets, Announcements, Mess, My Information, Accessibility, Check connection) open a shared `ComingSoon` screen. Any screen built without a reference is listed in `docs/not-from-reference.md`.
 
 ## Stack (fixed)
 
@@ -84,7 +86,15 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
   - Mobile and WhatsApp OTP use `console` for now.
   - Email + password login must work in production without any OTP provider.
 - **Roles:** `student`, `warden` and `institution_admin` in Phase 1. The full role list goes in the schema.
-- **No admin screens in Phase 1:** admins use seed/CSV import scripts and the API. The warden scanner is one plain camera screen.
+- **Staff screens are free design** (user decision, 2026-11-08). The pixel-identical rule applies to **student screens only**. Warden and `institution_admin` screens have no reference screenshots and are designed freely:
+  - Reuse the existing tokens, Plus Jakarta Sans, the Phosphor icons and cut-outs, and the shared components, in light and dark.
+  - Admin screens work well at desktop widths as well as on phones. Warden screens are phone-first.
+  - Each role lands on its own home after sign-in. Staff never get student screens and students never get staff screens. The server's role rules stay as they are.
+  - Functional tests only: no visual diff tests for staff screens. Every staff screen is listed in `docs/not-from-reference.md` as "free design".
+  - **Warden scope:** QR scanner, today's attendance list, student and room lookup.
+  - **Admin scope:** summary home; users (search, add, edit, roles, CSV import); hostel structure with rooms and beds; support contacts and FAQs; audit log view.
+  - **Order:** finish the student screens first (Support, My Profile with the real Sign Out, Entry Pass, Settings), then the staff screens, with a checkpoint after each group.
+  - This replaces the earlier "no admin screens in Phase 1" decision. The seed and CSV import scripts stay.
 - **Rooms:** one block, "West".
 
   | Floor | Code | Rooms |
@@ -107,7 +117,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
     - Made with `potrace` (GPL-2.0). It is **tools-only**: it must never appear in `client/` or `server/` package.json, and nothing there may import it.
     - Thresholds are pinned in `FIXED_T` in `trace-icons.ts`.
     - The final check is each screen's Docker visual regression.
-  - **Git:** commit only what the user asks for, in their order, showing the staged files first (never `.env*`, `.data`, `screenshot-text.json` or `client/tests/fixtures/private/`). Nothing is pushed; there is no remote yet.
+  - **Git:** commit only what the user asks for, in their order, showing the staged files first (never `.env*`, `.data`, `screenshot-text.json` or `client/tests/fixtures/private/`). The user pushes; Claude never pushes.
 - **The user's original rule for icons:**
   - Compare **Lucide, Phosphor and Heroicons** with `src/icons-multi.ts`, installed in the analysis folder only.
   - **Never use Tabler.** It was tested and doesn't match.

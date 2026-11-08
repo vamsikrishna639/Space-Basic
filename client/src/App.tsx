@@ -8,6 +8,8 @@ import { OtpEntry } from './screens/auth/OtpEntry';
 import { ForgotPassword, ResetPassword } from './screens/auth/ForgotPassword';
 import { Home } from './screens/home/Home';
 import { Notifications } from './screens/notifications/Notifications';
+import { Help } from './screens/support/Help';
+import { CommonQuestions, ContactUs } from './screens/support/SupportLists';
 import { ComingSoon } from './screens/app/ComingSoon';
 import { SignOutButton } from './screens/app/SignOutButton';
 
@@ -63,10 +65,12 @@ const router = createBrowserRouter([
           { path: '/home', element: <Home /> },
           { path: '/notifications', element: <Notifications /> },
           // Built at the next checkpoints; until then the shared placeholder (docs/not-from-reference.md).
-          { path: '/support', element: <ComingSoon title="Help" /> },
+          { path: '/support', element: <Help /> },
           { path: '/profile', element: <ComingSoon title="My Profile"><SignOutButton /></ComingSoon> },
         ],
       },
+      { path: '/support/contact', element: <ContactUs /> },
+      { path: '/support/faqs', element: <CommonQuestions /> },
       { path: '/m/:module', element: <ModuleScreen /> },
     ],
   },

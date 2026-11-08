@@ -1,0 +1,39 @@
+{
+  "//": "Visual-test fixture for reference-ui/06-contact-support.png. The screen shows no personal data; me is the fake Home user.",
+  "me": {
+    "id": "000000000000000000000001",
+    "fullName": "ARJUN KUMAR RAO",
+    "firstName": "ARJUN",
+    "email": "arjun.rao@example.com",
+    "phone": "+919000000001",
+    "roles": [
+      "student"
+    ],
+    "room": {
+      "hostelName": "West",
+      "code": "CS240",
+      "display": "West CS240"
+    },
+    "avatarUrl": null,
+    "institution": {
+      "id": "000000000000000000000002",
+      "name": "Presidency University",
+      "logoUrl": "/api/v1/institutions/000000000000000000000002/logo?v=1",
+      "timezone": "Asia/Kolkata",
+      "enabledModules": [
+        "notifications",
+        "support",
+        "attendance",
+        "leave",
+        "tickets",
+        "announcements",
+        "mess"
+      ]
+    },
+    "consent": {
+      "policyVersion": "2026-11-01",
+      "acceptedAt": "2026-11-03T10:00:00.000Z"
+    }
+  },
+  "unreadCount": 120
+}

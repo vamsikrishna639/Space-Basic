@@ -424,7 +424,7 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
-| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including the Notifications list and mark-as-read (not a visual test) | No |
+| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read) and Help (contacts, FAQs) (not a visual test) | No |
 | `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
@@ -529,3 +529,25 @@ Measured with `probe.ts` and `fontfit.ts` (`n-*` samples), then corrected from `
 | Badge | Pill 25.333 × 13 at (138.33, 726.33), with a 1.333 px ring in the tab-bar colour cut into the bell. This corrected the badge on Home too (it was 0.667 px high and 0.667 px wide) |
 
 **Visual result (Linux image, real DPR 3, 2026-11-08).** Notifications **0.90%** (fake fixture; the screen shows no personal data). Every region's box is within 1 device px. Highest regions: the "99+" badge text (13.8%), the emoji (3.7%) and text edges. Home went from 1.34% to 1.32% with the badge fix.
+
+## 12. Help, the Support tab (dark)
+
+Measured with `probe.ts` and `fontfit.ts` (`p-*` samples), then corrected from `visual.ts`. CSS px from the top of the screen (status bar included).
+
+| Element | Measurement |
+|---|---|
+| Header | 0 → 83.667 on #101116, a 1 px #232429 divider (`--divider`) under it, no band (unlike Notifications) |
+| Title "Help" | 22 / 500, #EDEEF3, cap top 50.33 (as Notifications) |
+| Subtitle | 14 / 400, #A3A9B7, line 21, cap top 89 (the first line box starts 1.33 px above the divider's bottom edge) |
+| "Contact us" card | 16 → 344, y 141.667 → 234.333 (92.667 tall), radius 20. Fill `linear-gradient(140deg, #4457E1 0%, #4A5CE6 55.5%, #3E50DA 100%)`, fitted on a 16 × 5 grid of samples (two checks between fit points within one hex step). Glow `0 8px 32px rgb(74 92 230 / 0.32)`, fitted from the falloff beside and below the card |
+| Phone tile | 42 × 42 at (32, 167), radius 14 (corner fit 13.7), white at 16% over the gradient; Phosphor Phone fill 24.42 (§4), white |
+| Contact text | "Contact us" 18 / 500 white, cap top 162, ink from x 87; "Reach your hostel office or / SpaceBasic." 13 / 400 #DCE2FF, line 18.333 |
+| Arrow | Phosphor ArrowRight bold 16 (§4), white, ink ending at x 325.33, centred on the card. In the visual test its head is about 1 px taller than the screenshot's (3.8% of the region); §4 had flagged this icon for exactly this check |
+| "Common questions" card | 16 → 344, y 250.333 → 329.333 (79 tall), radius 20 (corner fit 19.7), #181B24 with a 1 px #2A2D36 ring |
+| Question tile | 38 × 38 at (33, 271), radius 12 (corner fit 11.7), #1E2140 (`--tile-bg`); `question-circle.svg` cut-out in 18 px, #8B96FF |
+| FAQ text | "Common questions" 14 / 400 #EDEEF3, cap top 267.67, ink from x 83.67; "Leave, tickets, announcements and / signing in" 12 / 400 #A3A9B7, line 16.667 |
+| Chevron | CaretRight bold 14.77, #494F5D, ink 6 × 10.67 ending at x 322, centred on the card |
+| Video line | `video.svg` cut-out in 18 px and "Video tutorials are on the way." 13 / 400, #8A909F, centred as one line, cap top 354, ink from x 78.33 |
+| Active Support tab | Headset fill, #8B96FF; indicator and label as §10 |
+
+**Visual result (Linux image, real DPR 3, 2026-11-08).** Help **0.98%** (fake fixture; the screen shows no personal data). Every region's box is within 1 device px except the arrow's height (above). Highest regions: the video line (8.4%, text edges) and the contact text (6.4%).

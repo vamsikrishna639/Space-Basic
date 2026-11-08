@@ -79,6 +79,13 @@ export const SAMPLES: Sample[] = [
   { id: 'n-time', file: '05-notifications.png', text: '07:24 PM', r: [100, 492, 175, 45] },
   { id: 'n-time-tnum', file: '05-notifications.png', text: '07:24 PM', r: [100, 492, 175, 45], tnum: true },
   { id: 'n-tab-on', file: '05-notifications.png', text: 'Notifications', r: [298, 2262, 225, 46] },
+  { id: 'p-title', file: '06-contact-support.png', text: 'Help', r: [45, 140, 160, 80] },
+  { id: 'p-sub', file: '06-contact-support.png', text: 'Answers to the questions that come up most, and', r: [40, 258, 990, 56] },
+  { id: 'p-contact', file: '06-contact-support.png', text: 'Contact us', r: [255, 478, 300, 60] },
+  { id: 'p-contact-sub', file: '06-contact-support.png', text: 'Reach your hostel office or', r: [255, 550, 500, 56] },
+  { id: 'p-faq', file: '06-contact-support.png', text: 'Common questions', r: [245, 795, 410, 58] },
+  { id: 'p-faq-sub', file: '06-contact-support.png', text: 'Leave, tickets, announcements and', r: [245, 855, 615, 50] },
+  { id: 'p-video', file: '06-contact-support.png', text: 'Video tutorials are on the way.', r: [295, 1052, 560, 58] },
   { id: 'h-badge', file: '04-home.png', text: '99+', r: [424, 2182, 60, 34] },
 ];
 if (!PRIVATE.deviceId) {

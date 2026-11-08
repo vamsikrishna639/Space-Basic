@@ -20,10 +20,10 @@ The rule (SPEC.md): anything functionally required but not shown in `reference-u
 
 | What | Where | How it's built | Replace when |
 |---|---|---|---|
-| **ComingSoon** screen | Apps, Quick Actions, and (temporarily) the Support and My Profile tabs | Header from the Settings screenshot (back chevron, 22 px title, divider), one centred "Coming soon" | Each module's screenshot; the three tabs are supplied screens built at the next checkpoints |
+| **ComingSoon** screen | Apps, Quick Actions, and (temporarily) the My Profile tab | Header from the Settings screenshot (back chevron, 22 px title, divider), one centred "Coming soon" | Each module's screenshot; the three tabs are supplied screens built at the next checkpoints |
 | **Sign Out** on the My Profile placeholder | `/profile` | The outline button, TEMPORARY so you can sign out | The real My Profile screen (its red "Sign Out" button) |
 | **Light** Home | Home in light theme | Settings-light colours for page, cards, text; tiles, accent and tab bar provisional | A light Home screenshot |
-| **Active** Support / My Profile tabs | Tab bar | Phosphor `fill` weight for the headset, accent ring around the avatar (the active Notifications tab now matches `05-notifications.png`) | Screenshots with those tabs active |
+| **Active** My Profile tab | Tab bar | Accent ring around the avatar (the active Notifications and Support tabs now match their screenshots) | A screenshot with that tab active |
 | Institution with **no logo** | Home header | The white tile, empty | A screenshot of that case |
 
 ## One-time codes and Forgot password (step 6, third checkpoint, 2026-11-08)
@@ -54,6 +54,17 @@ The list itself matches `05-notifications.png` (0.90%). Only these states have n
 | **Light** Notifications | Light theme | Settings-light colours; the chevron colour (#B4B8C3) is provisional | A light Notifications screenshot |
 | **Pressed** row | Notifications | No pressed style | A screenshot or video of a tap |
 | Long titles | Notifications | One line, cut with "…" | A screenshot with a long title |
+
+## Help sub-screens (step 6, fifth checkpoint, 2026-11-08)
+
+Help itself matches `06-contact-support.png` (0.98%). What it opens has no screenshot:
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| **Contact us** screen | `/support/contact`, from the "Contact us" card | The Settings header (back, title "Contact us"); Home's section labels "HOSTEL OFFICE" and "SPACEBASIC"; one card per group (radius 20, 1 px ring, rows split by 1 px lines). Each row: label 14 / 500, hours 12 / 400 secondary, then `tel:` and `mailto:` links in the accent colour with Phosphor Phone and EnvelopeSimple (15 px). Phones show as "+91 98765 43210" | A Contact us screenshot |
+| **Common questions** screen | `/support/faqs`, from the "Common questions" card | Same header and section labels (LEAVE, TICKETS, ANNOUNCEMENTS, SIGNING IN, OTHER; empty ones hidden). Each question is a row (14 / 500) with a CaretRight that turns down when open; the answer shows below in 13 / 400 secondary text | A Common questions screenshot |
+| **Empty** and **error** states | Both sub-screens | "No contacts yet" / "No questions yet", or the API's message, as one centred line | Screenshots of those states |
+| **Light** Help | Help in the light theme | Same blue card and glow (glow alpha 0.22, provisional) on the light page | A light Help screenshot |
 
 | Entry point | Plan |
 |---|---|

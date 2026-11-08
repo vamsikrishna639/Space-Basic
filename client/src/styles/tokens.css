@@ -104,8 +104,14 @@
   --badge-text: #1a121d;
   --avatar-ring: #3f424b;
   --chip-shadow: rgb(0 0 0 / 0.35);
-  --chevron: #494f5d;           /* list-row chevrons (Notifications) */
+  --chevron: #494f5d;           /* list-row chevrons (Notifications, Help) */
   --dot-unread: #4a5ce6;
+  /* Help "Contact us" card (§12): 140deg gradient fitted on a grid of samples, glow fitted from its falloff */
+  --promo-bg: linear-gradient(140deg, #4457e1 0%, #4a5ce6 55.5%, #3e50da 100%);
+  --promo-glow: 0 8px 32px rgb(74 92 230 / 0.32);
+  --promo-tile: rgb(255 255 255 / 0.16);
+  --promo-text: #ffffff;
+  --promo-text-2: #dce2ff;
 }
 
 /* Light: page, card, border and text are measured on settings-light.png. The rest is PROVISIONAL until a light
@@ -130,4 +136,9 @@
   --chip-shadow: rgb(19 22 31 / 0.08); /* provisional */
   --chevron: #b4b8c3;           /* provisional */
   --dot-unread: #4a5ce6;
+  --promo-bg: linear-gradient(140deg, #4457e1 0%, #4a5ce6 55.5%, #3e50da 100%); /* provisional (same as dark) */
+  --promo-glow: 0 8px 32px rgb(74 92 230 / 0.22); /* provisional */
+  --promo-tile: rgb(255 255 255 / 0.16);
+  --promo-text: #ffffff;
+  --promo-text-2: #dce2ff;
 }

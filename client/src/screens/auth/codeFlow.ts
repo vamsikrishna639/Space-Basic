@@ -1,6 +1,6 @@
 // Shared logic of the one-time-code screens: email / SMS / WhatsApp sign-in and the password reset.
 // No screenshot exists for these screens (docs/not-from-reference.md); the copy and states live here.
-import { OTP_RESEND_SECONDS, emailSchema, formatIndianMobile, normalizePhone, type OtpChannel } from '@spacebasic/shared';
+import { OTP_RESEND_SECONDS, displayPhone, emailSchema, formatIndianMobile, normalizePhone, type OtpChannel } from '@spacebasic/shared';
 import { ApiError } from '../../api/client';
 
 export { CODE_LENGTH, sanitizeCode } from '../../components/codeValue';
@@ -35,10 +35,7 @@ export function formatCountdown(seconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-/** "+919876543210" -> "+91 98765 43210"; other numbers are shown as stored. */
-export function displayPhone(e164: string): string {
-  return e164.startsWith('+91') && e164.length === 13 ? `+91 ${formatIndianMobile(e164.slice(3))}` : e164;
-}
+export { displayPhone } from '@spacebasic/shared';
 
 /** The end of "We sent a four-digit code to …". */
 export function describeTarget(channel: OtpChannel, identifier: string): string {
