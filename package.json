@@ -15,7 +15,8 @@
     "build": "npm run build -w shared && npm run build -w server && npm run build -w client",
     "test": "npm test -w server && npm test -w client --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "seed": "npm run seed -w server"
+    "seed": "npm run seed -w server",
+    "test:visual": "npm run build -w client && node tools/ui-analysis/run-in-docker.mjs src/visual.ts"
   },
   "allowScripts": {
     "bcrypt@6.0.0": true,
