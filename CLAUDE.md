@@ -4,7 +4,17 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
 
 ## Status
 
-- **Current phase (2026-11-08):** Phase 1, step 6 (frontend). All Phase 1 backend modules are built and committed: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ (steps 2–4 docs in `docs/architecture.md`, `docs/schemas.md`, `docs/api.md`). Frontend first checkpoint: `client/` workspace, tokens, font, visual-test harness (`npm run test:visual`), and the **Welcome** and **Sign in** (Email, Mobile) screens, waiting at the checkpoint. Next: Home, plus wiring sign-in to the API and the OTP and Forgot password flows. The workflow below is superseded by go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints").
+- **Current phase (2026-11-08):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded).
+- **Done and committed:**
+  - Backend, all Phase 1 modules: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, plus the institution logo endpoints (`GET /institutions/:id/logo`, `PUT /institutions/current/logo`). 150 Jest tests.
+  - Frontend: `client/` workspace, tokens (light auth; dark and light in-app), font, shared components, **Welcome**, **Sign in** (Email, Mobile), **Home**, tab bar, `ComingSoon`. Email + password sign-in works end to end (session restore on reload, sign-out from a TEMPORARY button on the My Profile placeholder).
+  - Tests: `npm run test:visual` (Docker, real DPR 3): Welcome 0.93%, Sign in Mobile 1.28%, Sign in Email 1.59%, Home 1.34%. `tools/ui-analysis/src/smoke-signin.ts` (signs in through the UI against `npm run dev`).
+  - Git history was rewritten (approved) to remove the screenshot owner's name and device ID; the scan of every ref is clean.
+- **Next:** the OTP flow (Mobile "Send code", email one-time code, 4-digit entry with resend timer) and Forgot password. Then Notifications, Support (Help), My Profile (with the real Sign Out), Entry Pass, Settings.
+- **Open items (waiting on the user):**
+  - Light-theme **Home** and **Profile** screenshots (light Home tokens and the camera-badge ring are provisional).
+  - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
+  - **Push to GitHub:** no remote is configured yet (`gh` is installed). Recommended: a private repo. Push only when the user says "push".
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture
@@ -37,7 +47,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
 - **Dependencies:** ask before adding any. Name it, its licence and the reason. Never suggest paid services or paid upgrades.
 - **Lookalikes:** never substitute one. If an asset doesn't match the screenshot, stop, show a side-by-side, and wait.
 - **Measurements:** take them with scripts, don't eyeball. Record them in `docs/ui-measurements.md` and `client/src/styles/tokens.css`. Both a light and a dark token set are needed.
-- **Visual numbers:** report them **only** from Playwright's Linux Docker image, with `--font-render-hinting=none` (see README, "Visual tests"). Target under 1%. Up to about 3% is acceptable when the only remaining differences are text or edge rendering. Show the reference, the render and the diff.
+- **Visual numbers:** report them **only** from Playwright's Linux Docker image, with `--font-render-hinting=none` and a REAL device scale factor (`npm run test:visual`; Playwright's emulated `deviceScaleFactor` snaps to CSS px, unlike a phone). See README, "Visual tests". Target under 1%. Up to about 3% is acceptable when the only remaining differences are text or edge rendering. Show the reference, the render and the diff.
 - **Personal data:** the screenshots contain a real name, phone and email. Never commit them.
   - `reference-ui/*.png` and `client/tests/fixtures/private/` are gitignored.
   - Commit fake equivalents with the same character counts.
@@ -48,7 +58,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
 ## Decisions already made (don't re-ask)
 
 - **Font:** Plus Jakarta Sans, self-hosted from `@fontsource-variable/plus-jakarta-sans`, Latin subset. The type scale is in `docs/ui-measurements.md` §2.
-- **Logo:** use the supplied `reference-ui/assets/logo-spacebasic-transparent.png` as-is, never recoloured. The ~4% mismatch on the logo pill is accepted.
+- **Logos:** use the supplied files as-is, never recoloured and never stretched (`object-fit: contain`, centred in the screenshot's measured ink box). SpaceBasic pill region 4.46% (accepted); Presidency logo tile ~15% until the original file arrives.
 - **Default avatar (v2, approved):** `reference-ui/assets/avatar-default.png`, a 198 px RGBA file on the screenshot's pixel grid.
   - Render it at exactly 66 CSS px, on whole CSS pixels.
   - Don't add `border-radius`; the file already has a smooth circular alpha.
@@ -92,7 +102,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
     - Made with `potrace` (GPL-2.0). It is **tools-only**: it must never appear in `client/` or `server/` package.json, and nothing there may import it.
     - Thresholds are pinned in `FIXED_T` in `trace-icons.ts`.
     - The final check is each screen's Docker visual regression.
-  - **Git:** the history so far is 4 commits, in the order the user asked for: `.gitignore`, tooling, assets, docs. Commit only what the user asks for, in their order.
+  - **Git:** commit only what the user asks for, in their order, showing the staged files first (never `.env*`, `.data`, `screenshot-text.json` or `client/tests/fixtures/private/`). Nothing is pushed; there is no remote yet.
 - **The user's original rule for icons:**
   - Compare **Lucide, Phosphor and Heroicons** with `src/icons-multi.ts`, installed in the analysis folder only.
   - **Never use Tabler.** It was tested and doesn't match.

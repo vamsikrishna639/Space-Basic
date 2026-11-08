@@ -226,6 +226,12 @@ The QR token is a JWT signed with `QR_TOKEN_SECRET`. Claims: `{ sub: studentId, 
 | PUT | `/institutions/current/logo` | `institution:manage` | raw image ≤ 1 MB | `200 { logoUrl }` |
 | POST | `/institutions` | `institution:create` (super_admin) | `{ name, slug, timezone? }` | `201` |
 
+**Built behaviour (logo only, 2026-11-08; built early because Home shows it):**
+- `GET /institutions/:id/logo` is public, answers `public, max-age=86400` with a sha256 `ETag` and `304` on `If-None-Match`, `404` when there is no logo or the institution is suspended, `400` for a malformed id. `logoUrl` in `Me` carries `?v=<upload time>`, so a new logo gets a new URL.
+- `PUT /institutions/current/logo` (`institution:manage`): raw PNG, JPEG or WebP body ≤ 1 MB, checked by magic bytes (`415` otherwise), stored through the assets module (one logo per institution), audited as `institution.logo_update`. Returns `{ logoUrl }`.
+- The dev seed uploads the supplied `reference-ui/assets/logo-presidency.png` (as-is) when the demo institution has no logo.
+- `PATCH /institutions/current` and `POST /institutions` aren't built yet.
+
 ## Rate limits (defaults; the values live in env)
 
 | Scope | Limit |

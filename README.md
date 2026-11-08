@@ -43,6 +43,11 @@ npm run test:visual -- welcome       # one or more screen ids, comma-separated
 - The runner (`tools/ui-analysis/src/visual.ts`) serves `client/dist` inside the container, renders at 360 CSS px with a real device scale factor of 3 (`--force-device-scale-factor=3`; Playwright's emulated DPR snaps to CSS px, unlike a phone), crops both images to the app band (no status or navigation bar), and runs pixelmatch.
 - Output (gitignored) in `client/tests/visual/__output__/`: `<id>-sheet.png` (reference, render and diff side by side), `<id>-render.png`, `<id>-diff.png` and `results.json`. The console also prints each named element's offset from the reference in CSS px.
 - Pass is under 1%; the ceiling is 3% when only text or edge rendering differs. The command fails above 3%.
+- In-app screens mock the API in the browser from a fixture. When a screenshot shows personal data, the exact data lives in the gitignored `client/tests/fixtures/private/<name>.json`; without it the committed fake fixture is used (same character counts) and those regions are masked.
+
+### Sign-in smoke test
+
+With `npm run dev` running, `node tools/ui-analysis/src/smoke-signin.ts` signs in through the UI as the seeded fake users (consent gate, wrong password, Home data, reload, ComingSoon, sign-out). It uses the host's Playwright Chromium and checks behaviour only.
 
 ### Private data
 

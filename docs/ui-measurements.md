@@ -423,7 +423,8 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `avatar-v2.ts` | §5 `avatar-default.png` | **Yes**. Byte-identical on re-run |
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
-| `visual.ts` | Per-screen visual regression (§9). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
+| `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
+| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev` (not a visual test) | No |
 
 Shared modules:
 - `lib.ts`: PNG, ink, diff and browser helpers
@@ -481,3 +482,30 @@ What remains:
 1. **Glyph edges.** Android and Linux rasterise the same font differently; on the links and labels this is most of the region's mismatch (for example 12.5% on "Send it on WhatsApp instead", with position and size matching).
 2. **Circle and pill edges** (anti-aliasing), and the logo mark: the supplied file differs from the app's mark (§3, accepted).
 3. **The primary button's glow** is an approximation: the reference's is about 10 px left, 15 px right, 6 px above.
+
+## 10. Home (dark)
+
+Measured with `probe.ts` and `fontfit.ts` (`h-*` samples), then corrected from `visual.ts`. Positions are CSS px from the top of the screen: in-app screens are edge-to-edge, so this includes the 26 px status bar (`--safe-top` on a phone that draws the app under it).
+
+| Element | Measurement |
+|---|---|
+| Header | 0 → 149.667, linear gradient #3D4FD7 → #2F3EBF |
+| Logo tile | 28 × 28 at (16, 40), white, radius 10. Logo fitted in the measured ink box 21.333 × 18 at (19.333, 43.667) |
+| Institution name | ink from (52.67, 50.0), 10.26 / 700 / +0.135em, upper case, #B1BAF9 |
+| Greeting | ink top 89.33, 23.6 / 400, white |
+| Date | ink top 120.0, 13 / 400, #B7BDF8 |
+| Page | #101116 below the header; gutter 16 |
+| Section labels | "QUICK ACTIONS" ink top 188.33, "APPS" 277.67; 10.59 / 600 / +0.11em, #8A909F, 2 px in from the gutter |
+| Chips | 44 tall at y 209, radius 22, #181B24 with a 1 px #2A2D36 ring and a 2 px dark shadow, 8 px apart; content 12.333 px from the left edge, 17.333 from the right; text 14 / 500 #EDEEF3; icons #8B96FF (§4). The screenshot's row is scrolled 27.333 px |
+| Apps card | x 16 → 344, y 296 → 429.333, radius 22, 1 px #2A2D36 ring, #181B24 |
+| App tiles | 52 × 52, radius 16, #1E2140, first at x 37.667, top 317, 77.667 apart; icons #8B96FF (§4) |
+| App labels | 11.9 / 400 #EDEEF3, line 15.667, column 64 wide; "Announcements" 9.6 px, breaking inside the word |
+| Tab bar | from y 709: 0.667 px #2A2D34 top border, #181B24; four 86 px columns inside 8 px padding |
+| Active tab | 28 × 3 indicator #4A5CE6 under the border; icon and label #8B96FF, label 600 |
+| Tab labels | 11.1 / 400 #A4A9B7, ink top 757 |
+| Badge | #FF6A7D pill about 24.667 × 13, top-left (139, 726.33); "99+" dark #1A121D |
+| Profile tab avatar | 24 circle with a 0.667 px #3F424B ring, default avatar at 21.667 |
+
+**In-app colours.** Dark (measured): page #101116, card #181B24, border #2A2D36, text #EDEEF3 / #A3A9B7, header divider #232429. Light (from `settings-light.png`): page #F5F6FA, card #FFFFFF, border #EEEFF4, text #13161F / #6D717D; the rest is provisional (`tokens.css`).
+
+**Visual result (Linux image, real DPR 3, 2026-11-08).** Home **1.34%** with the private fixture (exact screenshot data), **1.25%** with the fake fixture and the name masked. Every region's box is within 1 device px. Highest regions: the logo tile (15.5%: the supplied Presidency file differs from the app's mark) and text edges (10–11% on the greeting, date and institution name).
