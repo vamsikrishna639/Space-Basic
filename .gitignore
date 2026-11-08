@@ -22,6 +22,8 @@ coverage/
 *.tsbuildinfo
 
 # --- tooling output ---
+# exact screenshot text that is personal data (device ID); read by fontfit.ts
+tools/ui-analysis/private/
 tools/ui-analysis/out/
 # one-off debug probes (kept locally, not part of the reproducible tooling)
 tools/ui-analysis/scratch/

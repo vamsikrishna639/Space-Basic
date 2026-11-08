@@ -7,6 +7,12 @@ import path from 'node:path';
 import { loadPng, crop, modeColor, inkColor, inkBBox, alignedDiff, newPage, closeBrowser, allFontCss, shotEl, sheet, hex, dist, px, OUT, DPR, FONTS, type RGB } from './lib.ts';
 import type { PNG } from 'pngjs';
 
+// The Settings screenshot's device ID is personal sample data (SPEC.md), so it is never committed. The exact text
+// is needed to fit glyphs to the crop; it lives in the gitignored private/screenshot-text.json ({ "deviceId": "..." }).
+// Without that file the device-ID samples are skipped.
+const PRIVATE_FILE = path.resolve(import.meta.dirname, '../private/screenshot-text.json');
+const PRIVATE: { deviceId: string } = fs.existsSync(PRIVATE_FILE) ? JSON.parse(fs.readFileSync(PRIVATE_FILE, 'utf8')) : { deviceId: '' };
+
 interface Sample { id: string; file: string; text: string; r: [number, number, number, number]; caps?: boolean; tnum?: boolean }
 export const SAMPLES: Sample[] = [
   { id: 'w-headline-1', file: '01-welcome.png', text: 'Seamless campus', r: [50, 1172, 760, 98] },
@@ -22,19 +28,44 @@ export const SAMPLES: Sample[] = [
   { id: 's-value-lastupd', file: 'settings-dark.png', text: '3 Nov 2026, 1:52 PM', r: [570, 788, 420, 54] },
   { id: 's-label-os', file: 'settings-dark.png', text: 'Operating system', r: [90, 924, 380, 56] },
   { id: 's-value-os', file: 'settings-dark.png', text: 'Android', r: [800, 924, 190, 56] },
-  { id: 's-value-devid', file: 'settings-dark.png', text: '<device-id>', r: [590, 1464, 400, 46] },
+  { id: 's-value-devid', file: 'settings-dark.png', text: PRIVATE.deviceId, r: [590, 1464, 400, 46] },
   { id: 's-appearance', file: 'settings-dark.png', text: 'Appearance', r: [90, 1664, 265, 54] },
   { id: 's-appearance-sub', file: 'settings-dark.png', text: "System matches your phone's light or dark setting", r: [90, 1724, 860, 50] },
   { id: 's-seg-system', file: 'settings-dark.png', text: 'System', r: [170, 1850, 175, 58] },
   { id: "w-headline-1:track", file: "01-welcome.png", text: "Seamless campus", r: [50, 1172, 760, 98], caps: true },
   { id: "w-headline-2:track", file: "01-welcome.png", text: "living.", r: [50, 1276, 245, 100], caps: true },
-  { id: "s-value-devid:tnum", file: "settings-dark.png", text: "<device-id>", r: [590, 1464, 400, 46], tnum: true },
-  { id: "s-value-devid:track", file: "settings-dark.png", text: "<device-id>", r: [590, 1464, 400, 46], caps: true },
-  { id: "s-value-devid:tnum+track", file: "settings-dark.png", text: "<device-id>", r: [590, 1464, 400, 46], caps: true, tnum: true },
+  { id: "s-value-devid:tnum", file: "settings-dark.png", text: PRIVATE.deviceId, r: [590, 1464, 400, 46], tnum: true },
+  { id: "s-value-devid:track", file: "settings-dark.png", text: PRIVATE.deviceId, r: [590, 1464, 400, 46], caps: true },
+  { id: "s-value-devid:tnum+track", file: "settings-dark.png", text: PRIVATE.deviceId, r: [590, 1464, 400, 46], caps: true, tnum: true },
   { id: "s-value-appver:tnum", file: "settings-dark.png", text: "11.1.1", r: [880, 460, 110, 54], tnum: true },
   { id: "s-value-bundle", file: "settings-dark.png", text: "11.1.1-20261103-082255-", r: [465, 596, 525, 46] },
   { id: "s-value-bundle:tnum", file: "settings-dark.png", text: "11.1.1-20261103-082255-", r: [465, 596, 525, 46], tnum: true },
+  // Auth screens (frontend step 6). Crop boxes come from `probe.ts lines` (docs/ui-measurements.md §9).
+  { id: 'w-btn-mobile', file: '01-welcome.png', text: 'Continue with mobile', r: [300, 1900, 480, 62] },
+  { id: 'w-footer-privacy', file: '01-welcome.png', text: 'Privacy Policy', r: [245, 2125, 245, 55] },
+  { id: 'w-footer-terms', file: '01-welcome.png', text: 'Terms & Conditions', r: [500, 2125, 335, 55] },
+  { id: 'a-title', file: '03-signin-email.png', text: 'Sign in', r: [50, 330, 260, 100] },
+  { id: 'a-sub', file: '02-signin-mobile.png', text: "We'll send a four-digit code to your phone.", r: [45, 448, 880, 60] },
+  { id: 'a-seg-on', file: '02-signin-mobile.png', text: 'Mobile', r: [700, 615, 160, 55] },
+  { id: 'a-seg-off', file: '02-signin-mobile.png', text: 'Email', r: [240, 615, 130, 55] },
+  { id: 'a-label', file: '02-signin-mobile.png', text: 'Mobile number', r: [50, 770, 285, 45] },
+  { id: 'a-ph-mobile', file: '02-signin-mobile.png', text: '98765 43210', r: [95, 868, 300, 58] },
+  { id: 'a-link-wa', file: '02-signin-mobile.png', text: 'Send it on WhatsApp instead', r: [50, 1055, 530, 55] },
+  { id: 'a-consent-brand', file: '02-signin-mobile.png', text: 'SpaceBasic', r: [300, 1240, 225, 50] },
+  { id: 'a-consent-2', file: '02-signin-mobile.png', text: 'personal data for hostel management under', r: [185, 1296, 785, 50] },
+  { id: 'a-privacy', file: '02-signin-mobile.png', text: 'Read the Privacy Policy', r: [55, 1640, 430, 55] },
+  { id: 'a-btn-disabled', file: '02-signin-mobile.png', text: 'Send code', r: [410, 1985, 260, 60] },
+  { id: 'a-helper', file: '02-signin-mobile.png', text: 'Tick the consent box above to continue', r: [190, 2125, 700, 48] },
+  { id: 'a-label-pass', file: '03-signin-email.png', text: 'Password', r: [50, 1118, 190, 50] },
+  { id: 'a-forgot', file: '03-signin-email.png', text: 'Forgot password?', r: [690, 1118, 340, 56] },
+  { id: 'a-ph-email', file: '03-signin-email.png', text: 'name@college.edu', r: [95, 930, 450, 65] },
+  { id: 'a-ph-pass', file: '03-signin-email.png', text: 'Enter your password', r: [95, 1258, 460, 65] },
+  { id: 'a-btn-login', file: '03-signin-email.png', text: 'Log in', r: [465, 2228, 150, 64] },
 ];
+if (!PRIVATE.deviceId) {
+  console.warn(`fontfit: ${PRIVATE_FILE} not found; skipping the device-ID samples`);
+  for (let i = SAMPLES.length - 1; i >= 0; i--) if (SAMPLES[i]!.id.startsWith('s-value-devid')) SAMPLES.splice(i, 1);
+}
 const ONLY = process.argv[2] ? new Set(process.argv[2].split(",")) : null;
 const FONT_ONLY = process.env.FONT_ONLY;
 
