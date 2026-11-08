@@ -1,8 +1,8 @@
-import { useState, type FormEvent } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router';
+import { useRef, useState, type FormEvent } from 'react';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
-import { formatIndianMobile } from '@spacebasic/shared';
+import { formatIndianMobile, type OtpChannel } from '@spacebasic/shared';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { BackButton } from '../../components/BackButton';
@@ -10,6 +10,8 @@ import { Button } from '../../components/Button';
 import { ConsentCard } from '../../components/ConsentCard';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { TextField, trailingClass } from '../../components/TextField';
+import { sendCode } from './codeApi';
+import { errorMessage, prefillOf, validateTarget } from './codeFlow';
 import { canSubmit, parseSignInMethod, type SignInMethod } from './signInMethod';
 import s from './SignIn.module.css';
 
@@ -22,11 +24,15 @@ const METHODS = [
 export function SignIn() {
   const { method } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Back from a code screen or Forgot password fills the address in again (router state, never stored).
+  const prefill = prefillOf(location.state);
   const [consent, setConsent] = useState(false);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => (prefill.includes('@') ? prefill : ''));
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [mobile, setMobile] = useState('');
+  const [mobile, setMobile] = useState(() => (prefill.includes('@') ? '' : prefill));
+  const consentRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login } = useAuth();
@@ -35,10 +41,29 @@ export function SignIn() {
   if (!parsed) return <Navigate to="/sign-in/email" replace />;
   const m: SignInMethod = parsed;
 
+  /** "Send code", "Send it on WhatsApp instead" and "Email me a one-time code instead": open the code screen. */
+  async function requestCode(channel: OtpChannel) {
+    if (busy) return;
+    if (!canSubmit(consent)) { consentRef.current?.focus(); return; }
+    const typed = channel === 'email' ? email : mobile;
+    const target = validateTarget(channel, typed);
+    if ('error' in target) { setError(target.error); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      const sent = await sendCode('login', channel, target.identifier);
+      navigate(location.pathname, { replace: true, state: { prefill: typed } }); // Back finds the address again
+      navigate('/sign-in/code', { state: sent });
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+    }
+  }
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!canSubmit(consent) || busy) return;
-    if (m !== 'email') return; // the mobile OTP flow arrives at the next checkpoint (docs/not-from-reference.md)
+    if (m === 'mobile') { await requestCode('sms'); return; }
     setBusy(true);
     setError(null);
     try {
@@ -64,7 +89,7 @@ export function SignIn() {
         label="Sign in with"
         options={METHODS}
         value={m}
-        onChange={(v) => navigate(`/sign-in/${v}`, { replace: true })}
+        onChange={(v) => { setError(null); navigate(`/sign-in/${v}`, { replace: true }); }}
       />
 
       {m === 'email' ? (
@@ -83,7 +108,7 @@ export function SignIn() {
           <TextField
             className={s.passwordField}
             label="Password"
-            aside={<button type="button" className={s.aside}>Forgot password?</button>}
+            aside={<button type="button" className={s.aside} onClick={() => navigate('/forgot-password', { state: { prefill: email } })}>Forgot password?</button>}
             type={showPassword ? 'text' : 'password'}
             name="password"
             autoComplete="current-password"
@@ -96,7 +121,7 @@ export function SignIn() {
               </button>
             }
           />
-          <button type="button" className={s.link}>Email me a one-time code instead</button>
+          <button type="button" className={s.link} onClick={() => void requestCode('email')}>Email me a one-time code instead</button>
         </>
       ) : (
         <>
@@ -111,11 +136,11 @@ export function SignIn() {
             value={mobile}
             onChange={(e) => setMobile(formatIndianMobile(e.target.value))}
           />
-          <button type="button" className={s.link}>Send it on WhatsApp instead</button>
+          <button type="button" className={s.link} onClick={() => void requestCode('whatsapp')}>Send it on WhatsApp instead</button>
         </>
       )}
 
-      <ConsentCard className={s.consent} checked={consent} onChange={setConsent} />
+      <ConsentCard className={s.consent} inputRef={consentRef} checked={consent} onChange={setConsent} />
       <a className={s.privacy} href="/privacy-policy">Read the Privacy Policy</a>
 
       <div className={s.submit}>
