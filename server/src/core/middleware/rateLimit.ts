@@ -19,6 +19,8 @@ export function createLimiters() {
     global: limiter(5 * 60_000, 300),
     authStrict: limiter(15 * 60_000, 20),
     otpSend: limiter(60 * 60_000, 30),
+    // Per scanner (signed-in user), not per IP: several wardens may share one hostel network. Runs after authenticate.
+    attendanceScan: limiter(60_000, 120, { keyGenerator: (req) => `scanner:${String(req.ctx?.userId ?? 'anonymous')}` }),
   };
 }
 export type Limiters = ReturnType<typeof createLimiters>;

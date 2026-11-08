@@ -27,6 +27,7 @@ export const errors = {
   consentRequired: () => new AppError(403, 'CONSENT_REQUIRED', 'Please sign in again and tick the consent box to continue.'),
   notFound: (message = 'Not found.') => new AppError(404, 'NOT_FOUND', message),
   conflict: (message: string, fields?: Record<string, string>) => new AppError(409, 'CONFLICT', message, fields),
+  alreadyScanned: (message = 'This QR code was already scanned.') => new AppError(409, 'ALREADY_SCANNED', message),
   rateLimited: (retryAfterSeconds: number) =>
     new AppError(429, 'RATE_LIMITED', 'Too many attempts. Please wait a moment and try again.', undefined, {
       'Retry-After': String(Math.max(1, Math.ceil(retryAfterSeconds))),
