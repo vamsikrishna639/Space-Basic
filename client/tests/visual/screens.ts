@@ -19,14 +19,44 @@ export interface ScreenSpec {
   /** File in reference-ui/ (gitignored: may contain personal data). */
   ref: string;
   route: string;
-  /** App band in the screenshot, device px [top, bottom). */
+  /** Band of the screenshot that is compared, device px [top, bottom). */
   app: [top: number, bottom: number];
+  /**
+   * 'band' (auth screens): the app's viewport IS the band (the OS bars sit outside the app).
+   * 'screen' (in-app screens): the app is edge-to-edge, so it renders at the full screen height (`screenHeight`
+   * CSS px) and the same band is cropped from both images.
+   */
+  viewport?: 'band' | 'screen';
+  screenHeight?: number;
+  /** CSS custom properties set on :root (safe-area insets). */
+  cssVars?: Record<string, string>;
+  colorScheme?: 'light' | 'dark';
+  /** Fixed clock (ISO with offset) and time zone, for greetings and dates. */
+  time?: string;
+  timezone?: string;
+  /** API fixture: client/tests/fixtures/private/<name>.json if present (exact screenshot data), else
+   * client/tests/fixtures/<name>.json (fake data of the same length, with `fakeMasks` applied). */
+  fixture?: string;
+  /** Horizontal scroll positions to restore, CSS px (e.g. the Quick Actions row in the screenshot). */
+  scrollX?: { selector: string; left: number }[];
   regions: Region[];
-  /** Device-px rects (band coordinates) excluded from the diff, e.g. personal data with no private fixture. */
+  /** Device-px rects (band coordinates) always excluded from the diff (OS overlays such as the gesture pill). */
   masks?: Region[];
+  /** Excluded only when running on the fake fixture: where the screenshot shows personal data. */
+  fakeMasks?: Region[];
 }
 
 const AUTH_APP: [number, number] = [78, 2296]; // 739.333 CSS px
+
+// In-app screens are 1080 x 2400 (360 x 800 CSS px). The band starts below the status-bar icons; the gesture pill
+// is masked. The app draws under both bars (--safe-top 26 px, --safe-bottom 14.667 px, as on the phone).
+const IN_APP: Pick<ScreenSpec, 'app' | 'viewport' | 'screenHeight' | 'cssVars' | 'masks'> = {
+  app: [105, 2400],
+  viewport: 'screen',
+  screenHeight: 800,
+  cssVars: { '--safe-top': '26px', '--safe-bottom': '14.667px' },
+  masks: [{ name: 'gesture pill', rect: [355, 2250, 370, 35] }],
+};
 
 export const SCREENS: ScreenSpec[] = [
   {
@@ -92,6 +122,33 @@ export const SCREENS: ScreenSpec[] = [
       { name: 'consent text', rect: [185, 1550, 800, 270] },
       { name: 'privacy link', rect: [50, 1950, 450, 70] },
       { name: 'button label', rect: [400, 2140, 280, 78] },
+    ],
+  },
+  {
+    id: 'home',
+    ref: '04-home.png',
+    route: '/home',
+    ...IN_APP,
+    colorScheme: 'dark',
+    time: '2026-11-03T17:20:00+05:30',
+    timezone: 'Asia/Kolkata',
+    fixture: 'home',
+    scrollX: [{ selector: '[data-testid="quick-actions"]', left: 27.333 }],
+    fakeMasks: [{ name: 'first name in the greeting', rect: [548, 155, 532, 95] }],
+    regions: [
+      { name: 'logo tile', rect: [40, 5, 100, 100], zoom: true },
+      { name: 'institution name', rect: [150, 35, 480, 45] },
+      { name: 'greeting (no name)', rect: [45, 150, 495, 85] },
+      { name: 'date', rect: [40, 245, 405, 58] },
+      { name: 'QUICK ACTIONS', rect: [45, 450, 315, 45] },
+      { name: 'chips row', rect: [0, 515, 1080, 140] },
+      { name: 'chip 2 content', rect: [480, 545, 380, 80] },
+      { name: 'APPS', rect: [45, 717, 160, 45] },
+      { name: 'card', rect: [30, 870, 1020, 430] },
+      { name: 'app tiles', rect: [100, 835, 880, 180] },
+      { name: 'app labels', rect: [80, 1020, 920, 115] },
+      { name: 'tab icons', rect: [0, 2065, 1080, 85] },
+      { name: 'tab labels', rect: [0, 2150, 1080, 60] },
     ],
   },
 ];

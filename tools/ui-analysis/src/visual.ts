@@ -12,7 +12,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { PNG } from 'pngjs';
 import pixelmatch from 'pixelmatch';
-import { chromium, type Browser } from 'playwright';
+import { chromium, type Browser, type Page } from 'playwright';
 import { ROOT, loadPng, crop, inkBBox, px, sheet, closeBrowser, DPR, type RGB } from './lib.ts';
 import { SCREENS, type ScreenSpec } from '../../../client/tests/visual/screens.ts';
 
@@ -56,23 +56,34 @@ let worst = 0;
 for (const spec of SCREENS.filter((s) => !only || only.has(s.id))) {
   const [top, bottom] = spec.app;
   const bandH = bottom - top;
-  const appHeightCss = bandH / DPR;
-  const ctx = await (await browserFor(Math.ceil(appHeightCss))).newContext({ viewport: null });
+  const screenMode = spec.viewport === 'screen';
+  // 'band': the viewport is the band, whose height need not be whole CSS px (739.333); 'screen': full height.
+  const appHeightCss = screenMode ? spec.screenHeight! : bandH / DPR;
+  const ctx = await (await browserFor(Math.ceil(appHeightCss))).newContext({
+    viewport: null,
+    colorScheme: spec.colorScheme ?? 'light',
+    ...(spec.timezone ? { timezoneId: spec.timezone } : {}),
+  });
   const page = await ctx.newPage();
+  if (spec.time) await page.clock.setFixedTime(new Date(spec.time));
+  const fixture = spec.fixture ? loadFixture(spec.fixture) : null;
+  if (fixture) await mockApi(page, fixture.data);
   await page.goto(base + spec.route, { waitUntil: 'networkidle' });
-  // The screenshot's app band is not a whole number of CSS px (e.g. 739.333): pin the app height to it.
-  await page.addStyleTag({ content: `:root { --app-height: ${appHeightCss.toFixed(4)}px; }` });
+  const vars: Record<string, string> = { '--app-height': `${appHeightCss.toFixed(4)}px`, ...spec.cssVars };
+  await page.addStyleTag({ content: `:root { ${Object.entries(vars).map(([k, v]) => `${k}: ${v};`).join(' ')} }` });
+  for (const sx of spec.scrollX ?? []) await page.locator(sx.selector).evaluate((el, left) => { el.scrollLeft = left; }, sx.left);
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(150);
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(200);
   const shot = PNG.sync.read(await page.screenshot({ animations: 'disabled', caret: 'hide' }));
   await ctx.close();
   if (shot.width !== 1080) throw new Error(`expected a 1080 px wide screenshot (real DPR 3), got ${shot.width}`);
 
-  const render = crop(shot, { x: 0, y: 0, w: 1080, h: bandH });
-  // A private fixture (gitignored) holds the exact screenshot when it contains personal data; else the reference.
-  const refFile = fs.existsSync(path.join(PRIVATE, spec.ref)) ? path.join(PRIVATE, spec.ref) : spec.ref;
-  const ref = crop(loadPng(refFile), { x: 0, y: top, w: 1080, h: bandH });
-  for (const m of spec.masks ?? []) { paint(ref, m.rect); paint(render, m.rect); }
+  const render = crop(shot, { x: 0, y: screenMode ? top : 0, w: 1080, h: bandH });
+  const ref = crop(loadPng(spec.ref), { x: 0, y: top, w: 1080, h: bandH });
+  const masks = [...(spec.masks ?? []), ...(fixture && !fixture.private ? spec.fakeMasks ?? [] : [])];
+  for (const m of masks) { paint(ref, m.rect); paint(render, m.rect); }
+  if (fixture) console.log(`  (${fixture.private ? 'private fixture: exact screenshot data' : 'fake fixture: personal-data regions masked'})`);
 
   const diff = new PNG({ width: 1080, height: bandH });
   const mismatch = pixelmatch(ref.data, render.data, diff.data, 1080, bandH, { threshold: 0.1, includeAA: false, alpha: 0.25 });
@@ -105,6 +116,31 @@ fs.writeFileSync(path.join(OUTDIR, 'results.json'), JSON.stringify(results, null
 for (const b of browsers.values()) await b.close();
 await closeBrowser(); server.close();
 process.exit(worst > CEILING ? 1 : 0);
+
+// ---- API fixtures ----------------------------------------------------------------------------------------
+// A fixture is { me, unreadCount?, logoFile? }. The private copy (gitignored) has the screenshot's exact data.
+interface Fixture { me: Record<string, unknown> & { institution: { logoUrl: string | null } }; unreadCount?: number; logoFile?: string }
+function loadFixture(name: string): { data: Fixture; private: boolean } {
+  const priv = path.join(PRIVATE, `${name}.json`);
+  const file = fs.existsSync(priv) ? priv : path.join(ROOT, 'client/tests/fixtures', `${name}.json`);
+  return { data: JSON.parse(fs.readFileSync(file, 'utf8')) as Fixture, private: file === priv };
+}
+
+async function mockApi(page: Page, f: Fixture) {
+  await page.route('**/api/v1/**', async (route) => {
+    const req = route.request();
+    const url = new URL(req.url());
+    const key = `${req.method()} ${url.pathname.replace(/^\/api\/v1/, '')}`;
+    const json = (body: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (key === 'POST /auth/refresh') return json({ accessToken: 'visual-test', expiresIn: 900, user: f.me });
+    if (key === 'GET /users/me') return json(f.me);
+    if (key === 'GET /notifications/unread-count') return json({ count: f.unreadCount ?? 0 });
+    if (f.logoFile && f.me.institution.logoUrl && url.pathname === new URL(f.me.institution.logoUrl, base).pathname) {
+      return route.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync(path.join(ROOT, f.logoFile)) });
+    }
+    return json({ error: { code: 'NOT_FOUND', message: 'Not found.' } }, 404);
+  });
+}
 
 function paint(png: PNG, [x, y, w, h]: [number, number, number, number]) {
   for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) {

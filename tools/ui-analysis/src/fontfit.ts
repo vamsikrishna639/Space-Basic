@@ -61,6 +61,17 @@ export const SAMPLES: Sample[] = [
   { id: 'a-ph-email', file: '03-signin-email.png', text: 'name@college.edu', r: [95, 930, 450, 65] },
   { id: 'a-ph-pass', file: '03-signin-email.png', text: 'Enter your password', r: [95, 1258, 460, 65] },
   { id: 'a-btn-login', file: '03-signin-email.png', text: 'Log in', r: [465, 2228, 150, 64] },
+  // Home (04). The greeting's name is personal data, so only "Good evening," is fitted.
+  { id: 'h-inst', file: '04-home.png', text: 'PRESIDENCY UNIVERSITY', r: [150, 140, 480, 45], caps: true },
+  { id: 'h-greet', file: '04-home.png', text: 'Good evening,', r: [45, 255, 500, 85] },
+  { id: 'h-date', file: '04-home.png', text: 'Tuesday 3 November', r: [40, 350, 405, 58] },
+  { id: 'h-section', file: '04-home.png', text: 'QUICK ACTIONS', r: [45, 555, 315, 45], caps: true },
+  { id: 'h-chip', file: '04-home.png', text: 'Raise a ticket', r: [555, 660, 290, 66] },
+  { id: 'h-tile', file: '04-home.png', text: 'Tickets', r: [350, 1130, 150, 50] },
+  { id: 'h-tile-small', file: '04-home.png', text: 'Announceme', r: [555, 1130, 200, 36] },
+  { id: 'h-tab', file: '04-home.png', text: 'Support', r: [595, 2262, 150, 46] },
+  { id: 'h-tab-on', file: '04-home.png', text: 'Home', r: [95, 2262, 115, 46] },
+  { id: 'h-badge', file: '04-home.png', text: '99+', r: [424, 2182, 60, 34] },
 ];
 if (!PRIVATE.deviceId) {
   console.warn(`fontfit: ${PRIVATE_FILE} not found; skipping the device-ID samples`);
