@@ -1,0 +1,55 @@
+import { z } from 'zod';
+import { paginationQuerySchema } from './common';
+
+// QR attendance (docs/architecture.md §9, docs/api.md "Attendance"). The Entry Pass shows a QR that refreshes
+// every 10 s; a warden's camera screen scans it.
+
+export const ATTENDANCE_KINDS = ['attendance'] as const; // later phases add 'amenity' | 'checkin'
+export type AttendanceKind = (typeof ATTENDANCE_KINDS)[number];
+
+export const QR_REFRESH_AFTER_MS = 10_000;
+
+/** GET /attendance/qr-token */
+export interface QrTokenResult {
+  token: string;
+  expiresAt: string;
+  refreshAfterMs: number;
+}
+
+export const scanBodySchema = z.object({
+  // A compact JWT. The length cap keeps junk from the camera out of the verifier.
+  token: z.string({ error: 'Scan a QR code' }).trim().min(20, { error: 'This is not a SpaceBasic QR code' }).max(2048, { error: 'This is not a SpaceBasic QR code' }),
+});
+
+/** POST /attendance/scan (201): what the warden's screen shows. */
+export interface ScanResult {
+  student: { fullName: string; room: string | null };
+  scannedAt: string;
+  kind: AttendanceKind;
+}
+
+/** GET /attendance/me */
+export interface MyAttendanceItem {
+  scannedAt: string;
+  kind: AttendanceKind;
+  scannedByName: string;
+}
+
+/** GET /attendance (wardens, admins): one day in the institution's time zone. */
+export interface AttendanceItem {
+  student: { id: string; fullName: string };
+  room: string | null;
+  scannedAt: string;
+  kind: AttendanceKind;
+  scannedByName: string;
+}
+
+export const myAttendanceQuerySchema = paginationQuerySchema;
+
+export const attendanceQuerySchema = paginationQuerySchema.extend({
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: 'Use the format YYYY-MM-DD' })
+    .refine((v) => !Number.isNaN(Date.parse(`${v}T00:00:00Z`)) && new Date(`${v}T00:00:00Z`).toISOString().startsWith(v), { error: 'Not a real date' })
+    .optional(),
+});
