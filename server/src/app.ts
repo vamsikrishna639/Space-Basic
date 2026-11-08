@@ -13,6 +13,7 @@ import { consentRouter } from './modules/consent/consent.routes';
 import { hostelRouter } from './modules/hostel/hostel.routes';
 import { notificationsRouter } from './modules/notifications/notifications.routes';
 import { attendanceRouter } from './modules/attendance/attendance.routes';
+import { supportRouter } from './modules/support/support.routes';
 
 /** Build the Express app (no listen; Supertest uses this directly). Request pipeline: docs/architecture.md §3. */
 export function createApp() {
@@ -38,6 +39,7 @@ export function createApp() {
   api.use('/hostel', hostelRouter());
   api.use('/notifications', notificationsRouter());
   api.use('/attendance', attendanceRouter(limiters));
+  api.use('/support', supportRouter());
   app.use('/api/v1', api);
 
   app.use(notFound);
