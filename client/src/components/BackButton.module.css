@@ -1,0 +1,15 @@
+/* Sign in back button: 124 device px circle, caret centred (CaretLeft bold 17.09 px, ui-measurements.md §4). */
+.back {
+  position: absolute;
+  left: 11.333px;
+  top: 33px;
+  display: grid;
+  place-items: center;
+  width: 41.333px;
+  height: 41.333px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--c-field);
+  color: var(--c-text);
+}

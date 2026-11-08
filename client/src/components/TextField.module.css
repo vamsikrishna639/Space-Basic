@@ -1,0 +1,59 @@
+/* Labelled input: label 12.3/500, box 128.5 device px tall with a 2 px border, text 15.1/500. */
+.field {
+  display: block;
+}
+
+.labelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--label-gap, 4.1px);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 42.833px;
+  box-shadow: inset 0 0 0 var(--hairline) var(--c-field-border);
+  border-radius: 14px;
+  background: var(--c-field);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 15.333px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--c-text);
+  font-size: var(--fs-button);
+  font-weight: 500;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--c-placeholder);
+  opacity: 1;
+}
+
+.box:focus-within {
+  box-shadow: inset 0 0 0 var(--hairline) var(--c-primary);
+}
+
+.trailing {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 100%;
+  margin: 0 5.333px 0 -8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-placeholder);
+}

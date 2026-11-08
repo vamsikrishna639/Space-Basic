@@ -1,0 +1,32 @@
+/* Email | Mobile switch: track 139.5 device px tall with a 2 device px ring; the selected segment is a raised white
+ * pill, 4.333 px inside the track, with a 4 px gap between the two segments. */
+.track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 46.5px;
+  gap: 4px;
+  padding: 4.333px;
+  box-shadow: inset 0 0 0 var(--hairline) var(--c-card-border);
+  border-radius: 14px;
+  background: var(--c-field);
+}
+
+.option {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: var(--fs-segment);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.option[aria-checked='true'] {
+  background: var(--c-page);
+  color: var(--c-text);
+  box-shadow: 0 2px 4px rgb(19 22 31 / 0.08);
+}

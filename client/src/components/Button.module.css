@@ -1,0 +1,35 @@
+/* Buttons (Welcome, Sign in): 49 x 322.333 px, fully rounded. Measured in docs/ui-measurements.md §9. */
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-button);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  padding-bottom: 1.333px; /* optical centre: the label sits 0.667 px above the box centre */
+}
+
+.primary {
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+  box-shadow: 0 6px 14px var(--c-primary-glow);
+}
+
+.outline {
+  background: var(--c-page);
+  color: var(--c-primary);
+  box-shadow: inset 0 0 0 var(--ring-4dp) var(--c-outline-border);
+}
+
+.primary:disabled {
+  background: var(--c-btn-disabled);
+  color: var(--c-btn-disabled-text);
+  box-shadow: none;
+  cursor: default;
+}
