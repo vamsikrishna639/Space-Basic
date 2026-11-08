@@ -72,6 +72,10 @@ for (const spec of SCREENS.filter((s) => !only || only.has(s.id))) {
   const vars: Record<string, string> = { '--app-height': `${appHeightCss.toFixed(4)}px`, ...spec.cssVars };
   await page.addStyleTag({ content: `:root { ${Object.entries(vars).map(([k, v]) => `${k}: ${v};`).join(' ')} }` });
   for (const sx of spec.scrollX ?? []) await page.locator(sx.selector).evaluate((el, left) => { el.scrollLeft = left; }, sx.left);
+  if (spec.scrollY === 'end') {
+    const y = await page.evaluate(() => { const el = document.scrollingElement!; el.scrollTop = el.scrollHeight; return el.scrollTop; });
+    console.log(`  (scrolled to the end: ${y.toFixed(2)} CSS px)`);
+  }
   await page.evaluate(() => document.fonts.ready);
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(200);

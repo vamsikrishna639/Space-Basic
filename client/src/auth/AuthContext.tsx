@@ -13,6 +13,8 @@ interface AuthState {
   /** One-time-code sign-in (email, SMS or WhatsApp). The code screen is only reached after the consent box was ticked. */
   loginWithCode: (channel: OtpChannel, identifier: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Merge a change into the signed-in profile (e.g. the new avatar URL after an upload). */
+  updateMe: (patch: Partial<Me>) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -63,7 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { await logoutRequest(); } finally { signedOut(); }
   }, [signedOut]);
 
-  const value = useMemo(() => ({ status, me, login, loginWithCode, logout }), [status, me, login, loginWithCode, logout]);
+  const updateMe = useCallback((patch: Partial<Me>) => setMe((m) => (m ? { ...m, ...patch } : m)), []);
+
+  const value = useMemo(() => ({ status, me, login, loginWithCode, logout, updateMe }), [status, me, login, loginWithCode, logout, updateMe]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

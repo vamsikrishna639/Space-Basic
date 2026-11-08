@@ -1,0 +1,23 @@
+/* Approved CameraBadge (docs/ui-measurements.md §6): 22 px disc + 2 px ring = 26 px, right/bottom -4px. */
+.badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid var(--surface-card);
+  border-radius: 50%;
+  background: var(--camera-badge);
+  color: #ffffff;
+}
+
+.badge:disabled {
+  opacity: 1;
+}
+
+.file {
+  display: none;
+}

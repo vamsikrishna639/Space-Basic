@@ -136,6 +136,22 @@ export async function apiBlob(path: string): Promise<Blob | null> {
   return res.blob();
 }
 
+/** An authenticated raw-body upload (the avatar: PUT /users/me/avatar takes the image bytes, no multipart). */
+export async function apiUpload<T>(path: string, file: Blob): Promise<T> {
+  const put = () => send(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': file.type, ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+    body: file,
+  }, false);
+  let res = await put();
+  if (res.status === 401 && accessToken) {
+    await refreshSession();
+    res = await put();
+  }
+  if (!res.ok) throw await toError(res);
+  return (await res.json()) as T;
+}
+
 export async function logoutRequest(): Promise<void> {
   try {
     await send('/auth/logout', { method: 'POST', headers: { [CLIENT_HEADER]: '1' } }, false);

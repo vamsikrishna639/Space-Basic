@@ -140,7 +140,7 @@
 .chevron {
   position: absolute;
   top: calc(50% - 7.385px);
-  right: 17.6px;
+  right: 17.933px;
   color: var(--chevron);
 }
 

@@ -1,0 +1,284 @@
+/*
+ * My Profile (reference-ui/07-profile.png, 07-profile(1).png, dark). Measured positions (docs/ui-measurements.md
+ * §13), CSS px from the top of the screen with the 26 px status bar included.
+ */
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--in-gutter) calc(116px + var(--safe-bottom)); /* "Sign Out" ends 39.667 above the tab bar */
+}
+
+/* Header + profile card stay at the top while the lists scroll under them: 0 -> 323. */
+.top {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  margin: 0 calc(-1 * var(--in-gutter));
+  padding: 0 var(--in-gutter) 4px;
+  background: var(--app-bg);
+}
+
+/* As Help: 0 -> 83.667 and a 1 px #232429 divider. */
+.header {
+  height: calc(var(--safe-top) + 58.667px);
+  margin: 0 calc(-1 * var(--in-gutter));
+  padding: calc(var(--safe-top) + 17.667px) var(--in-gutter) 0;
+  box-shadow: inset 0 -1px 0 var(--divider);
+}
+
+.title {
+  color: var(--text-1);
+  font-size: var(--fs-page-title);
+  font-weight: 500;
+  line-height: 28px;
+}
+
+/* Profile card: 328 x 227.333 at y 91.667, radius 20, 1 px ring. Contents are placed from the card's corner. */
+.profile {
+  position: relative;
+  height: 227.333px;
+  margin-top: 7px;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+
+/* The approved avatar file is registered to the screenshot's pixel grid (§5): (35.667, 111.333) on screen is
+ * device pixel (107, 334), so at DPR 3 it is drawn 1:1 with no resampling. */
+.avatar {
+  position: absolute;
+  top: 19.667px;
+  left: 19.667px;
+  width: 66px;
+  height: 66px;
+}
+
+.details {
+  position: absolute;
+  top: 0;
+  left: 104.667px;
+  right: 16px;
+}
+
+/* Name 20 / 500, upper case, cap top 115.667 */
+.name {
+  position: absolute;
+  top: 19.233px;
+  left: 0.333px;
+  right: 0;
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Room chip: pill 107.333 x 22.667 at (120.667, 141.667), tile colour, bed cut-out 14 px, text 11.75 / 500 accent. */
+.chip {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4.333px;
+  height: 22.667px;
+  padding: 0 10px 0 7.833px;
+  border-radius: 999px;
+  background: var(--tile-bg);
+  color: var(--accent);
+  font-size: 11.75px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* Phone and email: 13 / 400 secondary, icons in the section colour; lines centred at y 186.17 and 207.83. */
+.contact {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 18px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.phone {
+  top: 85.5px;
+}
+
+.email {
+  top: 107.167px;
+}
+
+.contactIcon {
+  flex: none;
+  color: var(--text-section);
+}
+
+.emailText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photoError {
+  position: absolute;
+  top: 92px;
+  left: 16px;
+  width: 80px;
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+/* "Show my QR code": 292.667 x 69.667 at (33.667, 232.333), radius 20, tile colour. */
+.qr {
+  position: absolute;
+  top: 140.667px;
+  left: 17.667px;
+  right: 17.667px;
+  height: 69.667px;
+  display: flex;
+  align-items: flex-start;
+  border-radius: 20px;
+  background: var(--tile-bg);
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+.qrTile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin: 15.5px 12px 0 11.333px;
+  border-radius: 13.333px;
+  background: var(--qr-tile);
+  color: #ffffff;
+}
+
+.qrText {
+  display: flex;
+  flex-direction: column;
+  max-width: 185px;
+  padding-top: 8.167px;
+}
+
+.qrTitle {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.qrSub {
+  color: var(--qr-text-2);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16.333px;
+}
+
+/* CaretRight bold 14.77: ink ends at x 310, centred on the panel. */
+.qrChevron {
+  position: absolute;
+  top: calc(50% - 7.385px);
+  right: 11.95px;
+  color: var(--qr-chevron);
+}
+
+/* Section labels 9.85 / 700 / +0.175em upper case, section colour, 2 px in from the gutter. */
+.section {
+  margin-top: 19.333px;
+  padding-left: 2px;
+  color: var(--text-section);
+  font-size: var(--fs-date-heading);
+  font-weight: 700;
+  letter-spacing: 0.175em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.first {
+  margin-top: 3.667px;
+}
+
+/* List cards: radius 20, a 1 px border, rows 62 tall; every row after the first has a 1 px line at its top. */
+.card {
+  margin: 8px 0 0;
+  padding: 1px 0;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  list-style: none;
+}
+
+.card > li + li .row {
+  box-shadow: inset 0 1px 0 var(--card-border);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 62px;
+  padding: 0 48px 0 17px; /* tile at x 33: the card's 1 px border + 16 */
+  border: 0;
+  background: none;
+  color: var(--text-1);
+  text-align: left;
+  text-decoration: none;
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-right: 12px;
+  border-radius: 12px;
+  background: var(--tile-bg);
+  color: var(--accent);
+}
+
+.label {
+  font-size: var(--fs-list-title);
+  font-weight: 400;
+  line-height: 20px;
+}
+
+/* CaretRight bold 14.77: ink ends at x 322 (right 17.933 puts it there at DPR 3), centred on the row. */
+.chevron {
+  position: absolute;
+  top: calc(50% - 7.385px);
+  right: 17.933px;
+  color: var(--chevron);
+}
+
+.signOutCard {
+  margin-top: 24px;
+}
+
+.signOut {
+  color: var(--danger);
+  cursor: pointer;
+}
+
+.signOut .label {
+  font-weight: 500;
+}
+
+.signOutTile {
+  background: var(--danger-tile);
+  color: var(--danger);
+}

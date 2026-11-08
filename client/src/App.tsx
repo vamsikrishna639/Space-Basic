@@ -11,7 +11,7 @@ import { Notifications } from './screens/notifications/Notifications';
 import { Help } from './screens/support/Help';
 import { CommonQuestions, ContactUs } from './screens/support/SupportLists';
 import { ComingSoon } from './screens/app/ComingSoon';
-import { SignOutButton } from './screens/app/SignOutButton';
+import { Profile } from './screens/profile/Profile';
 
 /** Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes straight to Home. */
 function PublicOnly() {
@@ -64,12 +64,18 @@ const router = createBrowserRouter([
         children: [
           { path: '/home', element: <Home /> },
           { path: '/notifications', element: <Notifications /> },
-          // Built at the next checkpoints; until then the shared placeholder (docs/not-from-reference.md).
           { path: '/support', element: <Help /> },
-          { path: '/profile', element: <ComingSoon title="My Profile"><SignOutButton /></ComingSoon> },
+          { path: '/profile', element: <Profile /> },
         ],
       },
       { path: '/support/contact', element: <ContactUs /> },
+      // My Profile rows whose screens come at later checkpoints (docs/not-from-reference.md).
+      { path: '/profile/entry-pass', element: <ComingSoon title="Entry Pass" /> },
+      { path: '/profile/information', element: <ComingSoon title="My Information" /> },
+      { path: '/profile/password', element: <ComingSoon title="Change Password" /> },
+      { path: '/profile/privacy', element: <ComingSoon title="Privacy & Consent" /> },
+      { path: '/settings', element: <ComingSoon title="Settings" /> },
+      { path: '/about', element: <ComingSoon title="About" /> },
       { path: '/support/faqs', element: <CommonQuestions /> },
       { path: '/m/:module', element: <ModuleScreen /> },
     ],

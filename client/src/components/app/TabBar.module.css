@@ -84,6 +84,8 @@
   box-shadow: inset 0 0 0 0.6667px var(--avatar-ring);
 }
 
+/* Active (07-profile.png): a 1.167 px #4A5CE6 ring fills the margin around the 21.667 px artwork, then a 1.5 px gap
+ * and a 1.5 px outer ring (30 px across). */
 .active .avatarRing {
-  box-shadow: inset 0 0 0 1.3333px var(--accent);
+  box-shadow: inset 0 0 0 1.1667px var(--indicator), 0 0 0 1.5px var(--tabbar-bg), 0 0 0 3px var(--indicator);
 }

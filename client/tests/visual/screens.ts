@@ -37,6 +37,8 @@ export interface ScreenSpec {
   /** API fixture: client/tests/fixtures/private/<name>.json if present (exact screenshot data), else
    * client/tests/fixtures/<name>.json (fake data of the same length, with `fakeMasks` applied). */
   fixture?: string;
+  /** 'end': scroll the page to the bottom before the screenshot (07-profile(1).png is My Profile scrolled down). */
+  scrollY?: 'end';
   /** Horizontal scroll positions to restore, CSS px (e.g. the Quick Actions row in the screenshot). */
   scrollX?: { selector: string; left: number }[];
   regions: Region[];
@@ -201,6 +203,61 @@ export const SCREENS: ScreenSpec[] = [
       { name: 'video line', rect: [225, 945, 630, 60], zoom: true },
       { name: 'tab icons', rect: [0, 2065, 1080, 85] },
       { name: 'tab labels', rect: [0, 2150, 1080, 60] },
+    ],
+  },
+  {
+    id: 'profile',
+    ref: '07-profile.png',
+    route: '/profile',
+    ...IN_APP,
+    colorScheme: 'dark',
+    time: '2026-11-03T17:21:00+05:30',
+    timezone: 'Asia/Kolkata',
+    fixture: 'profile',
+    fakeMasks: [
+      { name: 'name', rect: [355, 235, 600, 62] },
+      { name: 'phone', rect: [420, 428, 240, 52] },
+      { name: 'email', rect: [420, 495, 560, 52] },
+    ],
+    regions: [
+      { name: 'title', rect: [40, 40, 330, 75] },
+      { name: 'avatar + badge', rect: [100, 225, 230, 230], zoom: true },
+      { name: 'name', rect: [355, 235, 600, 62] },
+      { name: 'room chip', rect: [355, 315, 340, 80], zoom: true },
+      { name: 'contact icons', rect: [355, 425, 70, 125] },
+      { name: 'qr panel', rect: [95, 590, 890, 215] },
+      { name: 'qr tile', rect: [125, 630, 135, 135], zoom: true },
+      { name: 'qr text', rect: [280, 620, 480, 170] },
+      { name: 'ACCOUNT', rect: [45, 880, 220, 45] },
+      { name: 'account card', rect: [40, 935, 1000, 575] },
+      { name: 'row icons', rect: [110, 980, 100, 520] },
+      { name: 'row labels', rect: [240, 1000, 400, 480] },
+      { name: 'app card', rect: [40, 1625, 1000, 400] },
+      { name: 'tab avatar', rect: [860, 2060, 140, 140], zoom: true },
+      { name: 'tab labels', rect: [0, 2150, 1080, 60] },
+    ],
+  },
+  {
+    id: 'profile-end',
+    ref: '07-profile(1).png',
+    route: '/profile',
+    ...IN_APP,
+    colorScheme: 'dark',
+    time: '2026-11-03T17:22:00+05:30',
+    timezone: 'Asia/Kolkata',
+    fixture: 'profile',
+    scrollY: 'end',
+    fakeMasks: [
+      { name: 'name', rect: [355, 235, 600, 62] },
+      { name: 'phone', rect: [420, 428, 240, 52] },
+      { name: 'email', rect: [420, 495, 560, 52] },
+    ],
+    regions: [
+      { name: 'sticky card', rect: [40, 160, 1000, 690] },
+      { name: 'sticky edge (clipped list)', rect: [0, 835, 1080, 60], zoom: true },
+      { name: 'app card', rect: [40, 1245, 1000, 405] },
+      { name: 'sign out', rect: [40, 1700, 1000, 210] },
+      { name: 'sign out tile', rect: [110, 1750, 110, 110], zoom: true },
     ],
   },
 ];

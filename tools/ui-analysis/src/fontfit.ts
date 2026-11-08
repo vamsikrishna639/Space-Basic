@@ -8,10 +8,12 @@ import { loadPng, crop, modeColor, inkColor, inkBBox, alignedDiff, newPage, clos
 import type { PNG } from 'pngjs';
 
 // The Settings screenshot's device ID is personal sample data (SPEC.md), so it is never committed. The exact text
-// is needed to fit glyphs to the crop; it lives in the gitignored private/screenshot-text.json ({ "deviceId": "..." }).
-// Without that file the device-ID samples are skipped.
+// is needed to fit glyphs to the crop; it lives in the gitignored private/screenshot-text.json ({ "deviceId": "...",
+// "profileName", "profilePhone", "profileEmail" }, the My Profile screenshot's name, phone and email). Samples whose
+// private text is missing are skipped.
 const PRIVATE_FILE = path.resolve(import.meta.dirname, '../private/screenshot-text.json');
-const PRIVATE: { deviceId: string } = fs.existsSync(PRIVATE_FILE) ? JSON.parse(fs.readFileSync(PRIVATE_FILE, 'utf8')) : { deviceId: '' };
+const PRIVATE: { deviceId: string; profileName?: string; profilePhone?: string; profileEmail?: string } =
+  fs.existsSync(PRIVATE_FILE) ? JSON.parse(fs.readFileSync(PRIVATE_FILE, 'utf8')) : { deviceId: '' };
 
 interface Sample { id: string; file: string; text: string; r: [number, number, number, number]; caps?: boolean; tnum?: boolean }
 export const SAMPLES: Sample[] = [
@@ -86,12 +88,25 @@ export const SAMPLES: Sample[] = [
   { id: 'p-faq', file: '06-contact-support.png', text: 'Common questions', r: [245, 795, 410, 58] },
   { id: 'p-faq-sub', file: '06-contact-support.png', text: 'Leave, tickets, announcements and', r: [245, 855, 615, 50] },
   { id: 'p-video', file: '06-contact-support.png', text: 'Video tutorials are on the way.', r: [295, 1052, 560, 58] },
+  { id: 'r-title', file: '07-profile.png', text: 'My Profile', r: [45, 140, 330, 80] },
+  { id: 'r-name', file: '07-profile.png', text: PRIVATE.profileName ?? '', r: [358, 335, 600, 62], caps: true },
+  { id: 'r-chip', file: '07-profile.png', text: 'West CS240', r: [436, 438, 225, 44] },
+  { id: 'r-phone', file: '07-profile.png', text: PRIVATE.profilePhone ?? '', r: [420, 530, 235, 55] },
+  { id: 'r-phone-tnum', file: '07-profile.png', text: PRIVATE.profilePhone ?? '', r: [420, 530, 235, 55], tnum: true },
+  { id: 'r-email', file: '07-profile.png', text: PRIVATE.profileEmail ?? '', r: [420, 598, 560, 55] },
+  { id: 'r-qr', file: '07-profile.png', text: 'Show my QR code', r: [280, 728, 380, 60] },
+  { id: 'r-qr-sub', file: '07-profile.png', text: 'Attendance, amenities and', r: [280, 788, 470, 42] },
+  { id: 'r-row', file: '07-profile.png', text: 'My Information', r: [245, 1115, 310, 60] },
+  { id: 'r-row-2', file: '07-profile.png', text: 'Change Password', r: [245, 1300, 380, 60] },
+  { id: 'r-section', file: '07-profile.png', text: 'ACCOUNT', r: [45, 982, 210, 40], caps: true },
+  { id: 'r-signout', file: '07-profile(1).png', text: 'Sign Out', r: [245, 1885, 190, 55] },
   { id: 'h-badge', file: '04-home.png', text: '99+', r: [424, 2182, 60, 34] },
 ];
 if (!PRIVATE.deviceId) {
   console.warn(`fontfit: ${PRIVATE_FILE} not found; skipping the device-ID samples`);
   for (let i = SAMPLES.length - 1; i >= 0; i--) if (SAMPLES[i]!.id.startsWith('s-value-devid')) SAMPLES.splice(i, 1);
 }
+for (let i = SAMPLES.length - 1; i >= 0; i--) if (!SAMPLES[i]!.text) { console.warn(`fontfit: no private text for ${SAMPLES[i]!.id}; skipped`); SAMPLES.splice(i, 1); }
 const ONLY = process.argv[2] ? new Set(process.argv[2].split(",")) : null;
 const FONT_ONLY = process.env.FONT_ONLY;
 

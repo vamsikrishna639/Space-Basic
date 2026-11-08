@@ -112,6 +112,13 @@
   --promo-tile: rgb(255 255 255 / 0.16);
   --promo-text: #ffffff;
   --promo-text-2: #dce2ff;
+  /* My Profile (§13) */
+  --qr-tile: #4a5ce6;
+  --qr-text-2: #c3c6d5;
+  --qr-chevron: #5b62aa;
+  --danger: #f893a5;            /* "Sign Out" label and icon */
+  --danger-tile: #38191f;
+  --camera-badge: #4a5ce6;
 }
 
 /* Light: page, card, border and text are measured on settings-light.png. The rest is PROVISIONAL until a light
@@ -141,4 +148,10 @@
   --promo-tile: rgb(255 255 255 / 0.16);
   --promo-text: #ffffff;
   --promo-text-2: #dce2ff;
+  --qr-tile: #4a5ce6;
+  --qr-text-2: #555b6e;         /* provisional */
+  --qr-chevron: #8e95cc;        /* provisional */
+  --danger: #d6385a;            /* provisional */
+  --danger-tile: #fde8ec;       /* provisional */
+  --camera-badge: #4a5ce6;
 }

@@ -2,7 +2,9 @@
 // seeded FAKE users). Not a visual test: it runs on the host browser and checks behaviour only.
 //
 //   node tools/ui-analysis/src/smoke-signin.ts [baseUrl]
+import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
+import { CONSENT_POLICY_VERSION } from '../../../shared/src/consent.ts';
 
 const BASE = process.argv[2] ?? 'http://localhost:5173';
 const failures: string[] = [];
@@ -42,7 +44,7 @@ const logoLoaded = await page.locator('header img').evaluate((img: HTMLImageElem
   img.complete ? img.naturalWidth > 0 : new Promise<boolean>((r) => { img.onload = () => r(img.naturalWidth > 0); img.onerror = () => r(false); }));
 check(logoLoaded, 'institution logo loads from /api/v1/institutions/:id/logo');
 const badge = await page.getByRole('navigation', { name: 'Main' }).locator('[aria-label$="unread"]').textContent().catch(() => null);
-check(badge !== null && /^\d+\+?$/.test(badge), `unread badge: ${badge}`);
+check(badge === null ? true : /^\d+\+?$/.test(badge), badge === null ? 'unread badge hidden (no unread notifications left in the dev data)' : `unread badge: ${badge}`);
 check((await page.getByRole('link', { name: 'Leave Manager' }).count()) === 1, 'Apps grid lists the enabled modules');
 
 // the session survives a reload (refresh cookie; the access token is only in memory)
@@ -112,8 +114,42 @@ await page.waitForURL('**/support');
 await page.getByRole('link', { name: 'Home' }).click();
 await page.waitForURL('**/home');
 
-// sign out (temporary button on the My Profile placeholder) returns to Welcome, and stays signed out
+// My Profile: data from /users/me, the QR row, and a photo upload through the camera badge
 await page.getByRole('link', { name: 'My Profile' }).click();
+await page.waitForURL('**/profile');
+await page.getByRole('heading', { level: 2, name: 'Arjun Kumar Rao' }).waitFor();
+check(await page.getByRole('heading', { level: 2, name: 'Arjun Kumar Rao' }).evaluate((el) => getComputedStyle(el).textTransform) === 'uppercase', 'the name is shown in upper case');
+check((await page.getByText('West CS240').count()) === 1, 'room chip "West CS240"');
+check((await page.getByText('9000000001', { exact: true }).count()) === 1, 'phone shown as its 10 digits');
+check((await page.getByText('arjun.rao@example.com').count()) === 1, 'email shown');
+await page.getByRole('link', { name: /Show my QR code/ }).click();
+await page.getByRole('heading', { name: 'Entry Pass' }).waitFor();
+check(true, '"Show my QR code" opens the Entry Pass placeholder (built at the next checkpoint)');
+await page.goBack();
+await page.waitForURL('**/profile');
+const profileAvatar = page.locator('section[aria-label="Your profile"] img');
+const avatarSrc = () => profileAvatar.getAttribute('src');
+const defaultSrc = await avatarSrc();
+await page.locator('input[type="file"]').setInputFiles(fileURLToPath(new URL('../../../reference-ui/assets/avatar-default.png', import.meta.url)));
+await page.waitForFunction(() => document.querySelector('section[aria-label="Your profile"] img')?.getAttribute('src')?.startsWith('blob:'), null, { timeout: 15_000 })
+  .then(() => check(true, 'the camera badge uploads a photo and the profile shows it'), () => check(false, 'the camera badge uploads a photo and the profile shows it'));
+await page.waitForFunction(() => document.querySelector('nav[aria-label="Main"] img')?.getAttribute('src')?.startsWith('blob:'), null, { timeout: 15_000 })
+  .then(() => check(true, 'the tab-bar avatar shows the new photo too'), () => check(false, 'the tab-bar avatar shows the new photo too'));
+await page.reload();
+await page.waitForFunction(() => document.querySelector('section[aria-label="Your profile"] img')?.getAttribute('src')?.startsWith('blob:'), null, { timeout: 15_000 })
+  .then(() => check(true, 'the photo survives a reload (stored on the server)'), () => check(false, 'the photo survives a reload (stored on the server)'));
+// Put the seeded student back on the default avatar (DELETE /users/me/avatar with a fresh token).
+const api = await browser.newContext();
+const signin = await api.request.post(`${BASE}/api/v1/auth/login`, { data: { email: 'arjun.rao@example.com', password: 'Student@2026', consent: { accepted: true, policyVersion: CONSENT_POLICY_VERSION } } });
+const token = ((await signin.json()) as { accessToken: string }).accessToken;
+const removed = await api.request.delete(`${BASE}/api/v1/users/me/avatar`, { headers: { Authorization: `Bearer ${token}` } });
+check(removed.status() === 204, `photo removed again after the test (${removed.status()})`);
+await api.close();
+await page.reload();
+await profileAvatar.waitFor();
+check((await avatarSrc()) === defaultSrc, 'without a photo the default avatar is back');
+
+// sign out with the real "Sign Out" row returns to Welcome, and stays signed out
 await page.getByRole('button', { name: 'Sign Out' }).click();
 await page.waitForURL((u) => new URL(u).pathname === '/');
 await page.reload();
