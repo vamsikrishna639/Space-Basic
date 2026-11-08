@@ -20,10 +20,8 @@ The rule (SPEC.md): anything functionally required but not shown in `reference-u
 
 | What | Where | How it's built | Replace when |
 |---|---|---|---|
-| **ComingSoon** screen | Apps, Quick Actions, and (temporarily) the My Profile tab | Header from the Settings screenshot (back chevron, 22 px title, divider), one centred "Coming soon" | Each module's screenshot; the three tabs are supplied screens built at the next checkpoints |
-| **Sign Out** on the My Profile placeholder | `/profile` | The outline button, TEMPORARY so you can sign out | The real My Profile screen (its red "Sign Out" button) |
+| **ComingSoon** screen | Apps, Quick Actions, and (temporarily) some My Profile rows (below) | Header from the Settings screenshot (back chevron, 22 px title, divider), one centred "Coming soon" | Each module's screenshot; the three tabs are supplied screens built at the next checkpoints |
 | **Light** Home | Home in light theme | Settings-light colours for page, cards, text; tiles, accent and tab bar provisional | A light Home screenshot |
-| **Active** My Profile tab | Tab bar | Accent ring around the avatar (the active Notifications and Support tabs now match their screenshots) | A screenshot with that tab active |
 | Institution with **no logo** | Home header | The white tile, empty | A screenshot of that case |
 
 ## One-time codes and Forgot password (step 6, third checkpoint, 2026-11-08)
@@ -65,6 +63,19 @@ Help itself matches `06-contact-support.png` (0.98%). What it opens has no scree
 | **Common questions** screen | `/support/faqs`, from the "Common questions" card | Same header and section labels (LEAVE, TICKETS, ANNOUNCEMENTS, SIGNING IN, OTHER; empty ones hidden). Each question is a row (14 / 500) with a CaretRight that turns down when open; the answer shows below in 13 / 400 secondary text | A Common questions screenshot |
 | **Empty** and **error** states | Both sub-screens | "No contacts yet" / "No questions yet", or the API's message, as one centred line | Screenshots of those states |
 | **Light** Help | Help in the light theme | Same blue card and glow (glow alpha 0.22, provisional) on the light page | A light Help screenshot |
+
+## My Profile (step 6, sixth checkpoint, 2026-11-08)
+
+My Profile matches `07-profile.png` (1.14%) and `07-profile(1).png` (1.11%). Not in the screenshots:
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| Rows that open **ComingSoon** for now | "Show my QR code" (Entry Pass, next checkpoint), My Information (Phase 1 placeholder), Change Password and Privacy & Consent (supporting flows, a later checkpoint), Settings (its own checkpoint), About (no screenshot) | The shared ComingSoon screen with the row's title | Each screen as it's built |
+| **Photo upload** states | Camera badge | No preview or progress UI: the new photo appears when the upload ends. A refused file (type, size) shows the API's message in small danger-coloured text under the avatar | A screenshot of an upload |
+| **Sign Out** confirmation | Sign Out row | None: it signs out at once, as the screenshot offers no dialog | A screenshot of a confirm step, if there is one |
+| A user **without a room**, phone or email | Profile card | That line is left out | A screenshot of such a profile |
+| Long names and emails | Profile card | One line, cut with "…" | A screenshot with a long value |
+| **Light** My Profile | Light theme | Settings-light colours; Sign Out pink, its tile, the QR panel's subtitle and chevron colours are provisional | A light Profile screenshot |
 
 | Entry point | Plan |
 |---|---|

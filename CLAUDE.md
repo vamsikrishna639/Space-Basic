@@ -4,24 +4,37 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-08):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded).
-- **Done and committed (pushed by the user to the private `origin`):**
-  - Backend, all Phase 1 modules: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, plus the institution logo endpoints (`GET /institutions/:id/logo`, `PUT /institutions/current/logo`). 150 Jest tests.
-  - Frontend: `client/` workspace, tokens (light auth; dark and light in-app), font, shared components, **Welcome**, **Sign in** (Email, Mobile), **Home**, tab bar, `ComingSoon`. Email + password sign-in works end to end (session restore on reload, sign-out from a TEMPORARY button on the My Profile placeholder).
-  - **One-time codes and Forgot password** (committed 2026-11-08): `/sign-in/code` (SMS, WhatsApp, email), `/forgot-password`, `/forgot-password/code`. No screenshots: listed in `docs/not-from-reference.md`.
-  - Tests: `npm run test:visual` (Docker, real DPR 3): Welcome 0.93%, Sign in Mobile 1.28%, Sign in Email 1.59%, Home 1.32%, Notifications 0.90%, Help 0.98% (uncommitted). `tools/ui-analysis/src/smoke-signin.ts` (signs in through the UI against `npm run dev`). `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself and reads the console codes; max 5 codes an hour per address).
-  - **Password rule** on change and reset (create/import already had it): `passwordIsIdentity()` in `shared`. 151 Jest tests.
-  - **Notifications** screen (`/notifications`), the shared unread count, and the corrected tab-bar badge. `smoke-signin.ts` also covers the list and mark-as-read. (The user committed this with the password rule as `d365dd1`.)
-  - Git history was rewritten (approved) to remove the screenshot owner's name and device ID; the scan of every ref is clean.
-- **Built, NOT committed yet (checkpoint 2026-11-08, waiting on the user's "continue"):**
-  - **Help** (Support tab, `/support`, **0.98%**) and its sub-screens `/support/contact` and `/support/faqs` (no screenshots; listed in `docs/not-from-reference.md`). `smoke-signin.ts` covers both.
-  - The staff-screens decision recorded in `CLAUDE.md`, `SPEC.md` and `docs/decisions.md`.
-- **Next:** student screens: My Profile (with the real Sign Out), Entry Pass, Settings. Then the staff screens (free design). Checkpoint after each group.
+- **Current phase (2026-11-08, end of session):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Done:**
+  - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, and the password rule (a password can't be the account's email or phone, on create, import, change and reset). **151 Jest tests.**
+  - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
+
+    | Screen | Route | Visual |
+    |---|---|---|
+    | Welcome | `/` | 0.93% |
+    | Sign in, Mobile / Email | `/sign-in/mobile`, `/sign-in/email` | 1.28% / 1.59% |
+    | One-time codes (SMS, WhatsApp, email) and Forgot password | `/sign-in/code`, `/forgot-password`, `/forgot-password/code` | no screenshot |
+    | Home + tab bar | `/home` | 1.32% |
+    | Notifications | `/notifications` | 0.90% |
+    | Help, plus Contact us and Common questions | `/support`, `/support/contact`, `/support/faqs` | 0.98% (sub-screens: no screenshot) |
+    | My Profile, top / scrolled | `/profile` | 1.14% / 1.11% |
+
+    Screens and states without a screenshot are listed in `docs/not-from-reference.md`.
+  - **My Profile** has the sticky header and card, the camera-badge photo upload and the real **Sign Out**. **It is NOT committed yet** (the user's next commit). Its rows (QR, My Information, Change Password, Privacy & Consent, Settings, About) open ComingSoon for now.
+  - **Functional tests:** client unit tests (26), `tools/ui-analysis/src/smoke-signin.ts` (against a running `npm run dev`: sign-in, Home, Notifications, Help, My Profile, Sign Out), `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself; at most 5 codes an hour per address).
+  - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
+- **Next, in order (checkpoint after each group):**
+  1. **Entry Pass** (`reference-ui/QR_entry-pass.png`, strict): the QR bottom sheet over My Profile, opened by the profile's "Show my QR code" row (today `/profile/entry-pass`, a ComingSoon placeholder). Uses the QR/Attendance API already built. It needs the approved `qrcode` (MIT) in `client/`; it isn't installed yet (it's in the dependency table in `docs/decisions.md`).
+  2. **Settings** (`settings-dark.png`, `settings-light.png`, strict), and the supporting flows **Change Password** and **Privacy & Consent** (no screenshots: build plainly, list them in `docs/not-from-reference.md`; the backend exists).
+  3. **Staff screens** (free design; scope and rules under "Decisions already made"): warden first, then admin. The warden scanner needs `qr-scanner` (MIT, approved, not installed yet).
 - **Open items (waiting on the user):**
-  - Light-theme **Home** and **Profile** screenshots (light Home tokens and the camera-badge ring are provisional).
+  - Light-theme **Home** and **Profile** screenshots. Until then the light Home tokens, the camera-badge ring on a light card, and the light colours on Notifications, Help and My Profile are provisional.
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
-  - **Push to GitHub:** `origin` is `vamsikrishna639/Space-Basic`, **PRIVATE**. The user pushes; Claude never pushes.
-  - Light-theme **Notifications** screenshot (its chevron colour is provisional).
+- **Session notes (2026-11-08):**
+  - Visual tests need Docker Desktop; starting it is fine.
+  - The dev student's seeded notifications have all been read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up; the smoke test tolerates an empty unread badge).
+  - Before a smoke run, make sure ports 5173 / 4000 / 27027 are free, or reuse the running stack; on Windows stop the stack with `taskkill /PID <root> /T /F`.
+  - Every decision made this session is in `docs/decisions.md` (latest rows: profile avatar on the device grid, sticky profile top, photo upload, the git rule, the Help arrow).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture
@@ -117,7 +130,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
     - Made with `potrace` (GPL-2.0). It is **tools-only**: it must never appear in `client/` or `server/` package.json, and nothing there may import it.
     - Thresholds are pinned in `FIXED_T` in `trace-icons.ts`.
     - The final check is each screen's Docker visual regression.
-  - **Git:** commit only what the user asks for, in their order, showing the staged files first (never `.env*`, `.data`, `screenshot-text.json` or `client/tests/fixtures/private/`). The user pushes; Claude never pushes.
+  - **Git (user rule, 2026-11-08): the user does ALL git** (staging, commits, push). Claude never runs `git add`, `git commit` or `git push` and never asks about them. Read-only git (`status`, `log`, `diff`, `show`) is fine. Every checkpoint ends with a short **"Git for you"** section: (1) a one-line suggested commit message (two if the work splits into code and docs), (2) the changed and new files, (3) a reminder to run the private-data search on the staged changes (never `.env*`, `.data`, `screenshot-text.json`, `client/tests/fixtures/private/` or `reference-ui/*.png`). Nothing else about git.
 - **The user's original rule for icons:**
   - Compare **Lucide, Phosphor and Heroicons** with `src/icons-multi.ts`, installed in the analysis folder only.
   - **Never use Tabler.** It was tested and doesn't match.
@@ -146,4 +159,5 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   `avatar-v2.ts` and `logo-transparent.ts` **write asset files**, so only rerun them on purpose.
 - `tools/ui-analysis/scratch/` holds one-off debug probes. It is **gitignored**; don't commit it. Every committed script is listed in `docs/ui-measurements.md` §8.
 - The analysis-only packages (Playwright, pixelmatch, pngjs, the comparison fonts and the icon libraries) are not app dependencies.
+- Visual tests need Docker Desktop; starting it (`Docker Desktop.exe`) when it isn't running is fine (user, 2026-11-08).
 - The shell is Windows, so Git Bash and PowerShell are both available. With `docker -v` in Git Bash, set `MSYS_NO_PATHCONV=1`.

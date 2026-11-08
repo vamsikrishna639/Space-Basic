@@ -398,7 +398,7 @@ Sheet: `camera-badge.png`.
 |---|---|
 | Profile avatar | Centre (68.82, 144.47) from the top of the screenshot |
 | Tab-bar avatar, inactive | Artwork diameter 21.7, with a 1 px #3F424B border (about 24 total) |
-| Tab-bar avatar, active | Ring in the active tab colour. To be measured at the tab-bar step |
+| Tab-bar avatar, active | Measured on `07-profile.png` (§13): a 1.167 px #4A5CE6 ring filling the margin around the 21.667 px artwork, a 1.5 px gap in the tab-bar colour, and a 1.5 px #4A5CE6 outer ring: 30 px across |
 
 ## 8. Reproducing these numbers
 
@@ -424,7 +424,7 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
-| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read) and Help (contacts, FAQs) (not a visual test) | No |
+| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read), Help (contacts, FAQs) and My Profile (data, photo upload and removal, Sign Out) (not a visual test) | No |
 | `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
@@ -551,3 +551,26 @@ Measured with `probe.ts` and `fontfit.ts` (`p-*` samples), then corrected from `
 | Active Support tab | Headset fill, #8B96FF; indicator and label as §10 |
 
 **Visual result (Linux image, real DPR 3, 2026-11-08).** Help **0.98%** (fake fixture; the screen shows no personal data). Every region's box is within 1 device px except the arrow's height (above). Highest regions: the video line (8.4%, text edges) and the contact text (6.4%).
+
+## 13. My Profile (dark)
+
+Two screenshots: `07-profile.png` (top) and `07-profile(1).png` (the same screen scrolled to the end, 122.67 px). Measured with `probe.ts` and `fontfit.ts` (`r-*` samples; the name, phone and email samples read their text from the gitignored `private/screenshot-text.json`), then corrected from `visual.ts`. CSS px from the top of the screen (status bar included).
+
+| Element | Measurement |
+|---|---|
+| Header | As Help (§12): 0 → 83.667, 1 px #232429 divider; "My Profile" 22 / 500 |
+| Sticky top | Header + profile card stay put: in the scrolled screenshot the list is clipped at y 323 (the card's bottom 319 + 4 px of page) |
+| Profile card | 16 → 344, y 91.667 → 319 (227.333 tall), radius 20 (corner fit 19.8), #181B24 with a 1 px #2A2D36 ring |
+| Avatar + badge | The approved 66 px avatar (§5) at (35.667, 111.333), its registration on the screenshot's device grid (device pixel 107, 334); the approved CameraBadge (§6). Region 1.7% |
+| Name | 20 / 500, upper case, no tracking, #EDEEF3, cap top 115.667, ink from x 122 |
+| Room chip | Pill 107.333 × 22.667 at (120.667, 141.667), #1E2140; `bed-room.svg` in 14 px; "West CS240" 11.75 / 500 #8B96FF (weak font fit, 54% ink; the region diff is 8.4%, text edges) |
+| Phone, email | `phone.svg` 15 px and Phosphor EnvelopeSimple 15.2, #8A909F; text 13 / 400 #A3A9B7 (proportional digits: 22.6% vs 57% tabular), from x 141.67; lines centred at y 186.17 and 207.83. An Indian number shows as its 10 digits ("9876543210") |
+| QR panel | 292.667 × 69.667 at (33.667, 232.333), radius 20, #1E2140. Tile 38 × 38 at (44.667, 247.833), radius 13.333, #4A5CE6, `qr-code.svg` 20 px white. "Show my QR code" 14 / 500 #EDEEF3, cap top 245.67; "Attendance, amenities and / check-in" 12 / 400 #C3C6D5, line 16.333. Chevron CaretRight bold 14.77 #5B62AA |
+| Section labels | "ACCOUNT" cap top 330.33, "APP" 559.33; 9.85 / 700 / +0.175em, #8A909F, x 18 |
+| List cards | Radius 20, 1 px border, rows 62 tall (first row's top at the card's top + 1); every row after the first has a 1 px #2A2D36 line at its top. ACCOUNT 348.667 → 536.667, APP from 578 (2 rows), Sign Out 24 below APP (1 row) |
+| Rows | Tile 38 × 38 at x 33, radius 12, #1E2140, cut-outs (`user`, `key`, `shield-check`, `settings` 20 px; `info-circle` 18; `logout` 19) in #8B96FF; label 14 / 400 #EDEEF3 from x 83; chevron #494F5D, ink ending at x 322 |
+| Sign Out | Tile #38191F, `logout.svg` and "Sign Out" (14 / 500) in #F893A5 |
+| Page end | "Sign Out" ends 39.667 above the tab bar; the page then scrolls exactly 122.667, as in the screenshot |
+| Active My Profile tab | See §7 |
+
+**Visual result (Linux image, real DPR 3, 2026-11-08), private fixture (exact screenshot data).** My Profile **1.14%**, scrolled **1.11%**. Every region's box is within 1 device px; the name 0.23%, row icons 0.27%. What remains is text edges (chip 8.4%, labels) and the avatar's anti-aliased rim. With the committed fake fixture the name, phone and email are masked.

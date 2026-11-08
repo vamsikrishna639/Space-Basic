@@ -98,6 +98,14 @@ Dates are when the decision was made. **U** = decided by the user. **G** = decid
 | 2026-11-08 | G | **`displayPhone()` moved to `shared/src/phone.ts`** ("+91 98765 43210"), used by the code screen and Contact us |
 | 2026-11-08 | G | **"Contact us" card tokens** (`--promo-*`): the gradient, glow, tile and text colours measured on the Help screenshot, in both themes (the light glow is provisional) |
 | 2026-11-08 | G | **Flagged, not changed: the Help arrow.** Phosphor ArrowRight bold 16 is the same drawing, but its head is about 1 px taller than the screenshot's (3.8% of its region; Help passes at 0.98%). §4 had marked this icon for a recheck in this visual test |
+| 2026-11-08 | U | **Help arrow stays** the approved Phosphor ArrowRight bold 16, as is |
+| 2026-11-08 | U | **The user does all git** (staging, commits, push). Claude runs only read-only git and ends each checkpoint with a short "Git for you" section (suggested message, changed files, private-data reminder) |
+| 2026-11-08 | G | **Profile avatar on the screenshot's device grid.** The approved file is registered to device pixel (107, 334), i.e. (35.667, 111.333) CSS px. At the real DPR of 3 that is a whole device pixel, so it draws 1:1 without resampling, which is the purpose of the "whole CSS pixels" rule (written when tests used emulated DPR) |
+| 2026-11-08 | G | **My Profile's header and profile card are sticky**, as the scrolled screenshot shows (the list is clipped under the card at y 323). The page itself scrolls; the bottom padding makes it scroll exactly 122.667 px, as in the screenshot |
+| 2026-11-08 | G | **Profile phone** shows an Indian number as its 10 digits ("9876543210"), as in the screenshot; other numbers as stored. The email shows as stored (the API lower-cases it; the screenshot's capital letter is a sample) |
+| 2026-11-08 | G | **Photo upload** through the camera badge uses the existing `PUT /users/me/avatar` (raw bytes, PNG/JPEG/WebP ≤ 1 MB, no multipart). `apiUpload()` in the API client; `updateMe()` in the auth context refreshes both avatars at once |
+| 2026-11-08 | G | **The TEMPORARY Sign Out button is gone** (`SignOutButton.tsx` deleted): the real "Sign Out" row signs out and returns to Welcome |
+| 2026-11-08 | G | **Active My Profile tab** measured: 1.167 px #4A5CE6 ring, 1.5 px gap, 1.5 px outer ring. Row chevrons on Help and My Profile moved 0.333 px left (ink now ends at x 322, as measured) |
 
 ## Dependencies (all free and open source; approved 2026-11-07)
 
