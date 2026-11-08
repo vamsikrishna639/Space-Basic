@@ -1,0 +1,92 @@
+/*
+ * Sign in, Email and Mobile tabs (reference-ui/02-signin-mobile.png, 03-signin-email.png). Measured positions
+ * (docs/ui-measurements.md §9) in CSS px from the top of the app viewport. The submit block is pushed to the
+ * bottom (margin-top: auto), which is why the Mobile tab has a larger gap above "Send code".
+ */
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--gutter-r) 40.333px var(--gutter-l);
+}
+
+.title {
+  margin-top: 81.667px;
+  color: var(--c-text);
+  font-size: var(--fs-title);
+  font-weight: 500;
+  line-height: 32px;
+}
+
+.sub {
+  margin-top: 7.333px;
+  color: var(--c-text-2);
+  font-size: var(--fs-sub);
+  font-weight: 400;
+  line-height: 21.333px;
+}
+
+.segments {
+  margin-top: 22.667px;
+}
+
+.firstField {
+  margin-top: 17.6px;
+}
+
+/* "Password" + "Forgot password?": this label row is 13.333 px taller than a plain one (the link's tap area). */
+.passwordField {
+  --label-gap: 17.347px;
+  margin-top: 30.667px;
+}
+
+.link {
+  align-self: flex-start;
+  margin-top: 30.633px;
+  margin-left: 1.667px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-link);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 18px;
+  text-align: left;
+}
+
+.aside {
+  margin-right: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-link);
+  font-size: var(--fs-small);
+  font-weight: 500;
+}
+
+.consent {
+  margin-top: 30.713px;
+}
+
+.privacy {
+  align-self: flex-start;
+  margin: 30.333px 0 0 3.5px;
+  color: var(--c-text);
+  font-size: 12.25px;
+  font-weight: 500;
+  line-height: 18px;
+  text-decoration: underline;
+}
+
+.submit {
+  margin-top: auto;
+  padding-top: 34.533px;
+}
+
+.helper {
+  margin-top: 10px;
+  color: var(--c-text-2);
+  font-size: var(--fs-body-s);
+  font-weight: 400;
+  line-height: 18.333px;
+  text-align: center;
+}

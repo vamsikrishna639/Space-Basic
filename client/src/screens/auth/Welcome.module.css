@@ -1,0 +1,129 @@
+/*
+ * Welcome (reference-ui/01-welcome.png). All positions are measured (docs/ui-measurements.md §9), in CSS px from the
+ * top of the app viewport (the screenshot below the Android status bar). Layout: fixed hero, then copy, then the
+ * actions pinned to the bottom so taller screens only grow the space in between.
+ */
+.screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero {
+  position: relative;
+  flex: none;
+  height: 310.667px; /* 932 device px */
+  overflow: hidden;
+  border-radius: 0 0 28px 28px;
+  background: var(--c-primary);
+}
+
+.circle {
+  position: absolute;
+  left: 172.99px;
+  top: -78.38px;
+  width: 244.32px;
+  height: 244.32px;
+  border-radius: 50%;
+  background: var(--c-primary-circle);
+}
+
+/* In flow (margins), not absolutely positioned: Chromium snaps the edges of an absolutely positioned box at a
+ * fractional offset to whole CSS px, which made the pill 0.667 px short. */
+.pill {
+  position: relative;
+  margin: 55.667px 0 0 19px;
+  width: 193px;
+  height: 50.667px;
+  border-radius: var(--radius-pill);
+  background: #ffffff;
+}
+
+/* The supplied logo, used as-is and never stretched (decisions.md): it keeps its own proportions (920 x 856, aspect
+ * 1.077) inside the screenshot's measured ink box (32.333 x 28.333, aspect 1.141), centred. The app's own mark is
+ * wider than the supplied file, so a small mismatch remains (accepted, ui-measurements.md §3). */
+.logo {
+  position: absolute;
+  left: 18.667px;
+  top: 11px;
+  width: 32.333px;
+  height: 28.333px;
+  object-fit: contain;
+}
+
+.wordmark {
+  position: absolute;
+  left: 58.233px;
+  top: 12.6px;
+  color: #000000;
+  font-size: 21.03px;
+  font-weight: 800;
+  letter-spacing: -0.011em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 58.333px; /* 175 device px */
+  height: 58.333px;
+  border-radius: 50%;
+  color: #ffffff;
+}
+
+.b1 { left: 19px; top: 222px; background: var(--c-badge-mint); }
+.b2 { left: 88.667px; top: 237px; background: var(--c-badge-yellow); }
+.b3 { left: 158.333px; top: 222px; background: var(--c-badge-sky); }
+/* Phosphor's wallet glyph sits off-centre in its box; the screenshot's is centred 0.667 px left and lower. */
+.b3 > svg { transform: translate(-0.667px, 0.667px); }
+.b4 { left: 228px; top: 237px; background: var(--c-badge-pink); }
+
+.copy {
+  padding: 0 var(--gutter-r) 0 var(--gutter-l);
+}
+
+.headline {
+  margin-top: 49.333px;
+  color: var(--c-text);
+  font-size: var(--fs-hero);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 35px;
+}
+
+.lead {
+  max-width: 210px;
+  margin-top: 10.333px;
+  color: var(--c-text-2);
+  font-size: var(--fs-lead);
+  font-weight: 400;
+  line-height: 25.5px;
+}
+
+.actions {
+  margin-top: auto;
+  padding: 0 var(--gutter-r) 41px var(--gutter-l);
+}
+
+.second {
+  margin-top: 11.333px;
+}
+
+.legal {
+  margin-top: 40px;
+  color: var(--c-text-2);
+  font-size: var(--fs-legal);
+  font-weight: 500;
+  line-height: 16px;
+  text-align: center;
+}
+
+.dot {
+  margin: 0 1.5px;
+}
+
+.legal a {
+  color: inherit;
+  text-decoration: none;
+}
