@@ -12,6 +12,7 @@ import { Help } from './screens/support/Help';
 import { CommonQuestions, ContactUs } from './screens/support/SupportLists';
 import { ComingSoon } from './screens/app/ComingSoon';
 import { Profile } from './screens/profile/Profile';
+import { EntryPass } from './screens/profile/EntryPass';
 
 /** Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes straight to Home. */
 function PublicOnly() {
@@ -65,12 +66,12 @@ const router = createBrowserRouter([
           { path: '/home', element: <Home /> },
           { path: '/notifications', element: <Notifications /> },
           { path: '/support', element: <Help /> },
-          { path: '/profile', element: <Profile /> },
+          // The Entry Pass is a sheet over My Profile, so the profile stays rendered under it.
+          { path: '/profile', element: <Profile />, children: [{ path: 'entry-pass', element: <EntryPass /> }] },
         ],
       },
       { path: '/support/contact', element: <ContactUs /> },
       // My Profile rows whose screens come at later checkpoints (docs/not-from-reference.md).
-      { path: '/profile/entry-pass', element: <ComingSoon title="Entry Pass" /> },
       { path: '/profile/information', element: <ComingSoon title="My Information" /> },
       { path: '/profile/password', element: <ComingSoon title="Change Password" /> },
       { path: '/profile/privacy', element: <ComingSoon title="Privacy & Consent" /> },

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, Outlet, useNavigate } from 'react-router';
 import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/csr/EnvelopeSimple';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
 import { useAuth, useMe } from '../../auth/AuthContext';
@@ -114,6 +114,9 @@ export function Profile() {
           <span className={s.label}>Sign Out</span>
         </button>
       </div>
+
+      {/* /profile/entry-pass: the Entry Pass sheet */}
+      <Outlet />
     </div>
   );
 }

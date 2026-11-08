@@ -1,0 +1,231 @@
+/*
+ * Entry Pass (reference-ui/QR_entry-pass.png, dark; docs/ui-measurements.md §14). The sheet's top is at y 312 on
+ * the 800 px screen; positions below are from the sheet's top-left, CSS px.
+ */
+
+/* The <dialog> covers the screen (transparent); ::backdrop is the scrim, measured as black at 40 %. */
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text-1);
+}
+
+.dialog::backdrop {
+  background: var(--scrim);
+  transition: opacity 280ms ease-out;
+}
+
+/* 312 -> 800: 473.333 above the 14.667 px gesture bar. Top corners radius 20 (fit 19.95). */
+.sheet {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  max-width: 480px;
+  height: calc(473.333px + var(--safe-bottom));
+  max-height: 100%;
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 20px 20px 0 0;
+  outline: none; /* it takes the first focus (see EntryPass.tsx), which is not something to show */
+  background: var(--surface-card);
+  transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@starting-style {
+  .dialog[open] .sheet {
+    transform: translateY(100%);
+  }
+
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+.closing .sheet {
+  transform: translateY(100%);
+}
+
+.closing::backdrop {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet,
+  .dialog::backdrop {
+    transition: none;
+  }
+}
+
+/* "ENTRY PASS" 9.85 / 700 / +0.155em, section colour, cap top 336.33 */
+.label {
+  position: absolute;
+  top: 21.133px;
+  left: 20px;
+  margin: 0;
+  color: var(--text-section);
+  font-size: 9.85px;
+  font-weight: 700;
+  letter-spacing: 0.155em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+/* Name 20 / 500 upper case, cap top 355.67 */
+.name {
+  position: absolute;
+  top: 38.9px;
+  right: 56px;
+  left: 20px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-1);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Room 13.75 / 500 accent, cap top 383 */
+.room {
+  position: absolute;
+  top: 67.133px;
+  left: 20px;
+  margin: 0;
+  color: var(--accent);
+  font-size: 13.75px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+/* Close: 36 x 36 disc at (310, 330); Phosphor X bold 15.02, ink 10 x 10, text-2 */
+.close {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sheet-close-bg);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+/* QR card: 223.333 x 223 at (68.333, 418.667), radius 26, white, 12 px padding around the canvas */
+.card {
+  position: absolute;
+  top: 106.667px;
+  right: 0;
+  left: 0;
+  width: 223.333px;
+  height: 223px;
+  margin: 0 auto;
+  padding: 12px;
+  border-radius: 26px;
+  background: var(--qr-card);
+  box-shadow: inset 0 0 0 var(--hairline) var(--qr-card-ring);
+}
+
+/* The 512 px canvas shown at 199.333 x 199 (fitted on the module edges), smoothed by the browser. */
+.qr {
+  display: block;
+  width: 199.333px;
+  height: 199px;
+}
+
+/* Ring + "Expires in 9s", centred as one group; ring box 22.667 at y 670.33 */
+.countdown {
+  position: absolute;
+  top: 358.333px;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  height: 22.667px;
+}
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 8.667px;
+}
+
+.timer[hidden] {
+  display: none;
+}
+
+.ring {
+  flex: none;
+  width: 22.667px;
+  height: 22.667px;
+}
+
+.track,
+.arc {
+  fill: none;
+  stroke-width: 2.667px;
+}
+
+.track {
+  stroke: var(--ring-track);
+}
+
+.arc {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+/* "Expires in" 14 / 400 text-2; "9s" 13.75 / 500 text-1; cap top 676.67 */
+.expires {
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.seconds {
+  color: var(--text-1);
+  font-size: 13.75px;
+  font-weight: 500;
+}
+
+/* No screenshot (docs/not-from-reference.md): shown in the countdown's place when no valid code is on screen. */
+.status {
+  align-self: center;
+  padding: 0 20px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Footer 13 / 400 section colour, centred, cap top 718 */
+.footer {
+  position: absolute;
+  top: 401.883px;
+  right: 0;
+  left: 0;
+  margin: 0;
+  color: var(--text-section);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  text-align: center;
+}

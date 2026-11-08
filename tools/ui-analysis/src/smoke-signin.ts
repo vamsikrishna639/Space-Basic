@@ -4,6 +4,7 @@
 //   node tools/ui-analysis/src/smoke-signin.ts [baseUrl]
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
+import QRCode from 'qrcode'; // the client's renderer (root node_modules), to check the drawn modules
 import { CONSENT_POLICY_VERSION } from '../../../shared/src/consent.ts';
 
 const BASE = process.argv[2] ?? 'http://localhost:5173';
@@ -69,23 +70,23 @@ await page.getByRole('heading', { level: 1, name: 'Notifications' }).waitFor();
 await page.locator('main li, li').first().waitFor({ timeout: 15_000 });
 check((await page.locator('li').count()) > 0, `notifications listed (${await page.locator('li').count()})`);
 check((await page.getByRole('heading', { level: 2 }).first().textContent())?.match(/^\d\d [A-Z]{3} \d{4}$/) !== null, 'day headings look like "25 OCT 2026"');
-const unreadBefore = await page.getByLabel('Unread').count();
+const unreadBefore = await page.getByLabel('Unread', { exact: true }).count();
 if (unreadBefore === 0) {
   console.log('skip all seeded notifications are already read (dev data from earlier runs)');
 } else {
   const badgeBefore = await badgeCount();
-  await page.locator('li', { has: page.getByLabel('Unread') }).first().getByRole('button').click();
+  await page.locator('li', { has: page.getByLabel('Unread', { exact: true }) }).first().getByRole('button').click();
   await page.waitForURL('**/m/**');
   await page.getByText('Coming soon').waitFor();
   check(true, `an unread notification opens its module (${new URL(page.url()).pathname})`);
   await page.goBack();
   await page.waitForURL('**/notifications');
   await page.locator('li').first().waitFor();
-  check(await page.getByLabel('Unread').count() === unreadBefore - 1, 'the opened notification is now read');
+  check(await page.getByLabel('Unread', { exact: true }).count() === unreadBefore - 1, 'the opened notification is now read');
   check(await badgeCount() === badgeBefore - 1, `the badge went down by one (${badgeBefore} -> ${await badgeCount()})`);
   await page.reload();
   await page.locator('li').first().waitFor();
-  check(await page.getByLabel('Unread').count() === unreadBefore - 1, 'read state survives a reload (stored on the server)');
+  check(await page.getByLabel('Unread', { exact: true }).count() === unreadBefore - 1, 'read state survives a reload (stored on the server)');
 }
 // Help (Support tab): Contact us and Common questions load from the API
 await page.getByRole('link', { name: 'Support' }).click();
@@ -122,11 +123,67 @@ check(await page.getByRole('heading', { level: 2, name: 'Arjun Kumar Rao' }).eva
 check((await page.getByText('West CS240').count()) === 1, 'room chip "West CS240"');
 check((await page.getByText('9000000001', { exact: true }).count()) === 1, 'phone shown as its 10 digits');
 check((await page.getByText('arjun.rao@example.com').count()) === 1, 'email shown');
+// Entry Pass: the sheet over My Profile; the QR drawn is exactly the token the API issued, and a warden can scan it.
+// Every token the API hands out, in order. In development React's StrictMode runs the sheet's effect twice, so two
+// tokens are issued on open and the second is the one drawn; the check is always against the latest.
+const tokens: string[] = [];
+page.on('response', (r) => {
+  if (r.url().endsWith('/api/v1/attendance/qr-token') && r.status() === 200) void r.json().then((b: { token: string }) => tokens.push(b.token));
+});
 await page.getByRole('link', { name: /Show my QR code/ }).click();
-await page.getByRole('heading', { name: 'Entry Pass' }).waitFor();
-check(true, '"Show my QR code" opens the Entry Pass placeholder (built at the next checkpoint)');
-await page.goBack();
+const pass = page.getByRole('dialog');
+await pass.waitFor();
+check(page.url().endsWith('/profile/entry-pass'), '"Show my QR code" opens /profile/entry-pass');
+check((await pass.getByText('Entry Pass', { exact: true }).count()) === 1 && (await pass.getByText('West CS240').count()) === 1
+  && (await pass.getByRole('heading', { name: 'Arjun Kumar Rao' }).count()) === 1, 'the sheet shows ENTRY PASS, the name and the room');
+check((await page.locator('section[aria-label="Your profile"]').count()) === 1, 'My Profile stays rendered under the sheet');
+/** Module-by-module: the canvas's centre pixel of each module against qrcode's matrix for `token`. */
+async function qrMismatch(token: string): Promise<{ size: number; bad: number }> {
+  const qr = QRCode.create([{ data: new TextEncoder().encode(token), mode: 'byte' }], { errorCorrectionLevel: 'M' });
+  const size = qr.modules.size;
+  const bad = await pass.locator('canvas').evaluate((c: HTMLCanvasElement, { size, bits }) => {
+    const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+    const scale = c.width / (size + 2); // 1-module margin on each side
+    let n = 0;
+    for (let r = 0; r < size; r++) for (let k = 0; k < size; k++) {
+      const x = Math.floor((k + 1.5) * scale), y = Math.floor((r + 1.5) * scale);
+      if ((d[(y * c.width + x) * 4]! < 128) !== (bits[r * size + k] === 1)) n++;
+    }
+    return n;
+  }, { size, bits: Array.from(qr.modules.data) });
+  return { size, bad };
+}
+await pass.locator('canvas').waitFor();
+await page.waitForTimeout(600);
+const issued = tokens.at(-1) ?? '';
+check(issued.length === 96, 'the pass token is 96 characters (always QR version 6-M)');
+const shown = await qrMismatch(issued);
+check(shown.size === 41 && shown.bad === 0, `the QR on screen encodes the issued token (${shown.size} x ${shown.size}, ${shown.bad} modules differ)`);
+check(/^Expires in \d{1,2}s$/.test((await pass.getByText(/^Expires in/).textContent()) ?? ''), 'the countdown reads "Expires in Ns"');
+const wardenApi = await browser.newContext();
+const wSignin = await wardenApi.request.post(`${BASE}/api/v1/auth/login`, { data: { email: 'meera.nair@example.com', password: 'Warden@2026', consent: { accepted: true, policyVersion: CONSENT_POLICY_VERSION } } });
+const wToken = ((await wSignin.json()) as { accessToken: string }).accessToken;
+const scanned = await wardenApi.request.post(`${BASE}/api/v1/attendance/scan`, { headers: { Authorization: `Bearer ${wToken}` }, data: { token: issued } });
+const scanBody = (await scanned.json()) as { student?: { fullName: string }; error?: { message: string } };
+// 409 "marked a moment ago" means the token verified but this student was scanned in the last 5 minutes (an earlier run).
+check(scanned.status() === 201 ? scanBody.student?.fullName === 'Arjun Kumar Rao' : scanned.status() === 409 && /a moment ago/.test(scanBody.error?.message ?? ''),
+  `a warden scanning the shown token marks attendance (${scanned.status()})`);
+await wardenApi.close();
+const seen = tokens.length;
+for (let i = 0; i < 150 && tokens.length === seen; i++) await page.waitForTimeout(100); // the next code is fetched just before 10 s
+await page.waitForTimeout(1500); // and swapped in when the cycle ends
+const nextToken = tokens.at(-1) ?? '';
+const rotated = await qrMismatch(nextToken);
+check(nextToken !== issued && rotated.bad === 0, 'the code changes about every 10 s');
+await pass.getByRole('button', { name: 'Close' }).click();
 await page.waitForURL('**/profile');
+await pass.waitFor({ state: 'detached' });
+check(true, 'the close button slides the sheet away and returns to My Profile');
+await page.getByRole('link', { name: /Show my QR code/ }).click();
+await pass.waitFor();
+await page.keyboard.press('Escape');
+await page.waitForURL('**/profile');
+check((await pass.count()) === 0, 'Escape closes the sheet too');
 const profileAvatar = page.locator('section[aria-label="Your profile"] img');
 const avatarSrc = () => profileAvatar.getAttribute('src');
 const defaultSrc = await avatarSrc();

@@ -1,10 +1,10 @@
+import crypto from 'node:crypto';
 import request from 'supertest';
-import jwt from 'jsonwebtoken';
 import type { Express } from 'express';
 import type { Types } from 'mongoose';
 import type { Role } from '@spacebasic/shared';
 import { createApp } from '../../app';
-import { env } from '../../config/env';
+import { encodeQrToken, QR_TOKEN_LENGTH } from '../../core/security/tokens';
 import { useTestDb } from '../../test/db';
 import { CONSENT, makeInstitution, makeRoom, makeUser } from '../../test/factory';
 import { AuditModel } from '../../core/audit/audit';
@@ -46,12 +46,16 @@ async function world(name = 'Test University', prefix = '') {
 const qrToken = async (studentToken: string) => (await request(app).get('/api/v1/attendance/qr-token').set(auth(studentToken))).body.token as string;
 const scan = (scannerToken: string, token: string) => request(app).post('/api/v1/attendance/scan').set(auth(scannerToken)).send({ token });
 
-/** Sign a QR-shaped token directly, to test expiry and tampering without waiting. */
-function forge(claims: { sub: string; inst: string }, opts: { iat?: number; ttl?: number; secret?: string; audience?: string } = {}) {
+/** Sign a QR token directly, to test expiry and tampering without waiting. */
+function forge(claims: { sub: string; inst: string }, opts: { iat?: number; secret?: string } = {}) {
   const iat = opts.iat ?? Math.floor(Date.now() / 1000);
-  return jwt.sign({ inst: claims.inst, iat }, opts.secret ?? env.QR_TOKEN_SECRET, {
-    algorithm: 'HS256', subject: claims.sub, jwtid: `forged-${Math.random()}`, expiresIn: opts.ttl ?? 15, issuer: 'spacebasic', audience: opts.audience ?? 'spacebasic-qr',
-  });
+  return encodeQrToken({ ...claims, jti: crypto.randomBytes(10), iat }, opts.secret);
+}
+
+/** The body fields of a QR token (docs/api.md "Attendance"): format, sub, inst, jti, iat. */
+function unpack(token: string) {
+  const body = Buffer.from(token.split('.')[0]!, 'base64url');
+  return { format: body[0], sub: body.subarray(1, 13).toString('hex'), inst: body.subarray(13, 25).toString('hex'), jti: body.subarray(25, 35).toString('base64url'), iat: body.readUInt32BE(35), bytes: body.length };
 }
 
 describe('GET /attendance/qr-token (Entry Pass)', () => {
@@ -64,12 +68,15 @@ describe('GET /attendance/qr-token (Entry Pass)', () => {
     const ttl = Date.parse(res.body.expiresAt) - Date.now();
     expect(ttl).toBeGreaterThan(10_000);
     expect(ttl).toBeLessThanOrEqual(15_000);
-    const payload = jwt.decode(res.body.token) as Record<string, unknown>;
-    expect(Object.keys(payload).sort()).toEqual(['aud', 'exp', 'iat', 'inst', 'iss', 'jti', 'sub']);
-    expect(payload).toMatchObject({ sub: String(student.user._id), inst: String(inst._id), aud: 'spacebasic-qr' });
-    expect(JSON.stringify(payload)).not.toMatch(/Arjun|example\.com|CS240/);
+    // Always 96 characters, so the QR is always version 6-M (41 x 41 modules) like the screenshot.
+    expect(res.body.token).toHaveLength(QR_TOKEN_LENGTH);
+    expect(res.body.token).toMatch(/^[A-Za-z0-9_-]{52}\.[A-Za-z0-9_-]{43}$/);
+    const body = unpack(res.body.token);
+    expect(body).toMatchObject({ format: 1, sub: String(student.user._id), inst: String(inst._id), bytes: 39 });
+    expect(Date.parse(res.body.expiresAt)).toBe((body.iat + 15) * 1000);
+    expect(Buffer.from(res.body.token.split('.')[0], 'base64url').toString('latin1')).not.toMatch(/Arjun|example\.com|CS240/);
     const again = await request(app).get('/api/v1/attendance/qr-token').set(auth(student.token));
-    expect((jwt.decode(again.body.token) as { jti: string }).jti).not.toBe(payload.jti);
+    expect(unpack(again.body.token).jti).not.toBe(body.jti);
   });
 
   it('only students get a pass', async () => {
@@ -125,18 +132,27 @@ describe('POST /attendance/scan', () => {
     expect((await scan(warden.token, await qrToken(student.token))).status).toBe(201);
   });
 
-  it('rejects expired, forged, long-lived and non-QR tokens with 400 (expired says so)', async () => {
+  it('rejects expired, forged, tampered and non-QR tokens with 400 (expired says so)', async () => {
     const { inst, student, warden } = await world();
     const who = { sub: String(student.user._id), inst: String(inst._id) };
     const expired = await scan(warden.token, forge(who, { iat: Math.floor(Date.now() / 1000) - 60 }));
     expect(expired.status).toBe(400);
     expect(expired.body.error.fields.token).toMatch(/expired/);
+    const good = forge(who);
+    const [b64, mac] = good.split('.') as [string, string];
+    const otherStudent = Buffer.from(b64, 'base64url');
+    otherStudent.writeUInt8(otherStudent.readUInt8(12) ^ 1, 12); // a different sub under the old MAC
+    // The MAC's last character carries 2 unused bits: flipping the lowest one decodes to the same bytes.
+    const B64URL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const respelt = mac.slice(0, -1) + B64URL[B64URL.indexOf(mac.at(-1)!) ^ 1];
     for (const bad of [
       forge(who, { secret: 'x'.repeat(40) }), // wrong key
-      forge(who, { ttl: 3600 }), // claims a longer life than we issue
-      forge(who, { audience: 'spacebasic-api' }),
+      forge(who, { iat: Math.floor(Date.now() / 1000) + 60 }), // issued in the future
+      `${otherStudent.toString('base64url')}.${mac}`, // tampered body
+      `${b64}.${respelt}`, // non-canonical MAC
+      good.slice(0, -1), // truncated
       student.token, // an access token is not a QR token
-      'not-a-jwt-but-long-enough-to-pass-the-length-check',
+      'not-a-qr-token-but-long-enough-to-pass-the-length-check',
     ]) {
       const res = await scan(warden.token, bad);
       expect(res.status).toBe(400);

@@ -119,6 +119,12 @@
   --danger: #f893a5;            /* "Sign Out" label and icon */
   --danger-tile: #38191f;
   --camera-badge: #4a5ce6;
+  /* Entry Pass (§14): the sheet is --surface-card */
+  --scrim: rgb(0 0 0 / 0.4);    /* fitted on the dimmed profile: alpha 0.393-0.402 per channel, offset ~0 */
+  --sheet-close-bg: #20242f;
+  --ring-track: #20222e;
+  --qr-card: #ffffff;
+  --qr-card-ring: transparent;
 }
 
 /* Light: page, card, border and text are measured on settings-light.png. The rest is PROVISIONAL until a light
@@ -154,4 +160,9 @@
   --danger: #d6385a;            /* provisional */
   --danger-tile: #fde8ec;       /* provisional */
   --camera-badge: #4a5ce6;
+  --scrim: rgb(0 0 0 / 0.4);    /* provisional (as dark) */
+  --sheet-close-bg: #eef0f5;    /* provisional */
+  --ring-track: #e8e7ec;        /* provisional */
+  --qr-card: #ffffff;
+  --qr-card-ring: #e8e7ec;      /* provisional: a white card on a white sheet needs an edge */
 }

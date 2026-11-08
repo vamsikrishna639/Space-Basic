@@ -37,6 +37,10 @@ export interface ScreenSpec {
   /** API fixture: client/tests/fixtures/private/<name>.json if present (exact screenshot data), else
    * client/tests/fixtures/<name>.json (fake data of the same length, with `fakeMasks` applied). */
   fixture?: string;
+  /** Mocked GET /attendance/qr-token: this token (FAKE, unsigned), 10 s cycle. */
+  qrToken?: string;
+  /** Fixed clock to set once the page has loaded (ISO), e.g. to put a countdown where the screenshot shows it. */
+  clockAfterLoad?: string;
   /** 'end': scroll the page to the bottom before the screenshot (07-profile(1).png is My Profile scrolled down). */
   scrollY?: 'end';
   /** Horizontal scroll positions to restore, CSS px (e.g. the Quick Actions row in the screenshot). */
@@ -258,6 +262,47 @@ export const SCREENS: ScreenSpec[] = [
       { name: 'app card', rect: [40, 1245, 1000, 405] },
       { name: 'sign out', rect: [40, 1700, 1000, 210] },
       { name: 'sign out tile', rect: [110, 1750, 110, 110], zoom: true },
+    ],
+  },
+  {
+    // Entry Pass over My Profile. The QR's data modules depend on the token, which is new every 10 s, so they are
+    // masked: the three finder corners (with the format bits, mask 2 in both), the card and its padding are compared.
+    // Module grid from docs/ui-measurements.md §14 (canvas 512 px, margin 1, shown at 199.333 x 199 from (80.347, 430.641)).
+    id: 'entry-pass',
+    ref: 'QR_entry-pass.png',
+    route: '/profile/entry-pass',
+    ...IN_APP,
+    colorScheme: 'dark',
+    time: '2026-11-03T17:22:00+05:30',
+    timezone: 'Asia/Kolkata',
+    fixture: 'profile',
+    qrToken: '_aR3GHRHby_Zhj2JP0FwivCRovmnCMHpFSIW5YlBkT2XC_PxY3L2.YHQPNnpv8aBo5_hOkmoqVTHCPIO0ihQBNzzZJkBFN6A',
+    clockAfterLoad: '2026-11-03T17:22:01.320+05:30', // 8.68 s left: "Expires in 9s", the arc ending at 312.5°
+    masks: [
+      ...IN_APP.masks!,
+      { name: 'QR data, rows 0-8 between the top finders', rect: [380, 1200, 335, 128] },
+      { name: 'QR data, rows 9-32', rect: [254, 1326, 573, 334] },
+      { name: 'QR data, rows 33-40 right of the bottom finder', rect: [380, 1659, 447, 113] },
+    ],
+    fakeMasks: [
+      { name: 'profile name', rect: [355, 235, 600, 62] },
+      { name: 'profile phone', rect: [420, 428, 240, 52] },
+      { name: 'profile email', rect: [420, 495, 560, 52] },
+      { name: 'sheet name', rect: [55, 953, 600, 66] },
+    ],
+    regions: [
+      { name: 'dimmed profile', rect: [0, 0, 1080, 828] },
+      { name: 'sheet top edge', rect: [0, 815, 1080, 60], zoom: true },
+      { name: 'ENTRY PASS', rect: [55, 895, 240, 45] },
+      { name: 'name', rect: [55, 953, 600, 66] },
+      { name: 'room', rect: [55, 1035, 270, 55] },
+      { name: 'close', rect: [920, 875, 130, 130], zoom: true },
+      { name: 'qr card', rect: [195, 1140, 690, 690] },
+      { name: 'qr top-left corner', rect: [195, 1145, 200, 200], zoom: true },
+      { name: 'qr bottom-right corner', rect: [700, 1675, 185, 160], zoom: true },
+      { name: 'countdown', rect: [360, 1890, 380, 110], zoom: true },
+      { name: 'ring', rect: [365, 1900, 90, 90], zoom: true },
+      { name: 'footer', rect: [80, 2030, 925, 65] },
     ],
   },
 ];

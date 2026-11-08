@@ -67,10 +67,14 @@ for (const spec of SCREENS.filter((s) => !only || only.has(s.id))) {
   const page = await ctx.newPage();
   if (spec.time) await page.clock.setFixedTime(new Date(spec.time));
   const fixture = spec.fixture ? loadFixture(spec.fixture) : null;
-  if (fixture) await mockApi(page, fixture.data);
+  if (fixture) await mockApi(page, fixture.data, spec);
   await page.goto(base + spec.route, { waitUntil: 'networkidle' });
   const vars: Record<string, string> = { '--app-height': `${appHeightCss.toFixed(4)}px`, ...spec.cssVars };
   await page.addStyleTag({ content: `:root { ${Object.entries(vars).map(([k, v]) => `${k}: ${v};`).join(' ')} }` });
+  if (spec.clockAfterLoad) {
+    await page.clock.setFixedTime(new Date(spec.clockAfterLoad));
+    await page.waitForTimeout(100); // a few animation frames at the new time
+  }
   for (const sx of spec.scrollX ?? []) await page.locator(sx.selector).evaluate((el, left) => { el.scrollLeft = left; }, sx.left);
   if (spec.scrollY === 'end') {
     const y = await page.evaluate(() => { const el = document.scrollingElement!; el.scrollTop = el.scrollHeight; return el.scrollTop; });
@@ -130,7 +134,7 @@ function loadFixture(name: string): { data: Fixture; private: boolean } {
   return { data: JSON.parse(fs.readFileSync(file, 'utf8')) as Fixture, private: file === priv };
 }
 
-async function mockApi(page: Page, f: Fixture) {
+async function mockApi(page: Page, f: Fixture, spec: ScreenSpec) {
   await page.route('**/api/v1/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -140,6 +144,9 @@ async function mockApi(page: Page, f: Fixture) {
     if (key === 'GET /users/me') return json(f.me);
     if (key === 'GET /notifications/unread-count') return json({ count: f.unreadCount ?? 0 });
     if (key === 'GET /notifications') return json({ items: f.notifications ?? [], nextCursor: null });
+    if (key === 'GET /attendance/qr-token' && spec.qrToken) {
+      return json({ token: spec.qrToken, expiresAt: new Date(Date.parse(spec.time ?? '2026-01-01T00:00:00Z') + 15_000).toISOString(), refreshAfterMs: 10_000 });
+    }
     if (f.logoFile && f.me.institution.logoUrl && url.pathname === new URL(f.me.institution.logoUrl, base).pathname) {
       return route.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync(path.join(ROOT, f.logoFile)) });
     }

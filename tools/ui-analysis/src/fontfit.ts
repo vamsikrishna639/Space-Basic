@@ -101,6 +101,12 @@ export const SAMPLES: Sample[] = [
   { id: 'r-section', file: '07-profile.png', text: 'ACCOUNT', r: [45, 982, 210, 40], caps: true },
   { id: 'r-signout', file: '07-profile(1).png', text: 'Sign Out', r: [245, 1885, 190, 55] },
   { id: 'h-badge', file: '04-home.png', text: '99+', r: [424, 2182, 60, 34] },
+  { id: 'q-label', file: 'QR_entry-pass.png', text: 'ENTRY PASS', r: [55, 1000, 235, 42], caps: true },
+  { id: 'q-name', file: 'QR_entry-pass.png', text: PRIVATE.profileName ?? '', r: [55, 1058, 600, 64], caps: true },
+  { id: 'q-room', file: 'QR_entry-pass.png', text: 'West CS240', r: [55, 1140, 265, 54] },
+  { id: 'q-expires', file: 'QR_entry-pass.png', text: 'Expires in', r: [462, 2012, 195, 64] },
+  { id: 'q-seconds', file: 'QR_entry-pass.png', text: '9s', r: [656, 2012, 60, 64] },
+  { id: 'q-footer', file: 'QR_entry-pass.png', text: 'Scanned for attendance, amenities and check-in.', r: [80, 2140, 925, 60] },
 ];
 if (!PRIVATE.deviceId) {
   console.warn(`fontfit: ${PRIVATE_FILE} not found; skipping the device-ID samples`);

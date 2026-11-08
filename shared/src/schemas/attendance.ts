@@ -8,6 +8,8 @@ export const ATTENDANCE_KINDS = ['attendance'] as const; // later phases add 'am
 export type AttendanceKind = (typeof ATTENDANCE_KINDS)[number];
 
 export const QR_REFRESH_AFTER_MS = 10_000;
+/** A pass token is accepted for this long after it is issued (the scanner allows 5 s of clock skew on top). */
+export const QR_TOKEN_TTL_SECONDS = 15;
 
 /** GET /attendance/qr-token */
 export interface QrTokenResult {
@@ -17,7 +19,7 @@ export interface QrTokenResult {
 }
 
 export const scanBodySchema = z.object({
-  // A compact JWT. The length cap keeps junk from the camera out of the verifier.
+  // A 96-character signed token (docs/api.md "Attendance"). The length cap keeps junk from the camera out of the verifier.
   token: z.string({ error: 'Scan a QR code' }).trim().min(20, { error: 'This is not a SpaceBasic QR code' }).max(2048, { error: 'This is not a SpaceBasic QR code' }),
 });
 
