@@ -93,3 +93,17 @@ The Entry Pass matches `QR_entry-pass.png` (0.70%). Not in the screenshot:
 | Entry point | Plan |
 |---|---|
 | "Privacy Policy", "Terms & Conditions" (Welcome footer), "Read the Privacy Policy" (Sign in) | Plain text pages from the same tokens, or ComingSoon, at a later checkpoint |
+
+## Role routing and staff homes (step 6, staff group (a), 2026-11-09)
+
+**Free design**: staff screens have no screenshots by decision (2026-11-08); they reuse the tokens, Plus Jakarta Sans, Phosphor icons and shared components, in light and dark. Functional tests only (`tools/ui-analysis/src/smoke-roles.ts`).
+
+| What | Where | How it's built | Status |
+|---|---|---|---|
+| **Staff shell** | Every warden and admin page | Header: institution logo on a white tile, institution name (section-label style), the app's name ("Warden" / "Admin"), and an account button (avatar + caret) whose menu shows the name, email, "Switch to …" (only with two or more roles) and Sign out. Admin: sidebar of sections from 960 px, a scrolling strip on phones | free design |
+| **Warden home** | `/warden` | Greeting with the first name and the date (as Home's), then three cards: Scan entry passes, Today's attendance, Find a student or room | free design |
+| **Admin home** | `/admin` | The same greeting, then cards for Users, Hostel, Support and Audit log (2 columns from 720 px, 3 from 1200 px). The summary numbers come with the admin checkpoint | free design |
+| Staff **section pages** | `/warden/scan`, `/warden/attendance`, `/warden/lookup`, `/admin/users`, `/admin/hostel`, `/admin/support`, `/admin/audit` | Title (with a back link on warden pages) and "Coming soon", until their checkpoints | placeholder |
+| **Continue as** | `/choose`, accounts with two or more roles | Title, one line of explanation, one card per app the account has (icon tile, name, one line, chevron), Sign out | free design |
+| **Nothing here yet** | `/no-access`, an account whose roles have no app yet (mess staff) | Title, one line, Sign out | free design |
+| **"Switch role" row** in My Profile | Student app, **only** for accounts with two or more roles | One more row at the end of the APP list, the same row style, Phosphor ArrowsLeftRight 20 in the tile; opens "Continue as". Single-role students (the screenshot's case) don't get it, so their My Profile is unchanged (visual test 1.14% / 1.11%) | not in the screenshot |

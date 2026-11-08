@@ -250,6 +250,8 @@ It contains no personal data. The expiry isn't carried: it is always `iat + 15 s
 | Same routes, per IP | 30 / hour |
 | `/attendance/scan`, per scanner | 120 / min |
 
+The sign-in and code limits are pinned in `PRODUCTION_LIMITS` (`server/src/core/middleware/rateLimit.ts`, checked by `rateLimit.test.ts`). **Development and tests only:** `RELAX_RATE_LIMITS=true` (or `npm run dev:relaxed`) raises them (20 → 1000 per IP for sign-in, 30 → 1000 for code requests, 10 → 1000 failures per email, 5 → 100 codes an hour per address) so repeated smoke runs don't lock themselves out. The windows, the 30 s resend cooldown, the 5 attempts per code and the scan and global limits don't change. The API refuses to start with it when `NODE_ENV=production`.
+
 ## Not in Phase 1
 
 Leave, Tickets, Announcements, Mess and My Information have no endpoints. Their entry points open ComingSoon, and their routers aren't mounted.

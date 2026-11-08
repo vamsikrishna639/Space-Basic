@@ -425,11 +425,13 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
 | `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read), Help (contacts, FAQs), My Profile (data, photo upload and removal, Sign Out) and the Entry Pass (the canvas matches the issued token module by module, a warden scan of it, rotation, close and Escape) (not a visual test) | No |
+| `smoke-roles.ts` | Functional check of role routing: each role's own app, blocked cross-role URLs, no tab bar for staff, the admin sidebar / phone strip, the two-role chooser, remembered choice and switching both ways; saves review screenshots to `out/roles-*.png` | No |
 | `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
 - `lib.ts`: PNG, ink, diff and browser helpers
 - `icon-specs.ts`: icon crop boxes
+- `dev-stack.ts`: starts the dev stack for a smoke script with relaxed sign-in limits (`RELAX_RATE_LIMITS=true`, development only), or reuses a running one
 - `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
 
 One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`.
