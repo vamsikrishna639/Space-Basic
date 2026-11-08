@@ -1,0 +1,23 @@
+/*
+ * One-time-code and Forgot password screens. No screenshot: built from the Sign in screen's layout and tokens
+ * (SignIn.module.css supplies the screen, title, subtitle, link, submit and helper classes; docs/not-from-reference.md).
+ */
+.first {
+  margin-top: 30.667px;
+}
+
+/* "Resend code in 0:27": the text-link line's size and position, in the subtitle colour while it counts down. */
+.wait {
+  align-self: flex-start;
+  margin-top: 30.633px;
+  margin-left: 1.667px;
+  color: var(--c-text-2);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.next {
+  margin-top: 30.667px;
+}

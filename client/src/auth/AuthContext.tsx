@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { CONSENT_POLICY_VERSION, type AuthResult, type Me } from '@spacebasic/shared';
+import { CONSENT_POLICY_VERSION, type AuthResult, type Me, type OtpChannel } from '@spacebasic/shared';
 import { api, logoutRequest, onSessionEnd, refreshSession, setAccessToken } from '../api/client';
 
 type Status = 'loading' | 'signedOut' | 'signedIn';
@@ -9,6 +9,8 @@ interface AuthState {
   me: Me | null;
   /** Email + password sign-in. Ticking the consent box is what makes this call possible (SPEC.md screen 3). */
   login: (email: string, password: string) => Promise<void>;
+  /** One-time-code sign-in (email, SMS or WhatsApp). The code screen is only reached after the consent box was ticked. */
+  loginWithCode: (channel: OtpChannel, identifier: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -47,11 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signedIn(result);
   }, [signedIn]);
 
+  const loginWithCode = useCallback(async (channel: OtpChannel, identifier: string, code: string) => {
+    const result = await api<AuthResult>('POST', '/auth/otp/verify', {
+      auth: false,
+      body: { channel, identifier, code, consent: { accepted: true, policyVersion: CONSENT_POLICY_VERSION } },
+    });
+    signedIn(result);
+  }, [signedIn]);
+
   const logout = useCallback(async () => {
     try { await logoutRequest(); } finally { signedOut(); }
   }, [signedOut]);
 
-  const value = useMemo(() => ({ status, me, login, logout }), [status, me, login, logout]);
+  const value = useMemo(() => ({ status, me, login, loginWithCode, logout }), [status, me, login, loginWithCode, logout]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

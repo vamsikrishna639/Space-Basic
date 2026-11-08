@@ -12,6 +12,8 @@ export class ApiError extends Error {
     public readonly code: ErrorCode | 'NETWORK',
     message: string,
     public readonly fields?: Record<string, string>,
+    /** Seconds from a 429's Retry-After header (the OTP resend cooldown), when present. */
+    public readonly retryAfter?: number,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -57,9 +59,11 @@ async function send(path: string, init: RequestInit, retryUnavailable = true): P
 }
 
 async function toError(res: Response): Promise<ApiError> {
+  const retry = Number(res.headers.get('Retry-After'));
+  const retryAfter = Number.isFinite(retry) && retry > 0 ? retry : undefined;
   try {
     const body = (await res.json()) as ApiErrorBody;
-    return new ApiError(res.status, body.error.code, body.error.message, body.error.fields);
+    return new ApiError(res.status, body.error.code, body.error.message, body.error.fields, retryAfter);
   } catch {
     return new ApiError(res.status, 'INTERNAL', 'Something went wrong on our side. Please try again.');
   }

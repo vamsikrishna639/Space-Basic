@@ -4,11 +4,13 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import { TabBar } from './components/app/TabBar';
 import { Welcome } from './screens/auth/Welcome';
 import { SignIn } from './screens/auth/SignIn';
+import { OtpEntry } from './screens/auth/OtpEntry';
+import { ForgotPassword, ResetPassword } from './screens/auth/ForgotPassword';
 import { Home } from './screens/home/Home';
 import { ComingSoon } from './screens/app/ComingSoon';
 import { SignOutButton } from './screens/app/SignOutButton';
 
-/** Signed-out area: Welcome and Sign in. A signed-in user goes straight to Home. */
+/** Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes straight to Home. */
 function PublicOnly() {
   const { status } = useAuth();
   if (status === 'loading') return <div className="screen" aria-busy="true" />;
@@ -43,7 +45,11 @@ const router = createBrowserRouter([
     element: <PublicOnly />,
     children: [
       { path: '/', element: <Welcome /> },
+      // '/sign-in/code' is a static segment, so it ranks above ':method'.
+      { path: '/sign-in/code', element: <OtpEntry /> },
       { path: '/sign-in/:method', element: <SignIn /> },
+      { path: '/forgot-password', element: <ForgotPassword /> },
+      { path: '/forgot-password/code', element: <ResetPassword /> },
       { path: '/sign-in', element: <Navigate to="/sign-in/email" replace /> },
     ],
   },

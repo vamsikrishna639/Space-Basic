@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode, type Ref } from 'react';
 import s from './TextField.module.css';
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
@@ -8,9 +8,10 @@ type Props = InputHTMLAttributes<HTMLInputElement> & {
   /** Inside the box, after the input (e.g. the show/hide password button). */
   trailing?: ReactNode;
   className?: string;
+  ref?: Ref<HTMLInputElement>;
 };
 
-export function TextField({ label, aside, trailing, className, id, ...input }: Props) {
+export function TextField({ label, aside, trailing, className, id, ref, ...input }: Props) {
   const autoId = useId();
   const inputId = id ?? autoId;
   return (
@@ -20,7 +21,7 @@ export function TextField({ label, aside, trailing, className, id, ...input }: P
         {aside}
       </div>
       <div className={s.box}>
-        <input id={inputId} className={s.input} {...input} />
+        <input ref={ref} id={inputId} className={s.input} {...input} />
         {trailing}
       </div>
     </div>
