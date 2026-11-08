@@ -4,7 +4,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-09, staff group (a) checkpoint: role routing + plain staff homes):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Current phase (2026-11-09, Settings checkpoint):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
 - **Done:**
   - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, and the password rule (a password can't be the account's email or phone, on create, import, change and reset), the compact QR token (approved 2026-11-09 with tests per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, refused in production). **172 Jest tests.**
   - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
@@ -19,26 +19,28 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
     | Help, plus Contact us and Common questions | `/support`, `/support/contact`, `/support/faqs` | 0.98% (sub-screens: no screenshot) |
     | My Profile, top / scrolled | `/profile` | 1.14% / 1.11% |
     | Entry Pass (QR sheet over My Profile) | `/profile/entry-pass` | 0.70% (QR data modules masked: they change with every token) |
+    | Settings, dark (top) / light (scrolled to the end) | `/settings` | 0.93% / 1.04% |
+    | Change Password, Privacy & Consent | `/profile/password`, `/profile/privacy` | no screenshot |
 
     Screens and states without a screenshot are listed in `docs/not-from-reference.md`.
   - **My Profile** has the sticky header and card, the camera-badge photo upload and the real **Sign Out**. "Show my QR code" opens the **Entry Pass**; the other rows (My Information, Change Password, Privacy & Consent, Settings, About) open ComingSoon for now.
   - **Entry Pass** (2026-11-08): a native `<dialog>` routed as a child of `/profile`; QR drawn with `qrcode` exactly as the screenshot's (canvas 512 px, margin 1, shown at 199.333 × 199); ring drains over the 10 s cycle, label rounds up. **The QR token is no longer a JWT**: a 96-character HMAC token so the QR is always version 6-M like the screenshot (approved by the user 2026-11-09).
-  - **Role routing + plain staff homes** (2026-11-09, **not committed yet**): one app per role (`client/src/auth/areas.ts`): students `/home`, wardens `/warden`, admins `/admin`; cross-role URLs redirect to the user's own app; staff have no tab bar. Two roles: "Continue as" (`/choose`), remembered per user on the device, switch from the staff account menu or the "Switch role" row (multi-role students only) in My Profile. Server role separation is tested in `server/src/test/role-separation.test.ts`. Staff section pages are "Coming soon" until groups (b) and (c).
+  - **Role routing + plain staff homes** (2026-11-09): one app per role (`client/src/auth/areas.ts`): students `/home`, wardens `/warden`, admins `/admin`; cross-role URLs redirect to the user's own app; staff have no tab bar. Two roles: "Continue as" (`/choose`), remembered per user on the device, switch from the staff account menu or the "Switch role" row (multi-role students only) in My Profile. Server role separation is tested in `server/src/test/role-separation.test.ts`. Staff section pages are "Coming soon" until groups (b) and (c).
   - **Functional tests:** client unit tests (35); `tools/ui-analysis/src/smoke-signin.ts`, `smoke-roles.ts` and `smoke-otp.ts`. They start the dev stack themselves with relaxed sign-in limits (`dev-stack.ts`), or `smoke-signin`/`smoke-roles` reuse a running one (start it with `npm run dev:relaxed` for repeated runs). `smoke-otp` needs the ports free.
   - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
-- **Next, in order (user decision 2026-11-09; checkpoint after each group):**
-  1. **Staff group (b), warden:** QR scanner, today's attendance, student and room lookup (free design, phone-first). The scanner needs `qr-scanner` (MIT, approved, not installed yet).
-  2. **Staff group (c), admin:** summary, users (search, add, edit, roles, CSV import), hostel structure with rooms and beds, support contacts and FAQs, audit log (free design, desktop-friendly). The audit log needs a read endpoint (`audit:read` exists as a permission).
-  3. **Settings** (`settings-dark.png`, `settings-light.png`, strict), and the supporting flows **Change Password** and **Privacy & Consent** (no screenshots: build plainly, list them in `docs/not-from-reference.md`; the backend exists).
+  - **Settings, Change Password, Privacy & Consent** (2026-11-09, **not committed yet**), plus the reload sign-out fix (10 s grace for the previous refresh token, one refresh at a time across tabs).
+- **Next, in order (user plan 2026-11-09; stop only at these checkpoints):**
+  1. **Admin users screens** (free design, desktop-friendly, admins only, functional tests): users list with search, add and edit user, accept a user and assign a room (room picker showing free beds, enforced server-side), disable user, CSV import. No student self-signup in this phase. CHECKPOINT.
+  2. **Deployment:** Vercel (client), Render (server), MongoDB Atlas. In the repo: `vercel.json` with the `/api` rewrite, Render build/start commands, health check, the production env var list in `.env.example` and the README; verify both builds from a clean clone. Then walk the user through creating the Atlas cluster and setting env vars one step at a time; never ask for a secret. CHECKPOINT.
+  3. **Postponed until after deployment:** the warden scanner and other warden screens (`qr-scanner`, MIT, approved, not installed), admin hostel structure, support content and audit log.
 - **Open items (waiting on the user):**
-  - **Refresh race (flagged 2026-11-09):** a reload followed at once by another page load can sign the user out (the rotated refresh cookie is lost with the aborted request). Fixing it trades a little theft detection for robustness; waiting for the user's call (`docs/decisions.md`).
   - Light-theme **Home** and **Profile** screenshots. Until then the light Home tokens, the camera-badge ring on a light card, and the light colours on Notifications, Help, My Profile and the Entry Pass are provisional.
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
 - **Session notes (2026-11-08):**
   - Visual tests need Docker Desktop; starting it is fine.
   - The dev student's seeded notifications have all been read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up; the smoke test tolerates an empty unread badge).
   - Before a smoke run, make sure ports 5173 / 4000 / 27027 are free, or reuse the running stack; on Windows stop the stack with `taskkill /PID <root> /T /F`.
-  - Every decision made this session is in `docs/decisions.md` (latest rows, 2026-11-09: the QR token approval with its tests, relaxed dev limits, the new order, role routing, two-role accounts, the staff shell, the flagged refresh race).
+  - Every decision made this session is in `docs/decisions.md` (latest rows, 2026-11-09: the refresh grace fix, the new plan, Settings values and visual stamping, the shared header, measured light tokens, haptics/sounds, Clear stored data, Change Password and Privacy & Consent).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture
@@ -93,7 +95,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   - The light-card ring colour is **provisional** until the user sends a light Profile screenshot.
 - **Sessions:**
   - 15-minute access JWT kept in memory only.
-  - Rotating refresh token in an httpOnly, Secure, SameSite=Lax cookie, with reuse detection that revokes the whole session.
+  - Rotating refresh token in an httpOnly, Secure, SameSite=Lax cookie, with reuse detection that revokes the whole session. For 10 s after a rotation the immediately previous token works once more (approved 2026-11-09); the client refreshes one tab at a time (Web Locks).
   - Vercel rewrites `/api/*` to Render so the cookie is first-party.
   - Render's free tier can take up to about a minute to wake up: show a normal loading state and retry once.
 - **OTP providers:** behind one `OtpDelivery` interface, chosen with `OTP_PROVIDER`.
@@ -110,7 +112,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   - Functional tests only: no visual diff tests for staff screens. Every staff screen is listed in `docs/not-from-reference.md` as "free design".
   - **Warden scope:** QR scanner, today's attendance list, student and room lookup.
   - **Admin scope:** summary home; users (search, add, edit, roles, CSV import); hostel structure with rooms and beds; support contacts and FAQs; audit log view.
-  - **Order (changed by the user 2026-11-09):** after the Entry Pass, role routing and the staff screens (a: routing + plain homes, b: warden, c: admin), then Settings, Change Password and Privacy & Consent, with a checkpoint after each group.
+  - **Order (user plan, 2026-11-09, later message):** Settings + Change Password + Privacy & Consent (done), then the admin users screens, then deployment, a checkpoint after each. The warden screens and the other admin screens (hostel, support content, audit log) come after deployment.
   - **Role routing:** one app per role (students `/home`, wardens `/warden`, admins `/admin`), two-role accounts choose ("Continue as") and switch; details in `docs/decisions.md` 2026-11-09.
   - This replaces the earlier "no admin screens in Phase 1" decision. The seed and CSV import scripts stay.
 - **Rooms:** one block, "West".

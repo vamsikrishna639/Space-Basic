@@ -426,6 +426,7 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
 | `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including Notifications (list, mark-as-read), Help (contacts, FAQs), My Profile (data, photo upload and removal, Sign Out) and the Entry Pass (the canvas matches the issued token module by module, a warden scan of it, rotation, close and Escape) (not a visual test) | No |
 | `smoke-roles.ts` | Functional check of role routing: each role's own app, blocked cross-role URLs, no tab bar for staff, the admin sidebar / phone strip, the two-role chooser, remembered choice and switching both ways; saves review screenshots to `out/roles-*.png` | No |
+| `smoke-settings.ts` | Functional check of Settings (build and device values, appearance, toggles, links, Clear stored data), Change Password (rules, wrong current password, a real change and back) and Privacy & Consent (withdraw and re-consent); also a reload straight into another page load, and two tabs at once, stay signed in | No |
 | `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
@@ -434,7 +435,7 @@ Shared modules:
 - `dev-stack.ts`: starts the dev stack for a smoke script with relaxed sign-in limits (`RELAX_RATE_LIMITS=true`, development only), or reuses a running one
 - `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
 
-One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`.
+One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`, and for Settings (§15) `settings-shadow.ts`, `pjs-metrics.ts`, `menu-probe.ts`, `nav-probe.ts`, `refresh-race.ts`, `entry-states.ts`.
 
 `fontfit.ts` reads the Settings device ID from the gitignored `tools/ui-analysis/private/screenshot-text.json` (`{ "deviceId": "..." }`); without it, those samples are skipped.
 
@@ -599,3 +600,22 @@ Two screenshots: `07-profile.png` (top) and `07-profile(1).png` (the same screen
 **Font-fit crops.** The first `q-expires` and `q-seconds` crops were wrong: one cut the "n" off "in", the other started inside the "n". With clean crops (column ink runs: "in" ends at device x 651, "9s" spans 663 → 706) the fit is "Expires in" 14.01 / 400 (17.9 %) and "9s" 13.75 / 500 (6.8 %).
 
 **Visual result (Linux image, real DPR 3, 2026-11-08), private fixture.** Entry Pass **0.70%**. The QR's data modules depend on the token (new every 10 s), so they're masked in three rectangles; the three finder corners (with the format bits: the fixture token is a FAKE one chosen to use mask 2, like the screenshot), the card and its padding are compared: QR card 0.09 %, top-left corner 0.24 %, bottom-right corner 0.44 %, all boxes exact. The clock is set 1.32 s after the code arrives, so the ring ends at 312.5° (ring region 1.31 %). Every region's box is within 1 device px; what remains is text edges (room 13.6 %, "ENTRY PASS" 7.8 %).
+
+## 15. Settings (dark and light)
+
+`settings-dark.png` (top of the page) and `settings-light.png` (the same page scrolled to the end, 298.667 px: the "Device" row moves from device y 1217 to 321). Measured with `probe.ts`, `fontfit.ts` (`s-*` samples) and the scratch probes `settings-shadow.ts` and `pjs-metrics.ts`, then corrected from `visual.ts`. CSS px from the top of the screen at scroll 0 (light positions are 298.667 less).
+
+**Placing text from cap tops.** Measured in the Linux image (`scratch/pjs-metrics.ts`): Plus Jakarta Sans ascent 1.038, descent 0.222, cap height 0.75 per px; the cap top sits below the line box's top by 5.333 (14 / 20), 5.0 (13 / 19.333), 4.0 (12 / 16.333), 3.333 (10.25 / 14), 6.667 (22 / 28), 5.0 (20 / 24).
+
+| Element | Measurement |
+|---|---|
+| Header | The shared header, sticky, 0 → 100; caret and title 6 px below the status bar's inset (corrected here: they were 3.33 px high). Divider: a 1 px **overlay** at 100 → 101, the text colour at 8.6% (dark: #232429 over the page, #3A3D44 over a card ring) / 7.2% (light: #EEEEF0 over white, #E1E1E9 over the shadowed page) |
+| Cards | x 16 → 344, radius 20 (corner fit 19.75), 1 px ring #2A2D36 / #EEEEF0; content inset 17 (lines run 33 → 327). Light cards cast `0 16px 40px rgb(19 22 31 / 0.062)` (fitted: 7 levels darker at a card's side, 3 levels 16 px out, deeper below); dark cards none |
+| About card | 100 → 522.667. "ABOUT THIS APP" 10.25 / 700 / +0.13em, cap top 119.67. Rows 44 px + a 1 px line (the first 139.33 → 183.33): 11 above the 20 px line, 13 below. Labels 14 / 400 secondary; values 14 / 500 primary, right-aligned; IDs 13 / 400 tabular, secondary. Web bundle 64.33 tall, two 19.333 px lines, max 176 px wide, breaking only after a hyphen (inserted break points: Unicode forbids a break between "-" and a digit) |
+| Appearance card | 538.667 → 825.333. "Appearance" 14 / 400, cap 557.33; BETA pill 38.9 × 17 at x 121.4, 1 px below the title's line box, #1C2448 / #EAF0FF, text 10.22 / 600 / +0.045em #9EB5FB / #2E4AA3, 6 px in. Subline 12 / 400, line 16.333, cap 577 |
+| Segmented | Track 33 → 327 × 601.667 → 649.667, fully round, #20242F / #F7F8FC, padding 6 / 4. Segments 95.333 × 36; the selected pill is its segment inset 2 px left and right (Dark: 229.667 → 321), #363A46 / white with a shadow underneath. Labels 13 / 600, #EDEEF3 (dark) / #13161F, selected #384BD5 (light). A 1 × 26 #3A3E49 line between two unselected segments only |
+| Toggle rows | A 1 px line across the card at 661.667 and 743. Title 14 / 400 (cap 681.33, 762.67), subline 12 / 400 two lines, text column ends at x 260. Switch 51 × 31 at x 276, y 687 (25.333 into the row), #4A5CE6 / #384BD5; knob 24 white, 3 px from the end, its shadow falling to the lower left |
+| Links card | 841.333 → 1074.667, rows 77 (lines at 919.667, 996.667). Tile 38 × 38 at x 33, radius 12, centred on the whole row, #F1F1FB with #384BD5 icons (`accessibility` 22, `gauge` 21), danger #FFEDED with #F55B73 (`trash` 20). Title 14 / 400 #13161F from x 83, subline 12 / 400 #6D717D (16.333) wrapping before x 304; CaretRight bold 14.77 #C2C2C2 ending at x 322 |
+| Page end | 24 px under the last card (9.333 + the 14.667 px gesture bar), so the page scrolls exactly 298.667 |
+
+**Visual result (Linux image, real DPR 3, 2026-11-09), private fixture.** Settings dark **0.93%**, light **1.04%**. Every region's box is within 1 device px except the BETA text box (0.67 px narrower; region 4.7%). The rest is text edges (row labels 1.3%, link text 2.1%).

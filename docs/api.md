@@ -46,7 +46,7 @@
 | POST | `/auth/login` | public · rate-limited | `{ email, password, consent }` | `200 AuthResult` · `401 INVALID_CREDENTIALS` (same for unknown email, wrong password or disabled user) |
 | POST | `/auth/otp/request` | public · rate-limited | `{ channel: 'email'\|'sms'\|'whatsapp', identifier, purpose: 'login', consent }`. For sms/whatsapp, `identifier` is a 10-digit Indian number or E.164 | `202 { sent: true, resendAfter: 30 }`, always the same (no enumeration) · `429` during cooldown |
 | POST | `/auth/otp/verify` | public · rate-limited | `{ channel, identifier, code: /^\d{4}$/, consent }` | `200 AuthResult` · `401 INVALID_CREDENTIALS` (wrong or expired code; locked after 5 tries) |
-| POST | `/auth/refresh` | cookie | – | `200 AuthResult` (cookie rotated) · `401`; reuse detected revokes the whole session family |
+| POST | `/auth/refresh` | cookie | – | `200 AuthResult` (cookie rotated) · `401`; reuse detected revokes the whole session family. For 10 s after a rotation the immediately previous token is accepted once more and rotates normally (a page load cut off mid-rotation); a second use of it, or any older token, is reuse. `/auth/logout` also accepts an older token of the session |
 | POST | `/auth/logout` | cookie | – | `204`. Session revoked, cookie cleared |
 | POST | `/auth/password/forgot` | public · rate-limited | `{ email }` | `202 { sent: true, resendAfter: 30 }`, always |
 | POST | `/auth/password/reset` | public · rate-limited | `{ email, code, newPassword }` | `204`. All sessions revoked · `401 INVALID_CREDENTIALS` |

@@ -70,7 +70,7 @@ My Profile matches `07-profile.png` (1.14%) and `07-profile(1).png` (1.11%). Not
 
 | What | Where | How it's built | Replace when |
 |---|---|---|---|
-| Rows that open **ComingSoon** for now | My Information (Phase 1 placeholder), Change Password and Privacy & Consent (supporting flows, a later checkpoint), Settings (its own checkpoint), About (no screenshot) | The shared ComingSoon screen with the row's title | Each screen as it's built |
+| Rows that open **ComingSoon** for now | My Information (Phase 1 placeholder), About (no screenshot) | The shared ComingSoon screen with the row's title | Each screen as it's built |
 | **Photo upload** states | Camera badge | No preview or progress UI: the new photo appears when the upload ends. A refused file (type, size) shows the API's message in small danger-coloured text under the avatar | A screenshot of an upload |
 | **Sign Out** confirmation | Sign Out row | None: it signs out at once, as the screenshot offers no dialog | A screenshot of a confirm step, if there is one |
 | A user **without a room**, phone or email | Profile card | That line is left out | A screenshot of such a profile |
@@ -107,3 +107,17 @@ The Entry Pass matches `QR_entry-pass.png` (0.70%). Not in the screenshot:
 | **Continue as** | `/choose`, accounts with two or more roles | Title, one line of explanation, one card per app the account has (icon tile, name, one line, chevron), Sign out | free design |
 | **Nothing here yet** | `/no-access`, an account whose roles have no app yet (mess staff) | Title, one line, Sign out | free design |
 | **"Switch role" row** in My Profile | Student app, **only** for accounts with two or more roles | One more row at the end of the APP list, the same row style, Phosphor ArrowsLeftRight 20 in the tile; opens "Continue as". Single-role students (the screenshot's case) don't get it, so their My Profile is unchanged (visual test 1.14% / 1.11%) | not in the screenshot |
+
+## Settings, Change Password, Privacy & Consent (step 6, 2026-11-09)
+
+Settings matches `settings-dark.png` (0.93%) and `settings-light.png` (1.04%). Not in the screenshots:
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| Switches **off** | Haptic feedback, Sounds | Knob on the left, track #3A3E49 (dark) / #D5D8E0 (light), provisional | A screenshot with a switch off |
+| Segment **separator in light** | Appearance | #E2E4EA, provisional (the light screenshot has Light selected, so none shows) | A light screenshot with System or Dark selected |
+| The link card **in dark** | Accessibility, Check connection, Clear stored data | My Profile's dark row style: tile #1E2140 with #8B96FF icons, the danger tile and colour, chevron #494F5D | A dark screenshot scrolled to the end |
+| **Accessibility**, **Check connection** | Their rows | The shared Coming soon page (Phase 1 scope) | Their screenshots |
+| **"Clear stored data?"** confirm | Clear stored data row | A plain dialog: title, one line, Cancel and "Clear and sign out" (danger) | A screenshot of the real confirm |
+| **Change Password** screen | `/profile/password` | Settings header and card; three password fields (current, new, again) on the segmented-track colour, a rules line, "Show passwords", a primary button; "Password changed" card with Done | A Change Password screenshot |
+| **Privacy & Consent** screen | `/profile/privacy` | A card with the consent statement, when it was given and the policy version; a History card when there's more than one record; "Withdraw consent" (danger) with a confirm | A Privacy & Consent screenshot |
