@@ -1,0 +1,30 @@
+/* Standard in-app header, measured on settings-dark.png: back chevron (CaretLeft bold 18.01, ink from x 20),
+ * title 22/500 (ink from x 55), 1 px divider at 100 px from the top of the screen (status bar included). */
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(var(--safe-top) + 74px);
+  padding-top: var(--safe-top);
+  box-shadow: inset 0 -1px 0 var(--divider);
+}
+
+.back {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-1);
+}
+
+.title {
+  margin: 0 0 0 7px;
+  color: var(--text-1);
+  font-size: var(--fs-page-title);
+  font-weight: 500;
+  line-height: 28px;
+}

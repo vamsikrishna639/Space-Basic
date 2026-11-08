@@ -58,6 +58,21 @@ button {
   background: var(--c-page);
 }
 
+/* One in-app screen: full height (the app draws under the status and gesture bars), themed. */
+.app-screen {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: var(--app-height, 100dvh);
+  margin: 0 auto;
+  background: var(--app-bg);
+  color: var(--text-1);
+}
+
+h2 {
+  margin: 0;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

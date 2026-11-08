@@ -1,0 +1,13 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.line {
+  margin: auto 0;
+  padding: 0 var(--in-gutter);
+  color: var(--text-2);
+  font-size: var(--fs-chip);
+  font-weight: 400;
+  text-align: center;
+}

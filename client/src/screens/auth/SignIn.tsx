@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
 import { formatIndianMobile } from '@spacebasic/shared';
+import { ApiError } from '../../api/client';
+import { useAuth } from '../../auth/AuthContext';
 import { BackButton } from '../../components/BackButton';
 import { Button } from '../../components/Button';
 import { ConsentCard } from '../../components/ConsentCard';
@@ -25,13 +27,32 @@ export function SignIn() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [mobile, setMobile] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
 
   const parsed = parseSignInMethod(method);
   if (!parsed) return <Navigate to="/sign-in/email" replace />;
   const m: SignInMethod = parsed;
 
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!canSubmit(consent) || busy) return;
+    if (m !== 'email') return; // the mobile OTP flow arrives at the next checkpoint (docs/not-from-reference.md)
+    setBusy(true);
+    setError(null);
+    try {
+      await login(email.trim(), password);
+      // Signed in: the router sends the user to Home.
+    } catch (err) {
+      const apiErr = err instanceof ApiError ? err : null;
+      setError(apiErr?.fields?.email ?? apiErr?.fields?.password ?? apiErr?.message ?? 'Something went wrong. Please try again.');
+      setBusy(false);
+    }
+  }
+
   return (
-    <form className={`screen ${s.screen}`} noValidate onSubmit={(e) => e.preventDefault()}>
+    <form className={`screen ${s.screen}`} noValidate onSubmit={submit}>
       <BackButton onClick={() => navigate('/')} />
       <h1 className={s.title}>Sign in</h1>
       <p className={s.sub}>
@@ -98,8 +119,9 @@ export function SignIn() {
       <a className={s.privacy} href="/privacy-policy">Read the Privacy Policy</a>
 
       <div className={s.submit}>
-        <Button type="submit" variant="primary" disabled={!canSubmit(consent)}>{m === 'email' ? 'Log in' : 'Send code'}</Button>
+        <Button type="submit" variant="primary" disabled={!canSubmit(consent) || busy} aria-busy={busy}>{m === 'email' ? 'Log in' : 'Send code'}</Button>
         {!consent && <p className={s.helper}>Tick the consent box above to continue</p>}
+        {consent && error && <p className={s.helper} role="alert">{error}</p>}
       </div>
     </form>
   );

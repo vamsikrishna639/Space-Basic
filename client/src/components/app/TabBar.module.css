@@ -1,0 +1,88 @@
+/* Bottom tab bar (04-home.png): 76.333 px of content above the gesture bar, a 2 device px top border, four 86 px
+ * columns inside 8 px padding. The active tab has a 28 x 3 indicator under the border and the accent colour. */
+.bar {
+  position: fixed;
+  z-index: 10;
+  left: 50%;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  max-width: 480px;
+  height: calc(76.333px + var(--safe-bottom));
+  padding: 0 8px var(--safe-bottom);
+  transform: translateX(-50%);
+  background: var(--tabbar-bg);
+  box-shadow: inset 0 0.6667px 0 var(--tabbar-border);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 19.333px;
+  color: var(--tab-inactive);
+  font-size: var(--fs-tab);
+  font-weight: 400;
+  line-height: 14px;
+  text-decoration: none;
+}
+
+.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  top: 0.6667px;
+  left: calc(50% - 14px);
+  width: 28px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--indicator);
+}
+
+.icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+}
+
+.label {
+  margin-top: 1.333px;
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  top: -2.667px;
+  left: 14px;
+  min-width: 24.667px;
+  height: 13px;
+  padding: 0 4px;
+  border-radius: 6.5px;
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 13px;
+  text-align: center;
+}
+
+.avatarRing {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 0.6667px var(--avatar-ring);
+}
+
+.active .avatarRing {
+  box-shadow: inset 0 0 0 1.3333px var(--accent);
+}

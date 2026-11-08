@@ -55,10 +55,72 @@
   --radius-pill: 999px;
 }
 
-/* In-app themes (Home, Profile, Settings...). Values measured so far; the rest arrive with those screens. */
-:root[data-theme='dark'] {
-  --surface-card: #181b24;
+/* ---- in-app (Home, Notifications, Profile, Settings...) -------------------------------------------------------
+ * The phone draws the status bar and gesture bar over the app (the screenshots are edge-to-edge), so the app pads
+ * by the safe-area insets. Visual tests set --safe-top / --safe-bottom to the screenshot's bars (26 / 14.667 px).
+ */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --in-gutter: 16px;            /* 48 device px: cards, chips, section labels */
+
+  /* Home header: the same in both themes (measured on the dark Home screenshot). */
+  --hero-top: #3d4fd7;
+  --hero-bottom: #2f3ebf;
+  --hero-name: #b1baf9;         /* institution name */
+  --hero-text: #ffffff;         /* greeting */
+  --hero-date: #b7bdf8;
+
+  /* in-app type scale (fontfit.ts, h-* samples) */
+  --fs-greeting: 23.6px;        /* 400 */
+  --fs-chip: 14px;              /* 500 */
+  --fs-date: 13px;              /* 400 */
+  --fs-tile: 11.9px;            /* 400 */
+  --fs-tile-long: 9.6px;        /* 400: a one-word label too long for its column ("Announceme/nts") */
+  --fs-tab: 11.1px;             /* 400; 600 when active */
+  --fs-section: 10.59px;        /* 600, +0.11em */
+  --fs-institution: 10.26px;    /* 700, +0.135em */
+  --fs-page-title: 22px;        /* 500 (Settings header, §2) */
 }
+
+:root[data-theme='dark'] {
+  --app-bg: #101116;
+  --surface-card: #181b24;
+  --card-border: #2a2d36;
+  --text-1: #edeef3;
+  --text-2: #a3a9b7;
+  --text-section: #8a909f;
+  --divider: #232429;
+  --tile-bg: #1e2140;
+  --accent: #8b96ff;            /* app and chip icons, active tab */
+  --tabbar-bg: #181b24;
+  --tabbar-border: #2a2d34;
+  --tab-inactive: #a4a9b7;
+  --indicator: #4a5ce6;
+  --badge-bg: #ff6a7d;
+  --badge-text: #1a121d;
+  --avatar-ring: #3f424b;
+  --chip-shadow: rgb(0 0 0 / 0.35);
+}
+
+/* Light: page, card, border and text are measured on settings-light.png. The rest is PROVISIONAL until a light
+ * Home screenshot arrives (docs/not-from-reference.md). */
 :root[data-theme='light'] {
+  --app-bg: #f5f6fa;
   --surface-card: #ffffff;
+  --card-border: #eeeff4;
+  --text-1: #13161f;
+  --text-2: #6d717d;
+  --text-section: #6d717d;      /* provisional */
+  --divider: #e8e7ec;           /* provisional */
+  --tile-bg: #eceefb;           /* provisional */
+  --accent: #384bd5;            /* provisional (the brand primary) */
+  --tabbar-bg: #ffffff;         /* provisional */
+  --tabbar-border: #e8e7ec;     /* provisional */
+  --tab-inactive: #6d717d;      /* provisional */
+  --indicator: #4a5ce6;
+  --badge-bg: #ff6a7d;
+  --badge-text: #1a121d;
+  --avatar-ring: #e8e7ec;       /* provisional */
+  --chip-shadow: rgb(19 22 31 / 0.08); /* provisional */
 }
