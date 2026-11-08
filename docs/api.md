@@ -205,6 +205,18 @@ The QR token is a JWT signed with `QR_TOKEN_SECRET`. Claims: `{ sub: studentId, 
 | POST / PATCH / DELETE | `/support/contacts[/:id]` | `support:manage` | Contact fields | `201` / `200` / `204` |
 | POST / PATCH / DELETE | `/support/faqs[/:id]` | `support:manage` | FAQ fields | `201` / `200` / `204` |
 
+**Built behaviour (Support module, 2026-11-08):**
+- **Gate and caching:** the whole router sits behind `requireModule('support')`, and every response is `no-store`. Reads need `support:read` (every Phase 1 role); writes need `support:manage` (institution admins).
+- **Contact:** `{ id, group: 'hostel_office'|'spacebasic', label (≤ 80), phone|null (E.164; "98765 43210" is accepted and normalised), email|null (lower-cased), hours|null (≤ 80), order }`.
+  - A contact needs a phone or an email, on create and after every PATCH (`400`, `fields.phone`). `null` in a PATCH clears a field; an empty PATCH is `400`.
+  - At most 20 contacts per group (`409`).
+- **FAQ:** `{ id, question (≤ 200), answer (≤ 4000, plain text), category, order, published }`. Categories in display order: `leave`, `tickets`, `announcements`, `signing_in`, `other`.
+  - `GET /support/faqs` lists published entries sorted by category display order, then `order`. `?category=` filters. `?includeUnpublished=true` also lists drafts and needs `support:manage` (`403` otherwise).
+  - `published` defaults to `true`. At most 200 per institution (`409`).
+- **Order:** a new entry, or one moved to another group/category without an explicit `order`, goes to the end of that group/category.
+- **Errors:** another institution's id, or a deleted one, is `404`. A malformed id is `400`.
+- **Audit:** `support.contact_create|update|delete` and `support.faq_create|update|delete`; updates record the changed field names.
+
 ## Institutions (`/institutions`)
 
 | Method | Path | Permission | Request | Response |
