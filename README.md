@@ -30,7 +30,19 @@ On Windows PowerShell, set environment variables like this first: `$env:LIB='luc
 
 The runner starts Chromium with `--font-render-hinting=none`, because Android doesn't hint glyphs. Measured on the same text samples, this lowers the mean text mismatch from 24.8% to 8.6%. Don't change it, or numbers stop being comparable across runs.
 
-Results go to `tools/ui-analysis/out/linux/`: comparison sheets (reference, render and diff side by side) plus JSON. The per-screen Playwright tests under `client/tests/visual/` will use the same image once the screens exist.
+Results go to `tools/ui-analysis/out/linux/`: comparison sheets (reference, render and diff side by side) plus JSON.
+
+### Per-screen visual regression
+
+```bash
+npm run test:visual                  # build client/dist, then diff every screen in Docker
+npm run test:visual -- welcome       # one or more screen ids, comma-separated
+```
+
+- Screens are listed in `client/tests/visual/screens.ts` (route, reference file, the app band to compare, named regions).
+- The runner (`tools/ui-analysis/src/visual.ts`) serves `client/dist` inside the container, renders at 360 CSS px with a real device scale factor of 3 (`--force-device-scale-factor=3`; Playwright's emulated DPR snaps to CSS px, unlike a phone), crops both images to the app band (no status or navigation bar), and runs pixelmatch.
+- Output (gitignored) in `client/tests/visual/__output__/`: `<id>-sheet.png` (reference, render and diff side by side), `<id>-render.png`, `<id>-diff.png` and `results.json`. The console also prints each named element's offset from the reference in CSS px.
+- Pass is under 1%; the ceiling is 3% when only text or edge rendering differs. The command fails above 3%.
 
 ### Private data
 

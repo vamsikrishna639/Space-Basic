@@ -4,7 +4,7 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
 
 ## Status
 
-- **Current phase (2026-11-08):** Phase 1, step 5 (backend modules). Steps 2–4 are written in `docs/architecture.md`, `docs/schemas.md` and `docs/api.md` (go mode, see `docs/decisions.md`). Modules built and tested: **Auth**, **Users/Profile**, **Consent**, **Hostel/Floor/Room**, **Notifications**, **QR/Attendance**, **Support/FAQ** (waiting at its checkpoint; all Phase 1 backend modules are now built). Next: step 6, frontend. No `client/` code yet. The workflow below is superseded by go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints").
+- **Current phase (2026-11-08):** Phase 1, step 6 (frontend). All Phase 1 backend modules are built and committed: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ (steps 2–4 docs in `docs/architecture.md`, `docs/schemas.md`, `docs/api.md`). Frontend first checkpoint: `client/` workspace, tokens, font, visual-test harness (`npm run test:visual`), and the **Welcome** and **Sign in** (Email, Mobile) screens, waiting at the checkpoint. Next: Home, plus wiring sign-in to the API and the OTP and Forgot password flows. The workflow below is superseded by go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints").
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture

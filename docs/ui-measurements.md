@@ -65,6 +65,19 @@ The sheets are `font-comparison.png` and `font-pjs-diff.png`.
 
 Measured sizes are within ±0.15 px of the values above. Each one gets a final check in its screen's visual test.
 
+**Auth screens (fitted 2026-11-08, `fontfit.ts` samples `w-*` and `a-*`).** The fitter matches ink mass, so it reports in-between weights (430–470). The app uses the nearest standard weight, and the size is then corrected to the ink width at that weight (a heavier weight is wider, so 12.3 → 12.2 px at 500).
+
+| Role (sample) | Size (CSS px) | Weight | Colour |
+|---|---|---|---|
+| "Sign in" | 25.4 | 500 | #13161F |
+| Sign in subtitle | 14.12, line 21.333 | 400 | #6D717D |
+| Buttons, input text and placeholders | 15.1 | 500 | white / #384BD5 / #666666 (disabled); placeholder #6B717F |
+| Segmented labels "Email" / "Mobile" | 13.2 | 500 | #13161F on, #6D717D off |
+| Field labels, links ("Send it on WhatsApp instead", "Forgot password?") | 12.2 | 500 | #13161F; links #3C4DC4 |
+| Consent text, helper | 12.25, line 18.333 | 400 | #6D717D; "SpaceBasic" #13161F 500 |
+| "Read the Privacy Policy" (underlined) | 12.25 | 500 | #13161F |
+| Welcome footer | 11.3 | 500 | #6D717D |
+
 ## 3. Welcome logo pill (FINAL: supplied logo accepted, ~4% known mismatch)
 
 **Decision (user, 2026-11-07).** Use the supplied `logo-spacebasic.png` as-is, with no recolouring or reshaping. Removing the white background is allowed. About 4% mismatch on the logo pill is accepted. If the original SVG turns up, it replaces the file with no code change.
@@ -409,10 +422,62 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `avatar-measure.ts` | §5 / §7 Profile avatar circle and Home tab-bar avatar geometry | No |
 | `avatar-v2.ts` | §5 `avatar-default.png` | **Yes**. Byte-identical on re-run |
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
+| `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
+| `visual.ts` | Per-screen visual regression (§9). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
 
 Shared modules:
 - `lib.ts`: PNG, ink, diff and browser helpers
 - `icon-specs.ts`: icon crop boxes
 - `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
 
-One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`.
+One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`.
+
+`fontfit.ts` reads the Settings device ID from the gitignored `tools/ui-analysis/private/screenshot-text.json` (`{ "deviceId": "..." }`); without it, those samples are skipped.
+
+## 9. Auth screens: Welcome and Sign in (step 6, first checkpoint)
+
+Measured with `probe.ts` (sub-pixel box edges, ink bands and stroke colours) and `fontfit.ts`, then corrected from the per-element report of `visual.ts`. Positions are CSS px from the top of the **app band**: the screenshot below the Android status bar (device rows 0–77) and above the navigation bar (rows 2296+). The band is 2218 device px = **739.333 CSS px** tall.
+
+**Common**
+- Every full-width box spans device px 57 → 1024: left gutter 19 px, right 18.667 px.
+- Borders are 2 device px (#E8E7EC segmented track and consent card, #DBDCE0 inputs) and 4 device px (#E2E2E2 outline button, #C2C2C2 checkbox), drawn as inset rings (`box-shadow: inset 0 0 0 0.6667px`), which are exact on every renderer (decisions.md).
+- Fills: #F7F8FC (inputs, segmented track, consent card, back button). Disabled button #F0F0F0 with #666666 text.
+
+**Welcome (01)**
+
+| Element | Measurement |
+|---|---|
+| Hero panel | #384BD5, height 310.667 (932 device px), bottom corners radius 28 (fitted at 5 columns) |
+| Circle | #4658D8, centre (295.15, 43.78), r 122.16 |
+| Pill | left 19, top 55.667, 193 × 50.667, white. Logo with its own proportions (`object-fit: contain`) centred in the measured ink box 32.333 × 28.333 at (37.667, 66.667), so it renders 30.45 × 28.333; wordmark as §3 |
+| Badges | 58.333 (175 device px). Left 19 / 88.667 / 158.333 / 228, top 222 / 237 / 222 / 237. Mint #A9E2CF, yellow #FED981, sky #AAD3E9, pink #FFB4C0. White icons centred: bed and utensils cut-outs (25, 27 px), Phosphor Wallet (29.57; its drawing sits 0.667 px right and high, corrected) and ChatCircleDots (28.14) |
+| Headline | ink top 366.67, 30/500/−0.03em, line 35 |
+| Subtitle | ink top 447.0, 17/400, line 25.5; it wraps after "and", so the column is about 210 px wide |
+| Primary button | top 533.0, 49 tall, glow `0 6px 14px rgb(56 75 213 / 0.3)` (approximate: see §9 residuals) |
+| Outline button | top 593.333 (gap 11.333), 4 device px #E2E2E2 ring, label #384BD5 |
+| Footer | "Privacy Policy · Terms & Conditions", ink top 686.0; the gaps around "·" are 2 px wider than a space |
+
+**Sign in (02 Mobile, 03 Email)**
+
+| Element | Measurement |
+|---|---|
+| Back button | circle 41.333 at (11.333, 33.0), #F7F8FC; CaretLeft bold 17.09 centred (Phosphor's caret needs +1 px x) |
+| Title / subtitle | ink tops 88.33 / 126.33 |
+| Segmented track | top 165.0 (Mobile) / 186.0 (Email), 46.5 tall, radius 14. Selected pill white, 4.333 inside, 4 px gap between segments, shadow `0 2px 4px rgb(19 22 31 / 0.08)` |
+| Field | label 18 px row, then the box 4.1 below; box 42.833 tall (128.5 device px), radius 14, text inset 15.333 |
+| Password row | 13.333 px taller than a plain label row (the "Forgot password?" tap area); the link sits 2 px in from the right gutter |
+| Consent card | top 373.333 (Mobile), 115.667 tall with five lines; checkbox 18.667, radius 5.333, at (34.667, 387.0); text from x 65.67 |
+| Submit | 49 tall, pushed to the bottom (Mobile top 621.667); helper ink top 685.67 |
+
+**Visual results (Linux image, real DPR 3, 2026-11-08).** Welcome **0.93%** (pass), Sign in Mobile **1.28%**, Sign in Email **1.59%** (within the 3% ceiling). Every measured element is within 2 device px of the reference.
+
+| Region | Mismatch |
+|---|---|
+| Logo pill, 591 × 164 device px (stretched logo, emulated DPR) | 6.47% |
+| Logo pill, logo with `object-fit: contain` (emulated DPR) | 6.59% |
+| **Logo pill, `contain`, real DPR (final)** | **4.46%** (logo mark alone 14.97%) |
+
+What remains:
+1. **Glyph edges.** Android and Linux rasterise the same font differently; on the links and labels this is most of the region's mismatch (for example 12.5% on "Send it on WhatsApp instead", with position and size matching).
+2. **Circle and pill edges** (anti-aliasing), and the logo mark: the supplied file differs from the app's mark (§3, accepted).
+3. **The primary button's glow** is an approximation: the reference's is about 10 px left, 15 px right, 6 px above.
