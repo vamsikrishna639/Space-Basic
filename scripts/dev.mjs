@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 // `npm run dev`: start the API server and the Vite client together, with prefixed output.
 // No extra dependency: plain child processes. Ctrl+C stops both.
+//   --relax-rate-limits   (or `npm run dev:relaxed`) sets RELAX_RATE_LIMITS=true for the API: raised sign-in and code
+//                         limits for repeated local smoke runs. Development only; the API refuses it in production.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
+const relaxed = process.argv.includes('--relax-rate-limits');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const procs = [
   { name: 'db    ', color: 33, args: ['run', 'dev:db', '-w', 'server'] },
@@ -14,7 +17,7 @@ const procs = [
     : []),
 ];
 const children = procs.map(({ name, color, args }) => {
-  const child = spawn(npm, args, { stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32', env: { ...process.env, FORCE_COLOR: '1' } });
+  const child = spawn(npm, args, { stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32', env: { ...process.env, FORCE_COLOR: '1', ...(relaxed ? { RELAX_RATE_LIMITS: 'true' } : {}) } });
   const prefix = `\x1b[${color}m[${name}]\x1b[0m `;
   const pipe = (stream, out) => {
     let buf = '';

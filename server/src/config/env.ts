@@ -37,6 +37,7 @@ const rawSchema = z.object({
   GMAIL_API_REFRESH_TOKEN: optionalString,
   GMAIL_API_SENDER: optionalString,
   BCRYPT_COST: z.coerce.number().int().min(4).max(15).default(12),
+  RELAX_RATE_LIMITS: boolish,
 });
 
 export interface Env {
@@ -60,6 +61,8 @@ export interface Env {
   GMAIL_API_REFRESH_TOKEN?: string;
   GMAIL_API_SENDER?: string;
   BCRYPT_COST: number;
+  /** Development and tests only: raise the sign-in and code rate limits (core/middleware/rateLimit.ts). */
+  RELAX_RATE_LIMITS: boolean;
   /** Secrets that were generated for this process because none were configured (development/test only). */
   generatedSecrets: string[];
   warnings: string[];
@@ -110,6 +113,10 @@ export function parseEnv(raw: NodeJS.ProcessEnv, devSecretStore?: (name: string)
     warnings.push('ALLOW_CONSOLE_OTP=true in PRODUCTION: one-time codes are printed to the server log. Demo deployments with FAKE users only!');
   }
 
+  // Relaxed sign-in and code limits exist for repeated local smoke runs. Production limits never change.
+  if (isProd && v.RELAX_RATE_LIMITS) problems.push('RELAX_RATE_LIMITS is for development and tests only and is refused when NODE_ENV=production');
+  else if (v.RELAX_RATE_LIMITS) warnings.push('RELAX_RATE_LIMITS=true: sign-in and code rate limits are raised (development/test only)');
+
   const origins = v.APP_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean);
   if (isProd && origins.some((o) => !o.startsWith('https://'))) problems.push('APP_ORIGINS must be https:// origins in production');
 
@@ -136,6 +143,7 @@ export function parseEnv(raw: NodeJS.ProcessEnv, devSecretStore?: (name: string)
     GMAIL_API_REFRESH_TOKEN: v.GMAIL_API_REFRESH_TOKEN,
     GMAIL_API_SENDER: v.GMAIL_API_SENDER,
     BCRYPT_COST: v.BCRYPT_COST,
+    RELAX_RATE_LIMITS: v.RELAX_RATE_LIMITS,
     generatedSecrets,
     warnings,
   };

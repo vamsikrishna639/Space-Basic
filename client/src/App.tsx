@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useParams } from 'react-router';
 import { MODULE_KEYS, MODULES, type ModuleKey } from '@spacebasic/shared';
-import { AuthProvider, useAuth } from './auth/AuthContext';
+import { AuthProvider, useAuth, useMe } from './auth/AuthContext';
+import { areasFor, landingFor, type Area } from './auth/areas';
 import { TabBar } from './components/app/TabBar';
 import { Welcome } from './screens/auth/Welcome';
 import { SignIn } from './screens/auth/SignIn';
@@ -13,12 +14,18 @@ import { CommonQuestions, ContactUs } from './screens/support/SupportLists';
 import { ComingSoon } from './screens/app/ComingSoon';
 import { Profile } from './screens/profile/Profile';
 import { EntryPass } from './screens/profile/EntryPass';
+import { ChooseArea, NoAccess } from './screens/app/ChooseArea';
+import { AdminHome, ADMIN_NAV, WardenHome } from './screens/staff/StaffHomes';
+import { StaffSoon } from './screens/staff/StaffLayout';
 
-/** Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes straight to Home. */
+/**
+ * Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes to their own app:
+ * students to Home, wardens and admins to theirs, two roles to "Continue as" (auth/areas.ts).
+ */
 function PublicOnly() {
-  const { status } = useAuth();
+  const { status, me } = useAuth();
   if (status === 'loading') return <div className="screen" aria-busy="true" />;
-  return status === 'signedIn' ? <Navigate to="/home" replace /> : <Outlet />;
+  return status === 'signedIn' && me ? <Navigate to={landingFor(me)} replace /> : <Outlet />;
 }
 
 /** Signed-in area. While the session is being restored (the API may be waking up), a plain page shows. */
@@ -26,6 +33,15 @@ function RequireAuth() {
   const { status } = useAuth();
   if (status === 'loading') return <div className="app-screen" aria-busy="true" />;
   return status === 'signedIn' ? <Outlet /> : <Navigate to="/" replace />;
+}
+
+/**
+ * One app per role: a route outside the user's areas sends them to their own landing page. This only decides what
+ * is SHOWN; the server refuses the data anyway (server/src/test/role-separation.test.ts).
+ */
+function RequireArea({ area }: { area: Area }) {
+  const me = useMe();
+  return areasFor(me.roles).includes(area) ? <Outlet /> : <Navigate to={landingFor(me)} replace />;
 }
 
 /** Tab screens share the bottom tab bar. */
@@ -60,25 +76,57 @@ const router = createBrowserRouter([
   {
     element: <RequireAuth />,
     children: [
+      // ---- student app (strict pixel-perfect screens) ----
       {
-        element: <Tabs />,
+        element: <RequireArea area="student" />,
         children: [
-          { path: '/home', element: <Home /> },
-          { path: '/notifications', element: <Notifications /> },
-          { path: '/support', element: <Help /> },
-          // The Entry Pass is a sheet over My Profile, so the profile stays rendered under it.
-          { path: '/profile', element: <Profile />, children: [{ path: 'entry-pass', element: <EntryPass /> }] },
+          {
+            element: <Tabs />,
+            children: [
+              { path: '/home', element: <Home /> },
+              { path: '/notifications', element: <Notifications /> },
+              { path: '/support', element: <Help /> },
+              // The Entry Pass is a sheet over My Profile, so the profile stays rendered under it.
+              { path: '/profile', element: <Profile />, children: [{ path: 'entry-pass', element: <EntryPass /> }] },
+            ],
+          },
+          { path: '/support/contact', element: <ContactUs /> },
+          // My Profile rows whose screens come at later checkpoints (docs/not-from-reference.md).
+          { path: '/profile/information', element: <ComingSoon title="My Information" /> },
+          { path: '/profile/password', element: <ComingSoon title="Change Password" /> },
+          { path: '/profile/privacy', element: <ComingSoon title="Privacy & Consent" /> },
+          { path: '/settings', element: <ComingSoon title="Settings" /> },
+          { path: '/about', element: <ComingSoon title="About" /> },
+          { path: '/support/faqs', element: <CommonQuestions /> },
+          { path: '/m/:module', element: <ModuleScreen /> },
         ],
       },
-      { path: '/support/contact', element: <ContactUs /> },
-      // My Profile rows whose screens come at later checkpoints (docs/not-from-reference.md).
-      { path: '/profile/information', element: <ComingSoon title="My Information" /> },
-      { path: '/profile/password', element: <ComingSoon title="Change Password" /> },
-      { path: '/profile/privacy', element: <ComingSoon title="Privacy & Consent" /> },
-      { path: '/settings', element: <ComingSoon title="Settings" /> },
-      { path: '/about', element: <ComingSoon title="About" /> },
-      { path: '/support/faqs', element: <CommonQuestions /> },
-      { path: '/m/:module', element: <ModuleScreen /> },
+      // ---- warden app (free design, phone-first) ----
+      {
+        element: <RequireArea area="warden" />,
+        children: [
+          { path: '/warden', element: <WardenHome /> },
+          { path: '/warden/scan', element: <StaffSoon area="warden" title="Scan entry passes" back="/warden" /> },
+          { path: '/warden/attendance', element: <StaffSoon area="warden" title="Today's attendance" back="/warden" /> },
+          { path: '/warden/lookup', element: <StaffSoon area="warden" title="Find a student or room" back="/warden" /> },
+          { path: '/warden/*', element: <Navigate to="/warden" replace /> },
+        ],
+      },
+      // ---- admin app (free design, desktop-friendly) ----
+      {
+        element: <RequireArea area="admin" />,
+        children: [
+          { path: '/admin', element: <AdminHome /> },
+          { path: '/admin/users', element: <StaffSoon area="admin" title="Users" nav={ADMIN_NAV} /> },
+          { path: '/admin/hostel', element: <StaffSoon area="admin" title="Hostel" nav={ADMIN_NAV} /> },
+          { path: '/admin/support', element: <StaffSoon area="admin" title="Support" nav={ADMIN_NAV} /> },
+          { path: '/admin/audit', element: <StaffSoon area="admin" title="Audit log" nav={ADMIN_NAV} /> },
+          { path: '/admin/*', element: <Navigate to="/admin" replace /> },
+        ],
+      },
+      // ---- every signed-in user ----
+      { path: '/choose', element: <ChooseArea /> },
+      { path: '/no-access', element: <NoAccess /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

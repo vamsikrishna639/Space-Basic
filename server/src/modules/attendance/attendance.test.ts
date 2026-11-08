@@ -122,6 +122,14 @@ describe('POST /attendance/scan', () => {
     expect(await AttendanceLogModel.countDocuments({ institutionId: inst._id })).toBe(1);
   });
 
+  it('the single-use record is the database: two scans of one code at the same moment log it once', async () => {
+    const { inst, student, warden, admin } = await world();
+    const token = await qrToken(student.token);
+    const results = await Promise.all([scan(warden.token, token), scan(admin.token, token)]);
+    expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
+    expect(await AttendanceLogModel.countDocuments({ institutionId: inst._id })).toBe(1);
+  });
+
   it('a second scan of the same student within 5 minutes is a double tap (409); after that it counts again', async () => {
     const { inst, student, warden } = await world();
     expect((await scan(warden.token, await qrToken(student.token))).status).toBe(201);

@@ -13,13 +13,12 @@ import { UserModel, type User } from '../users/user.model';
 import { buildMe } from '../users/me.service';
 import { currentConsent, recordConsentAtSignIn } from '../consent/consent.service';
 import { OtpCodeModel, SessionModel, type OtpPurpose, type RevokeReason, type Session } from './auth.models';
+import { signInLimits } from '../../core/middleware/rateLimit';
 
 export const REFRESH_SLIDING_MS = 30 * 24 * 3600 * 1000; // 30 days, extended on each use
 export const REFRESH_ABSOLUTE_MS = 90 * 24 * 3600 * 1000; // hard limit
 export const REFRESH_RACE_GRACE_MS = 15_000; // two tabs refreshing at once is not token theft
 const LOGIN_FAIL_WINDOW_MS = 15 * 60_000;
-const LOGIN_FAIL_LIMIT = 10;
-const OTP_HOURLY_LIMIT = 5;
 
 export interface RequestMeta { ip?: string; userAgent?: string; requestId?: string }
 export interface IssuedSession { result: AuthResult; refreshToken: string; expiresAt: Date }
@@ -75,7 +74,7 @@ export async function revokeAllSessions(
 export async function loginWithPassword(email: string, password: string, meta: RequestMeta): Promise<IssuedSession> {
   const failKey = `login:fail:${email}`;
   const fails = await peek(failKey);
-  if (fails.count >= LOGIN_FAIL_LIMIT) throw errors.rateLimited(fails.retryAfterSeconds);
+  if (fails.count >= signInLimits().loginFailsPerEmail) throw errors.rateLimited(fails.retryAfterSeconds);
 
   const user = await findLoginCandidate('email', email).lean();
   const ok = await verifyPassword(password, user?.status === 'active' ? user.passwordHash : null);
@@ -106,7 +105,7 @@ export async function requestOtp(channel: OtpChannel, identifier: string, purpos
   const cooldown = await hit(`otp:cool:${purpose}:${identifier}`, OTP_RESEND_SECONDS * 1000);
   if (cooldown.count > 1) throw errors.rateLimited(cooldown.retryAfterSeconds);
   const hourly = await hit(`otp:hour:${purpose}:${identifier}`, 3600_000);
-  if (hourly.count > OTP_HOURLY_LIMIT) throw errors.rateLimited(hourly.retryAfterSeconds);
+  if (hourly.count > signInLimits().codesPerAddressHourly) throw errors.rateLimited(hourly.retryAfterSeconds);
 
   const user = await findLoginCandidate(lookupField(channel), identifier).lean();
   const real = !!user && user.status === 'active';

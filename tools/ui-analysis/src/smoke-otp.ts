@@ -1,47 +1,40 @@
 // Functional smoke test of the one-time-code sign-in (SMS, WhatsApp, email) and Forgot password, through the UI.
-// It starts `npm run dev` itself, because the codes are only printed in the server console (OTP_PROVIDER
+// It starts the dev stack itself (dev-stack.ts), because the codes are only printed in the server console (OTP_PROVIDER
 // console, the development default), and stops it at the end. The dev ports (5173, 4000) must be free.
 // Uses the seeded FAKE users. The reset sets the student's password back to its seeded value.
 //
 //   node tools/ui-analysis/src/smoke-otp.ts
 //
-// The API allows 5 codes an hour per address, so run it at most a few times an hour.
-import { spawn, execSync } from 'node:child_process';
+// The stack runs with RELAX_RATE_LIMITS=true (dev-stack.ts), so repeated runs don't hit the 5-codes-an-hour limit.
+// The 30 s resend cooldown is unchanged (this script checks it).
+import fs from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { devStack } from './dev-stack.ts';
 import { chromium, type Page } from 'playwright';
 
 const BASE = 'http://localhost:5173';
-const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 const failures: string[] = [];
 const check = (ok: boolean, what: string) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) failures.push(what); };
 
-// ---- dev stack, with the console OTPs collected ------------------------------------------------------------
-const codes: { channel: string; to: string; code: string; purpose: string }[] = [];
-let ready = false;
-const dev = spawn(process.execPath, ['scripts/dev.mjs'], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
-let log = '';
-/** Parses whole lines only (a chunk can end in the middle of the boxed OTP line); one buffer per stream. */
-const lineReader = () => {
-  let partial = '';
-  return (d: Buffer) => {
-    // eslint-disable-next-line no-control-regex
-    const lines = (partial + d.toString()).replace(/\x1b\[[0-9;]*m/g, '').split(/\r?\n/);
-    partial = lines.pop() ?? '';
-    for (const line of lines) {
-      log += line + '\n';
-      const m = /OTP\s+(EMAIL|SMS|WHATSAPP)\s+(\S+)\s+->\s+(\d{4})\s+\((\w+)/.exec(line);
-      if (m) codes.push({ channel: m[1]!.toLowerCase(), to: m[2]!, code: m[3]!, purpose: m[4]! });
-    }
-  };
-};
-dev.stdout.on('data', lineReader());
-dev.stderr.on('data', lineReader());
+// The 30 s resend cooldown is real even with relaxed limits (this script checks it), and it outlives a restart:
+// a run started right after the last one waits it out first.
+const LAST_RUN = fileURLToPath(new URL('../out/smoke-otp.last', import.meta.url));
+try {
+  const left = Number(fs.readFileSync(LAST_RUN, 'utf8')) + 31_000 - Date.now();
+  if (left > 0) { console.log(`(waiting ${Math.ceil(left / 1000)} s for the last run's resend cooldown)`); await new Promise((r) => setTimeout(r, left)); }
+} catch { /* first run */ }
+process.on('exit', () => { try { fs.mkdirSync(path.dirname(LAST_RUN), { recursive: true }); fs.writeFileSync(LAST_RUN, String(Date.now())); } catch { /* best effort */ } });
 
-function stopDev() {
-  // On Windows a plain kill orphans mongod / tsx children: end the whole tree.
-  if (process.platform === 'win32') { try { execSync(`taskkill /PID ${dev.pid} /T /F`, { stdio: 'ignore' }); } catch { /* already gone */ } }
-  else dev.kill('SIGTERM');
-}
+// ---- dev stack (sign-in and code limits relaxed), with the console OTPs collected ---------------------------
+const codes: { channel: string; to: string; code: string; purpose: string }[] = [];
+const stack = await devStack({
+  reuse: false, // the codes are read from this stack's console
+  onLine: (line) => {
+    const m = /OTP\s+(EMAIL|SMS|WHATSAPP)\s+(\S+)\s+->\s+(\d{4})\s+\((\w+)/.exec(line);
+    if (m) codes.push({ channel: m[1]!.toLowerCase(), to: m[2]!, code: m[3]!, purpose: m[4]! });
+  },
+});
 
 async function until<T>(what: string, fn: () => T | undefined | false | Promise<T | undefined | false>, ms = 90_000): Promise<T> {
   const end = Date.now() + ms;
@@ -58,8 +51,14 @@ const codeFor = (to: string, since: number) =>
   until(`a code for ${to}`, () => codes.slice(since).reverse().find((c) => c.to === to), 15_000);
 
 async function signOut(page: Page) {
-  await page.getByRole('link', { name: 'My Profile' }).click();
-  await page.getByRole('button', { name: 'Sign Out' }).click();
+  if (/^\/(warden|admin)/.test(new URL(page.url()).pathname)) {
+    // staff: the account menu (role routing, decisions.md 2026-11-09)
+    await page.getByRole('button', { name: /^Account/ }).click();
+    await page.locator('[popover]').getByRole('button', { name: 'Sign out' }).click();
+  } else {
+    await page.getByRole('link', { name: 'My Profile' }).click();
+    await page.getByRole('button', { name: 'Sign Out' }).click();
+  }
   await page.waitForURL((u) => new URL(u).pathname === '/');
 }
 
@@ -77,9 +76,6 @@ async function typeCode(page: Page, code: string) {
 }
 
 try {
-  await until('the API', async () => { try { return (await fetch('http://127.0.0.1:4000/api/v1/health')).ok; } catch { return false; } });
-  await until('the client', async () => { try { return (await fetch(BASE)).ok; } catch { return false; } });
-  ready = true;
 
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 3 });
@@ -144,8 +140,8 @@ try {
   const wa = await codeFor('+919000000002', seen);
   check(wa.channel === 'whatsapp', 'WhatsApp code printed in the console');
   await typeCode(page, wa.code);
-  await page.waitForURL('**/home', { timeout: 15_000 });
-  check(true, 'the WhatsApp code signs the warden in');
+  await page.waitForURL('**/warden', { timeout: 15_000 });
+  check(true, 'the WhatsApp code signs the warden in (to the warden app)');
   await signOut(page);
 
   // ---- invalid number: no request, message in the helper line ----------------------------------------------
@@ -166,8 +162,8 @@ try {
   const em = await codeFor('rahul.verma@example.com', seen);
   check(em.channel === 'email', 'email code printed in the console');
   await typeCode(page, em.code);
-  await page.waitForURL('**/home', { timeout: 15_000 });
-  check(true, 'the email code signs the admin in');
+  await page.waitForURL('**/admin', { timeout: 15_000 });
+  check(true, 'the email code signs the admin in (to the admin app)');
   await signOut(page);
 
   // ---- Forgot password (student) ---------------------------------------------------------------------------
@@ -211,8 +207,8 @@ try {
   failures.push(String(err));
   console.log(`FAIL ${String(err)}`);
 } finally {
-  if (failures.length) console.log(`\n--- last server lines (${ready ? 'after start' : 'start failed'}) ---\n${log.split('\n').slice(-25).join('\n')}`);
-  stopDev();
+  if (failures.length) console.log(`\n--- last server lines ---\n${stack.log().split('\n').slice(-25).join('\n')}`);
+  stack.stop();
 }
 
 console.log(failures.length ? `\n${failures.length} FAILED` : '\nall passed');

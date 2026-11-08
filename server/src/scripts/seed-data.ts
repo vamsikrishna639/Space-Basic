@@ -12,15 +12,37 @@ import { createNotification } from '../modules/notifications/notifications.servi
 import { FaqModel, SupportContactModel } from '../modules/support/support.models';
 import { setLogo } from '../modules/institutions/institutions.service';
 
+/** Creates the DEV_USERS that don't exist yet (by email). Returns how many were added. */
+async function seedDevUsers(institutionId: mongoose.Types.ObjectId): Promise<number> {
+  let added = 0;
+  for (const u of DEV_USERS) {
+    if (await UserModel.exists({ institutionId, email: u.email })) continue;
+    const room = u.roomCode ? await RoomModel.findOne({ institutionId, code: u.roomCode }, { _id: 1 }).lean() : null;
+    await UserModel.create({
+      institutionId,
+      fullName: u.fullName,
+      email: u.email,
+      phone: u.phone,
+      passwordHash: await hashPassword(u.password),
+      roles: u.roles,
+      roomId: room?._id ?? null,
+    });
+    added++;
+  }
+  return added;
+}
+
 /**
  * DEVELOPMENT SEED: FAKE data only (docs/schemas.md §3). Refuses to run in production.
  * The passwords below are throwaway local-development credentials, printed at every checkpoint.
  */
-export const DEV_USERS: { role: Role; fullName: string; email: string; phone: string; password: string; roomCode?: string }[] = [
-  { role: 'student', fullName: 'Arjun Kumar Rao', email: 'arjun.rao@example.com', phone: '+919000000001', password: 'Student@2026', roomCode: 'CS240' },
-  { role: 'warden', fullName: 'Meera Nair', email: 'meera.nair@example.com', phone: '+919000000002', password: 'Warden@2026' },
-  { role: 'institution_admin', fullName: 'Rahul Verma', email: 'rahul.verma@example.com', phone: '+919000000003', password: 'Admin@2026' },
-  { role: 'super_admin', fullName: 'Space Basic Admin', email: 'admin@spacebasic.example', phone: '+919000000004', password: 'Super@2026' },
+export const DEV_USERS: { roles: Role[]; fullName: string; email: string; phone: string; password: string; roomCode?: string }[] = [
+  { roles: ['student'], fullName: 'Arjun Kumar Rao', email: 'arjun.rao@example.com', phone: '+919000000001', password: 'Student@2026', roomCode: 'CS240' },
+  { roles: ['warden'], fullName: 'Meera Nair', email: 'meera.nair@example.com', phone: '+919000000002', password: 'Warden@2026' },
+  { roles: ['institution_admin'], fullName: 'Rahul Verma', email: 'rahul.verma@example.com', phone: '+919000000003', password: 'Admin@2026' },
+  { roles: ['super_admin'], fullName: 'Space Basic Admin', email: 'admin@spacebasic.example', phone: '+919000000004', password: 'Super@2026' },
+  // Two roles (a senior student who is also a floor warden): signs in to the "Continue as" chooser (decisions.md 2026-11-09).
+  { roles: ['student', 'warden'], fullName: 'Devika Menon', email: 'devika.menon@example.com', phone: '+919000000005', password: 'Both@2026', roomCode: 'CS241' },
 ];
 
 // Placeholder hostel layout (decisions.md: fake until the user confirms the real ranges).
@@ -35,10 +57,12 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
   if (opts.reset) await mongoose.connection.dropDatabase();
   const existing = await InstitutionModel.findOne({ slug: 'presidency-university' }, { _id: 1 }).lean();
   if (existing) {
+    const users = await seedDevUsers(existing._id);
     const added = await seedDevNotifications(existing._id);
     const support = await seedDevSupport(existing._id);
     const logo = await seedDevLogo(existing._id);
     const topUps = [
+      users ? `${users} user(s)` : '',
       logo ? 'the institution logo' : '',
       added ? `sample notifications for ${added} user(s)` : '',
       support.contacts ? `${support.contacts} support contacts` : '',
@@ -60,17 +84,7 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
     }
     for (const r of await RoomModel.insertMany(rooms)) roomIds.set(r.code, r._id);
   }
-  for (const u of DEV_USERS) {
-    await UserModel.create({
-      institutionId,
-      fullName: u.fullName,
-      email: u.email,
-      phone: u.phone,
-      passwordHash: await hashPassword(u.password),
-      roles: [u.role],
-      roomId: u.roomCode ? roomIds.get(u.roomCode) : null,
-    });
-  }
+  await seedDevUsers(institutionId);
   await seedDevNotifications(institutionId);
   await seedDevSupport(institutionId);
   await seedDevLogo(institutionId);
@@ -158,6 +172,6 @@ export async function seedDevLogo(institutionId: mongoose.Types.ObjectId): Promi
 
 export function printDevUsers(): void {
   console.log('\nFAKE development users (password sign-in; OTP codes print in this console):');
-  for (const u of DEV_USERS) console.log(`  ${u.role.padEnd(18)} ${u.email.padEnd(28)} ${u.password.padEnd(14)} ${u.phone}`);
+  for (const u of DEV_USERS) console.log(`  ${u.roles.join(' + ').padEnd(18)} ${u.email.padEnd(28)} ${u.password.padEnd(14)} ${u.phone}`);
   console.log('');
 }

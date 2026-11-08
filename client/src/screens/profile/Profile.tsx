@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router';
 import { EnvelopeSimpleIcon } from '@phosphor-icons/react/dist/csr/EnvelopeSimple';
 import { CaretRightIcon } from '@phosphor-icons/react/dist/csr/CaretRight';
+import { ArrowsLeftRightIcon } from '@phosphor-icons/react/dist/csr/ArrowsLeftRight';
+import { areasFor } from '../../auth/areas';
 import { useAuth, useMe } from '../../auth/AuthContext';
 import { Avatar } from '../../components/app/Avatar';
 import { CameraBadge } from '../../components/app/CameraBadge';
@@ -9,7 +11,7 @@ import { CutoutIcon, type CutoutName } from '../../components/CutoutIcon';
 import { PROFILE_LINKS, profilePhone } from './profileText';
 import s from './Profile.module.css';
 
-interface Row { to: string; label: string; icon: CutoutName; size: number }
+interface Row { to: string; label: string; icon: CutoutName | ReactNode; size: number }
 
 const ACCOUNT: Row[] = [
   { to: PROFILE_LINKS.information, label: 'My Information', icon: 'user', size: 20 },
@@ -20,6 +22,11 @@ const APP: Row[] = [
   { to: PROFILE_LINKS.settings, label: 'Settings', icon: 'settings', size: 20 },
   { to: PROFILE_LINKS.about, label: 'About', icon: 'info-circle', size: 18 },
 ];
+/**
+ * Only for accounts with more than one role (not in the screenshot, which is a student-only account; listed in
+ * docs/not-from-reference.md): opens "Continue as". Single-role students never see it.
+ */
+const SWITCH: Row = { to: '/choose', label: 'Switch role', icon: <ArrowsLeftRightIcon size={20} aria-hidden="true" />, size: 20 };
 
 function Rows({ rows }: { rows: Row[] }) {
   return (
@@ -27,7 +34,7 @@ function Rows({ rows }: { rows: Row[] }) {
       {rows.map((r) => (
         <li key={r.to}>
           <Link to={r.to} className={s.row}>
-            <span className={s.tile}><CutoutIcon name={r.icon} size={r.size} /></span>
+            <span className={s.tile}>{typeof r.icon === 'string' ? <CutoutIcon name={r.icon as CutoutName} size={r.size} /> : r.icon}</span>
             <span className={s.label}>{r.label}</span>
             <CaretRightIcon className={s.chevron} size={14.77} weight="bold" aria-hidden="true" />
           </Link>
@@ -106,7 +113,7 @@ export function Profile() {
       <h2 className={`${s.section} ${s.first}`}>Account</h2>
       <Rows rows={ACCOUNT} />
       <h2 className={s.section}>App</h2>
-      <Rows rows={APP} />
+      <Rows rows={areasFor(me.roles).length > 1 ? [...APP, SWITCH] : APP} />
 
       <div className={`${s.card} ${s.signOutCard}`}>
         <button type="button" className={`${s.row} ${s.signOut}`} onClick={() => void signOut()} disabled={signingOut} aria-busy={signingOut}>

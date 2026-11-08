@@ -19,6 +19,7 @@ async function main() {
 
   const server = createApp().listen(env.PORT, () => {
     console.log(`api: ready on http://localhost:${env.PORT}/api/v1  (health: http://localhost:${env.PORT}/api/v1/health)`);
+    if (env.RELAX_RATE_LIMITS) console.log('api: sign-in and code rate limits RELAXED (RELAX_RATE_LIMITS=true; development/test only)');
     console.log(`api: OTP provider for email = ${env.OTP_PROVIDER ?? 'none (password sign-in only)'}; SMS/WhatsApp = ${!env.isProd || env.ALLOW_CONSOLE_OTP ? 'console' : 'unavailable'}`);
   });
   const shutdown = () => server.close(() => { disconnectDb().finally(() => process.exit(0)); });

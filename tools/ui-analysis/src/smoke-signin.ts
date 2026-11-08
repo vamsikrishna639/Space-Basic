@@ -1,13 +1,17 @@
-// Functional smoke test of signing in through the UI, against a running `npm run dev` (client :5173, API :4000,
-// seeded FAKE users). Not a visual test: it runs on the host browser and checks behaviour only.
+// Functional smoke test of signing in through the UI (seeded FAKE users). Not a visual test: it runs on the host
+// browser and checks behaviour only. It uses a running dev stack if there is one (start it with
+// `npm run dev:relaxed` for repeated runs), otherwise it starts one with relaxed sign-in limits and stops it at the
+// end (dev-stack.ts).
 //
-//   node tools/ui-analysis/src/smoke-signin.ts [baseUrl]
+//   node tools/ui-analysis/src/smoke-signin.ts
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
 import QRCode from 'qrcode'; // the client's renderer (root node_modules), to check the drawn modules
+import { CLIENT, devStack } from './dev-stack.ts';
 import { CONSENT_POLICY_VERSION } from '../../../shared/src/consent.ts';
 
-const BASE = process.argv[2] ?? 'http://localhost:5173';
+const BASE = CLIENT;
+const stack = await devStack({ reuse: true });
 const failures: string[] = [];
 const check = (ok: boolean, what: string) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) failures.push(what); };
 
@@ -213,15 +217,16 @@ await page.reload();
 await page.waitForTimeout(800);
 check(new URL(page.url()).pathname === '/', 'after sign-out a reload stays on Welcome');
 
-// the other seeded roles can sign in too
-for (const [email, pw] of [['meera.nair@example.com', 'Warden@2026'], ['rahul.verma@example.com', 'Admin@2026']] as const) {
+// the other seeded roles sign in to their own apps (role routing is covered in smoke-roles.ts)
+for (const [email, pw, home] of [['meera.nair@example.com', 'Warden@2026', '/warden'], ['rahul.verma@example.com', 'Admin@2026', '/admin']] as const) {
   const fresh = await browser.newContext({ viewport: { width: 360, height: 800 } }); // no shared session cookie
   const p = await fresh.newPage();
   await signIn(p, email, pw);
-  await p.waitForURL('**/home', { timeout: 15_000 }).then(() => check(true, `${email} signs in`), () => check(false, `${email} signs in`));
+  await p.waitForURL(`**${home}`, { timeout: 15_000 }).then(() => check(true, `${email} signs in to ${home}`), () => check(false, `${email} signs in to ${home}`));
   await fresh.close();
 }
 
 await browser.close();
+stack.stop(); // only stops a stack this script started
 console.log(failures.length ? `\n${failures.length} FAILED` : '\nall passed');
 process.exit(failures.length ? 1 : 0);

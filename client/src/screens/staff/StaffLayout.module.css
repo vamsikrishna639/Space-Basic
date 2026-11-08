@@ -1,0 +1,352 @@
+/*
+ * Staff shell (FREE DESIGN, docs/not-from-reference.md): the in-app tokens in both themes. Wardens get a phone
+ * column (max 560 px); admins get the full width with a sidebar from 960 px.
+ */
+.staff {
+  min-height: var(--app-height, 100dvh);
+  background: var(--app-bg);
+  color: var(--text-1);
+}
+
+/* ---- header: institution + area on the left, account on the right ---- */
+.top {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: calc(var(--safe-top) + 64px);
+  padding: var(--safe-top) var(--in-gutter) 0;
+  background: var(--app-bg);
+  box-shadow: inset 0 -1px 0 var(--divider);
+}
+
+.narrow .top {
+  padding-right: max(var(--in-gutter), calc((100% - 560px) / 2 + var(--in-gutter)));
+  padding-left: max(var(--in-gutter), calc((100% - 560px) / 2 + var(--in-gutter)));
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The institution logo as supplied, on a white tile (as on Home), never stretched. */
+.logoTile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.logoTile img {
+  width: 26px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.institution {
+  overflow: hidden;
+  color: var(--text-section);
+  font-size: var(--fs-date-heading);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.areaName {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.account {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.account img {
+  border-radius: 50%;
+}
+
+/* ---- account menu (native popover, top layer) ---- */
+.menu {
+  inset: auto;
+  top: calc(var(--safe-top) + 60px);
+  right: 12px;
+  width: min(280px, calc(100vw - 24px));
+  margin: 0;
+  padding: 8px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), 0 12px 32px rgb(0 0 0 / 0.28);
+  color: var(--text-1);
+}
+
+.menuName {
+  margin: 8px 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.menuSub {
+  margin: 2px 10px 8px;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuGroup {
+  padding-top: 6px;
+  box-shadow: inset 0 1px 0 var(--card-border);
+}
+
+.menuLabel {
+  margin: 4px 10px;
+  color: var(--text-section);
+  font-size: var(--fs-date-heading);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuItem:hover,
+.menuItem:focus-visible {
+  background: var(--tile-bg);
+}
+
+.signOut {
+  margin-top: 6px;
+  color: var(--danger);
+}
+
+/* ---- body: phone column (warden), sidebar layout (admin) ---- */
+.main {
+  padding: 20px var(--in-gutter) calc(32px + var(--safe-bottom));
+}
+
+.narrow .main {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Admin sections: a scrolling strip under the header on phones... */
+.nav {
+  display: flex;
+  gap: 6px;
+  padding: 10px var(--in-gutter);
+  overflow-x: auto;
+  box-shadow: inset 0 -1px 0 var(--divider);
+  scrollbar-width: none;
+}
+
+.navItem {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.navItem:hover {
+  color: var(--text-1);
+}
+
+.active {
+  background: var(--tile-bg);
+  color: var(--accent);
+}
+
+/* ...and a sidebar from 960 px. */
+@media (min-width: 960px) {
+  .wide .body {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    min-height: calc(100dvh - 64px);
+  }
+
+  .wide .nav {
+    position: sticky;
+    top: 64px;
+    flex-direction: column;
+    align-self: start;
+    gap: 2px;
+    padding: 20px 12px;
+    box-shadow: none;
+  }
+
+  .wide .navItem {
+    border-radius: 12px;
+  }
+
+  .wide .main {
+    max-width: 1120px;
+    padding: 28px 32px 48px;
+    box-shadow: inset 1px 0 0 var(--divider);
+  }
+}
+
+/* ---- page content ---- */
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -10px;
+  color: var(--text-1);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-page-title);
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.soon {
+  margin: 48px 0;
+  color: var(--text-2);
+  font-size: var(--fs-chip);
+  text-align: center;
+}
+
+.greeting {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.date {
+  margin: 4px 0 20px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.cards {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .wide .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .wide .cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-1);
+  text-decoration: none;
+}
+
+.card:hover,
+.card:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--tile-bg);
+  color: var(--accent);
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cardSub {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}

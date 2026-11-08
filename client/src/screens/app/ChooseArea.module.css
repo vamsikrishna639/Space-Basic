@@ -1,0 +1,99 @@
+/* "Continue as" and "Nothing here yet" (FREE DESIGN): in-app tokens, the list-card style of My Profile. */
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 48px) var(--in-gutter) calc(24px + var(--safe-bottom));
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-page-title);
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.lead {
+  margin: 8px 0 24px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px 44px 14px 16px;
+  border: 0;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover,
+.option:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--tile-bg);
+  color: var(--accent);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.blurb {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.chevron {
+  position: absolute;
+  top: calc(50% - 7.385px);
+  right: 18px;
+  color: var(--chevron);
+}
+
+.signOut {
+  align-self: center;
+  margin-top: 28px;
+  padding: 12px 20px;
+  border: 0;
+  background: none;
+  color: var(--danger);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}

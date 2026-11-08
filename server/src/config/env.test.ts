@@ -23,6 +23,18 @@ describe('environment rules', () => {
     expect(() => parseEnv({ ...prodBase, OTP_PROVIDER: 'gmail-smtp', GMAIL_USER: 'a', GMAIL_APP_PASSWORD: 'b' })).toThrow(/local development only/);
   });
 
+  it('RELAX_RATE_LIMITS is refused in production, and allowed (with a warning) in development and tests', () => {
+    expect(() => parseEnv({ ...prodBase, RELAX_RATE_LIMITS: 'true' })).toThrow(/RELAX_RATE_LIMITS is for development and tests only/);
+    expect(() => parseEnv({ ...prodBase, RELAX_RATE_LIMITS: '1' })).toThrow(ConfigError);
+    expect(parseEnv({ ...prodBase }).RELAX_RATE_LIMITS).toBe(false);
+    for (const NODE_ENV of ['development', 'test']) {
+      const env = parseEnv({ NODE_ENV, RELAX_RATE_LIMITS: 'true' });
+      expect(env.RELAX_RATE_LIMITS).toBe(true);
+      expect(env.warnings.join(' ')).toMatch(/rate limits are raised/);
+    }
+    expect(parseEnv({ NODE_ENV: 'development' }).RELAX_RATE_LIMITS).toBe(false); // off unless asked for
+  });
+
   it('gmail-api needs all its variables', () => {
     expect(() => parseEnv({ ...prodBase, OTP_PROVIDER: 'gmail-api' })).toThrow(/GMAIL_API_CLIENT_ID/);
   });
