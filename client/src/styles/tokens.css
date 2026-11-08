@@ -1,0 +1,64 @@
+/*
+ * Design tokens, measured from reference-ui/ with tools/ui-analysis (docs/ui-measurements.md §2 and §9).
+ * Never eyeballed. The screenshots are DPR 3, so many values sit on device pixels (n / 3 CSS px); they are written
+ * here with three decimals (e.g. 58.333px = 175 device px).
+ *
+ * Auth screens (Welcome, Sign in) are light only. The in-app screens have a dark and a light set, chosen in
+ * Settings > Appearance; their surfaces are added with those screens under [data-theme].
+ */
+:root {
+  --font-sans: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* ---- colour: brand ---- */
+  --c-primary: #384bd5;          /* Welcome panel, primary button, outline-button label */
+  --c-primary-circle: #4658d8;   /* Welcome panel's decorative circle */
+  --c-primary-glow: rgb(56 75 213 / 0.3);
+  --c-link: #3c4dc4;             /* text links ("Send it on WhatsApp instead", "Forgot password?") */
+
+  /* ---- colour: auth (light) ---- */
+  --c-page: #ffffff;
+  --c-text: #13161f;             /* headlines, titles, labels, values */
+  --c-text-2: #6d717d;           /* subtitles, consent text, helper, footer */
+  --c-placeholder: #6b717f;
+  --c-field: #f7f8fc;            /* inputs, segmented track, consent card, back button */
+  --c-field-border: #dbdce0;     /* inputs */
+  --c-card-border: #e8e7ec;      /* segmented track, consent card */
+  --c-check-border: #c2c2c2;
+  --c-outline-border: #e2e2e2;
+  --c-btn-disabled: #f0f0f0;
+  --c-btn-disabled-text: #666666;
+  --c-badge-mint: #a9e2cf;
+  --c-badge-yellow: #fed981;
+  --c-badge-sky: #aad3e9;
+  --c-badge-pink: #ffb4c0;
+  --c-on-primary: #ffffff;
+
+  /* ---- type scale (size / weight), fitted by fontfit.ts ---- */
+  --fs-hero: 30px;        /* Welcome headline, 500, -0.03em */
+  --fs-title: 25.4px;     /* "Sign in", 500 */
+  --fs-lead: 17px;        /* Welcome subtitle, 400 */
+  --fs-sub: 14.12px;      /* Sign in subtitle, 400 */
+  --fs-button: 15.1px;    /* buttons and input text, 500 */
+  --fs-segment: 13.2px;   /* segmented labels, 500 */
+  --fs-small: 12.2px;     /* field labels, links, 500 */
+  --fs-body-s: 12.25px;   /* consent text, helper, 400 */
+  --fs-legal: 11.3px;     /* Welcome footer, 500 */
+
+  /* ---- layout ---- */
+  --gutter-l: 19px;       /* 57 device px */
+  --gutter-r: 18.667px;   /* 56 device px: every full-width box spans 57 -> 1024 device px */
+  /* Borders are drawn as inset rings (box-shadow): Chromium snaps any border-width under 2 CSS px to 1 CSS px
+   * (3 device px), but the screenshots have 2 and 4 device px borders. Inset rings draw exactly that. */
+  --hairline: 0.6667px;   /* 2 device px: segmented track, inputs, consent card */
+  --ring-4dp: 1.3333px;   /* 4 device px: outline button, checkbox */
+  --control-h: 49px;      /* buttons, 147 device px */
+  --radius-pill: 999px;
+}
+
+/* In-app themes (Home, Profile, Settings...). Values measured so far; the rest arrive with those screens. */
+:root[data-theme='dark'] {
+  --surface-card: #181b24;
+}
+:root[data-theme='light'] {
+  --surface-card: #ffffff;
+}
