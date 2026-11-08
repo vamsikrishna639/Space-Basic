@@ -1,0 +1,137 @@
+{
+  "//": "Visual-test fixture for reference-ui/05-notifications.png. The list shows no personal data; me is the fake Home user.",
+  "me": {
+    "id": "000000000000000000000001",
+    "fullName": "ARJUN KUMAR RAO",
+    "firstName": "ARJUN",
+    "email": "arjun.rao@example.com",
+    "phone": "+919000000001",
+    "roles": [
+      "student"
+    ],
+    "room": {
+      "hostelName": "West",
+      "code": "CS240",
+      "display": "West CS240"
+    },
+    "avatarUrl": null,
+    "institution": {
+      "id": "000000000000000000000002",
+      "name": "Presidency University",
+      "logoUrl": "/api/v1/institutions/000000000000000000000002/logo?v=1",
+      "timezone": "Asia/Kolkata",
+      "enabledModules": [
+        "notifications",
+        "support",
+        "attendance",
+        "leave",
+        "tickets",
+        "announcements",
+        "mess"
+      ]
+    },
+    "consent": {
+      "policyVersion": "2026-11-01",
+      "acceptedAt": "2026-11-03T10:00:00.000Z"
+    }
+  },
+  "unreadCount": 120,
+  "notifications": [
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa1",
+      "type": "attendance_marked",
+      "title": "Attendance Marked",
+      "body": null,
+      "link": {
+        "module": "attendance",
+        "refId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-25T13:54:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa2",
+      "type": "announcement_new",
+      "title": "👋 New Announcement",
+      "body": null,
+      "link": {
+        "module": "announcements",
+        "refId": null
+      },
+      "readAt": "2026-10-19T15:29:00.000Z",
+      "createdAt": "2026-10-19T15:29:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa3",
+      "type": "leave_approved",
+      "title": "Great News: Leave Approved",
+      "body": null,
+      "link": {
+        "module": "leave",
+        "refId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-16T09:55:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa4",
+      "type": "leave_partially_approved",
+      "title": "Leave Partially Approved",
+      "body": null,
+      "link": {
+        "module": "leave",
+        "refId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-16T09:46:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa5",
+      "type": "leave_submitted",
+      "title": "Leave Request Submitted",
+      "body": null,
+      "link": {
+        "module": "leave",
+        "refId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-16T09:28:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa6",
+      "type": "announcement_new",
+      "title": "👋 New Announcement",
+      "body": null,
+      "link": {
+        "module": "announcements",
+        "refId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-14T11:03:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa7",
+      "type": "announcement_new",
+      "title": "👋 New Announcement",
+      "body": null,
+      "link": {
+        "module": "announcements",
+        "refId": null
+      },
+      "readAt": null,
+      "createdAt": "2026-10-09T05:35:00.000Z"
+    },
+    {
+      "id": "aaaaaaaaaaaaaaaaaaaaaaa8",
+      "type": "leave_submitted",
+      "title": "Leave Request Submitted",
+      "body": null,
+      "link": {
+        "module": "leave",
+        "refId": null
+      },
+      "readAt": "2026-10-08T04:42:00.000Z",
+      "createdAt": "2026-10-08T04:42:00.000Z"
+    }
+  ]
+}

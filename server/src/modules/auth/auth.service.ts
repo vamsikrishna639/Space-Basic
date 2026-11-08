@@ -1,5 +1,7 @@
 import { Types } from 'mongoose';
-import { ACCESS_TOKEN_TTL_SECONDS, OTP_RESEND_SECONDS, type AuthResult, type OtpChannel } from '@spacebasic/shared';
+import {
+  ACCESS_TOKEN_TTL_SECONDS, OTP_RESEND_SECONDS, PASSWORD_IS_IDENTITY_MESSAGE, passwordIsIdentity, type AuthResult, type OtpChannel,
+} from '@spacebasic/shared';
 import { errors } from '../../core/http/errors';
 import { hit, peek, reset } from '../../core/db/counters';
 import { audit } from '../../core/audit/audit';
@@ -124,8 +126,18 @@ export async function requestOtp(channel: OtpChannel, identifier: string, purpos
   return { resendAfter: OTP_RESEND_SECONDS, deliver };
 }
 
-/** Check a code; on success mark it consumed and return the user id. Wrong / expired / locked -> 401. */
-async function consumeOtp(identifier: string, purpose: OtpPurpose, code: string): Promise<Types.ObjectId> {
+/**
+ * Check a code; on success mark it consumed and return the user id. Wrong / expired / locked -> 401.
+ * `beforeConsume` runs once the code has matched, before it is used up: if it throws (e.g. a new password that
+ * breaks a rule), the code stays valid for a corrected request. It never runs for a wrong code, so it can't be
+ * used to learn anything about an account without the code.
+ */
+async function consumeOtp(
+  identifier: string,
+  purpose: OtpPurpose,
+  code: string,
+  beforeConsume?: (userId: Types.ObjectId) => Promise<void>,
+): Promise<Types.ObjectId> {
   const now = new Date();
   const otp = await OtpCodeModel.findOne({ identifier, purpose, consumedAt: null, expiresAt: { $gt: now } })
     .sort({ createdAt: -1 })
@@ -135,6 +147,7 @@ async function consumeOtp(identifier: string, purpose: OtpPurpose, code: string)
     await OtpCodeModel.updateOne({ _id: otp._id }, { $inc: { attempts: 1 } });
     throw errors.invalidCredentials();
   }
+  await beforeConsume?.(otp.userId);
   // consume atomically (a code works once even under concurrent requests)
   const r = await OtpCodeModel.updateOne({ _id: otp._id, consumedAt: null }, { $set: { consumedAt: now } });
   if (r.modifiedCount !== 1) throw errors.invalidCredentials();
@@ -217,8 +230,16 @@ export async function logout(refreshToken: string | undefined): Promise<void> {
 // ---------------------------------------------------------------------------------------------------------
 // passwords
 
+const passwordIsIdentityError = () => errors.validation({ newPassword: PASSWORD_IS_IDENTITY_MESSAGE }, PASSWORD_IS_IDENTITY_MESSAGE);
+
 export async function resetPassword(email: string, code: string, newPassword: string, meta: RequestMeta): Promise<void> {
-  const userId = await consumeOtp(email, 'reset_password', code);
+  // The email is in the request, so this check needs no code and reveals nothing.
+  if (passwordIsIdentity(newPassword, email)) throw passwordIsIdentityError();
+  // The phone is only known once the code proves the caller owns the account.
+  const userId = await consumeOtp(email, 'reset_password', code, async (id) => {
+    const owner = await UserModel.findOne({ _id: id, email }, { phone: 1 }).setOptions({ unscoped: 'auth: password rule after a verified code' }).lean();
+    if (owner && passwordIsIdentity(newPassword, null, owner.phone)) throw passwordIsIdentityError();
+  });
   const user = await UserModel.findOne({ _id: userId, email, status: 'active' }).setOptions({ unscoped: 'auth: password reset by verified code' }).lean();
   if (!user) throw errors.invalidCredentials();
   await UserModel.updateOne({ _id: user._id, institutionId: user.institutionId }, { $set: { passwordHash: await hashPassword(newPassword), passwordChangedAt: new Date() } });
@@ -235,6 +256,7 @@ export async function changePassword(
 ): Promise<void> {
   const user = await UserModel.findOne({ _id: ctx.userId, institutionId: ctx.institutionId }).select('+passwordHash').lean();
   if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) throw errors.invalidCredentials();
+  if (passwordIsIdentity(newPassword, user.email, user.phone)) throw passwordIsIdentityError();
   await UserModel.updateOne({ _id: user._id, institutionId: ctx.institutionId }, { $set: { passwordHash: await hashPassword(newPassword), passwordChangedAt: new Date() } });
   await revokeAllSessions(ctx, 'password_changed', ctx.sessionId);
   await audit({ institutionId: ctx.institutionId, actorId: ctx.userId, action: 'password.change', targetType: 'user', targetId: ctx.userId, requestId: meta.requestId });

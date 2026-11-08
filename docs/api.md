@@ -52,7 +52,7 @@
 | POST | `/auth/password/reset` | public · rate-limited | `{ email, code, newPassword }` | `204`. All sessions revoked · `401 INVALID_CREDENTIALS` |
 | POST | `/auth/password/change` | auth | `{ currentPassword, newPassword }` | `204`. Other sessions revoked; this one stays · `401 INVALID_CREDENTIALS` |
 
-**Password rule:** 8–128 characters. Must not equal the email or phone.
+**Password rule:** 8–128 characters. Must not equal the account's email (any case) or phone (any accepted format), on create, import, change and reset (`400`, field `password` or `newPassword`). On reset the phone is checked only after the code has matched, without using it up.
 
 ## Users and profile (`/users`)
 

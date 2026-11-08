@@ -2,8 +2,7 @@ import { z } from 'zod';
 import { ROLES, type Role } from '../roles';
 import type { ModuleKey } from '../modules';
 import { ROOM_CODE_PATTERN } from '../hostel';
-import { normalizePhone } from '../phone';
-import { emailSchema, objectIdSchema, paginationQuerySchema, passwordSchema, phoneSchema } from './common';
+import { emailSchema, objectIdSchema, paginationQuerySchema, passwordIsIdentity, passwordSchema, phoneSchema, PASSWORD_IS_IDENTITY_MESSAGE } from './common';
 
 /** GET /users/me and the `user` part of every AuthResult. */
 export interface Me {
@@ -89,8 +88,8 @@ export const createUserBodySchema = z
   .superRefine((v, ctx) => {
     if (!v.email && !v.phone) ctx.addIssue({ code: 'custom', path: ['email'], message: 'Give an email or a mobile number' });
     if (v.roomCode && !v.roles.includes('student')) ctx.addIssue({ code: 'custom', path: ['roomCode'], message: 'Only students have a room' });
-    if (v.password && (v.password.toLowerCase() === v.email || normalizePhone(v.password) === v.phone)) {
-      ctx.addIssue({ code: 'custom', path: ['password'], message: 'The password must not be the email or mobile number' });
+    if (v.password && passwordIsIdentity(v.password, v.email, v.phone)) {
+      ctx.addIssue({ code: 'custom', path: ['password'], message: PASSWORD_IS_IDENTITY_MESSAGE });
     }
   });
 export type CreateUserBody = z.input<typeof createUserBodySchema>;

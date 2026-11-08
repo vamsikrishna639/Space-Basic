@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CONSENT_POLICY_VERSION, type AuthResult, type Me, type OtpChannel } from '@spacebasic/shared';
 import { api, logoutRequest, onSessionEnd, refreshSession, setAccessToken } from '../api/client';
+import { setUnread } from '../notifications/unread';
 
 type Status = 'loading' | 'signedOut' | 'signedIn';
 
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signedOut = useCallback(() => {
     setAccessToken(null);
     setMe(null);
+    setUnread(0); // the next user's badge starts from their own count
     setStatus('signedOut');
   }, []);
 

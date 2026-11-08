@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { NavLink } from 'react-router';
 import { HouseSimpleIcon } from '@phosphor-icons/react/dist/csr/HouseSimple';
 import { BellSimpleIcon } from '@phosphor-icons/react/dist/csr/BellSimple';
 import { HeadsetIcon } from '@phosphor-icons/react/dist/csr/Headset';
-import type { UnreadCount } from '@spacebasic/shared';
-import { api } from '../../api/client';
 import { useMe } from '../../auth/AuthContext';
+import { refreshUnread, useUnreadCount } from '../../notifications/unread';
 import { badgeText } from '../../screens/home/homeText';
 import { Avatar } from './Avatar';
 import s from './TabBar.module.css';
@@ -13,10 +12,9 @@ import s from './TabBar.module.css';
 /** Home, Notifications (unread badge), Support, My Profile (the user's avatar). Icon weights and sizes: §4. */
 export function TabBar() {
   const me = useMe();
-  const [unread, setUnread] = useState(0);
+  const unread = useUnreadCount();
   useEffect(() => {
-    if (!me.institution.enabledModules.includes('notifications')) return;
-    api<UnreadCount>('GET', '/notifications/unread-count').then((r) => setUnread(r.count)).catch(() => setUnread(0));
+    if (me.institution.enabledModules.includes('notifications')) void refreshUnread();
   }, [me]);
   const badge = badgeText(unread);
   const cls = ({ isActive }: { isActive: boolean }) => (isActive ? `${s.tab} ${s.active}` : s.tab);

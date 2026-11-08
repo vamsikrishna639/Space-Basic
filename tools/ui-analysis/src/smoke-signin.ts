@@ -58,6 +58,36 @@ check((await page.getByRole('heading', { name: 'Leave Manager' }).count()) === 1
 await page.getByRole('button', { name: 'Back' }).click();
 await page.waitForURL('**/home');
 
+// Notifications: the list comes from the API; opening an unread row marks it read, follows its deep link and
+// lowers the badge. Each run reads one seeded notification for good, so after a few runs there may be none left.
+const badgeCount = async () => Number((await page.getByRole('navigation', { name: 'Main' }).locator('[aria-label$="unread"]').textContent().catch(() => '0')) ?? 0);
+await page.getByRole('link', { name: 'Notifications' }).click();
+await page.waitForURL('**/notifications');
+await page.getByRole('heading', { level: 1, name: 'Notifications' }).waitFor();
+await page.locator('main li, li').first().waitFor({ timeout: 15_000 });
+check((await page.locator('li').count()) > 0, `notifications listed (${await page.locator('li').count()})`);
+check((await page.getByRole('heading', { level: 2 }).first().textContent())?.match(/^\d\d [A-Z]{3} \d{4}$/) !== null, 'day headings look like "25 OCT 2026"');
+const unreadBefore = await page.getByLabel('Unread').count();
+if (unreadBefore === 0) {
+  console.log('skip all seeded notifications are already read (dev data from earlier runs)');
+} else {
+  const badgeBefore = await badgeCount();
+  await page.locator('li', { has: page.getByLabel('Unread') }).first().getByRole('button').click();
+  await page.waitForURL('**/m/**');
+  await page.getByText('Coming soon').waitFor();
+  check(true, `an unread notification opens its module (${new URL(page.url()).pathname})`);
+  await page.goBack();
+  await page.waitForURL('**/notifications');
+  await page.locator('li').first().waitFor();
+  check(await page.getByLabel('Unread').count() === unreadBefore - 1, 'the opened notification is now read');
+  check(await badgeCount() === badgeBefore - 1, `the badge went down by one (${badgeBefore} -> ${await badgeCount()})`);
+  await page.reload();
+  await page.locator('li').first().waitFor();
+  check(await page.getByLabel('Unread').count() === unreadBefore - 1, 'read state survives a reload (stored on the server)');
+}
+await page.getByRole('link', { name: 'Home' }).click();
+await page.waitForURL('**/home');
+
 // sign out (temporary button on the My Profile placeholder) returns to Welcome, and stays signed out
 await page.getByRole('link', { name: 'My Profile' }).click();
 await page.getByRole('button', { name: 'Sign Out' }).click();

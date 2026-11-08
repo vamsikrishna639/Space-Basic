@@ -118,8 +118,8 @@ await closeBrowser(); server.close();
 process.exit(worst > CEILING ? 1 : 0);
 
 // ---- API fixtures ----------------------------------------------------------------------------------------
-// A fixture is { me, unreadCount?, logoFile? }. The private copy (gitignored) has the screenshot's exact data.
-interface Fixture { me: Record<string, unknown> & { institution: { logoUrl: string | null } }; unreadCount?: number; logoFile?: string }
+// A fixture is { me, unreadCount?, logoFile?, notifications? }. The private copy (gitignored) has the screenshot's exact data.
+interface Fixture { me: Record<string, unknown> & { institution: { logoUrl: string | null } }; unreadCount?: number; logoFile?: string; notifications?: unknown[] }
 function loadFixture(name: string): { data: Fixture; private: boolean } {
   const priv = path.join(PRIVATE, `${name}.json`);
   const file = fs.existsSync(priv) ? priv : path.join(ROOT, 'client/tests/fixtures', `${name}.json`);
@@ -135,6 +135,7 @@ async function mockApi(page: Page, f: Fixture) {
     if (key === 'POST /auth/refresh') return json({ accessToken: 'visual-test', expiresIn: 900, user: f.me });
     if (key === 'GET /users/me') return json(f.me);
     if (key === 'GET /notifications/unread-count') return json({ count: f.unreadCount ?? 0 });
+    if (key === 'GET /notifications') return json({ items: f.notifications ?? [], nextCursor: null });
     if (f.logoFile && f.me.institution.logoUrl && url.pathname === new URL(f.me.institution.logoUrl, base).pathname) {
       return route.fulfill({ status: 200, contentType: 'image/png', body: fs.readFileSync(path.join(ROOT, f.logoFile)) });
     }

@@ -9,14 +9,17 @@ Space Basic is a college hostel management PWA. The UI must be a **pixel-identic
   - Backend, all Phase 1 modules: Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, plus the institution logo endpoints (`GET /institutions/:id/logo`, `PUT /institutions/current/logo`). 150 Jest tests.
   - Frontend: `client/` workspace, tokens (light auth; dark and light in-app), font, shared components, **Welcome**, **Sign in** (Email, Mobile), **Home**, tab bar, `ComingSoon`. Email + password sign-in works end to end (session restore on reload, sign-out from a TEMPORARY button on the My Profile placeholder).
   - **One-time codes and Forgot password** (committed 2026-11-08): `/sign-in/code` (SMS, WhatsApp, email), `/forgot-password`, `/forgot-password/code`. No screenshots: listed in `docs/not-from-reference.md`.
-  - Tests: `npm run test:visual` (Docker, real DPR 3): Welcome 0.93%, Sign in Mobile 1.28%, Sign in Email 1.59%, Home 1.34%. `tools/ui-analysis/src/smoke-signin.ts` (signs in through the UI against `npm run dev`). `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself and reads the console codes; max 5 codes an hour per address).
+  - Tests: `npm run test:visual` (Docker, real DPR 3): Welcome 0.93%, Sign in Mobile 1.28%, Sign in Email 1.59%, Home 1.34% (1.32% after the uncommitted badge fix). `tools/ui-analysis/src/smoke-signin.ts` (signs in through the UI against `npm run dev`). `tools/ui-analysis/src/smoke-otp.ts` (starts `npm run dev` itself and reads the console codes; max 5 codes an hour per address).
   - Git history was rewritten (approved) to remove the screenshot owner's name and device ID; the scan of every ref is clean.
-- **Next:** Notifications, Support (Help), My Profile (with the real Sign Out), Entry Pass, Settings.
+- **Built, NOT committed yet (checkpoint 2026-11-08, waiting on the user's "continue"):**
+  - **Password rule** on change and reset (create/import already had it): `passwordIsIdentity()` in `shared`. 151 Jest tests.
+  - **Notifications** screen (`/notifications`), the shared unread count, and the corrected tab-bar badge. Visual: Notifications **0.90%**, Home now **1.32%**. `smoke-signin.ts` also covers the list and mark-as-read.
+- **Next:** Support (Help), My Profile (with the real Sign Out), Entry Pass, Settings.
 - **Open items (waiting on the user):**
   - Light-theme **Home** and **Profile** screenshots (light Home tokens and the camera-badge ring are provisional).
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
   - **Push to GitHub:** `vamsikrishna639/Space-Basic` exists and is **PRIVATE** (checked with `gh`, 2026-11-08). The user pushes it themselves; Claude doesn't push.
-  - **Password rule gap:** `docs/api.md` says a password must not equal the email or phone; the server doesn't enforce it (flagged in `docs/decisions.md`).
+  - Light-theme **Notifications** screenshot (its chevron colour is provisional).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture

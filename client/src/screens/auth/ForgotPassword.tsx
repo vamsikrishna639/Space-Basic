@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye';
 import { EyeSlashIcon } from '@phosphor-icons/react/dist/csr/EyeSlash';
-import { passwordSchema } from '@spacebasic/shared';
+import { PASSWORD_IS_IDENTITY_MESSAGE, passwordIsIdentity, passwordSchema } from '@spacebasic/shared';
 import { BackButton } from '../../components/BackButton';
 import { Button } from '../../components/Button';
 import { CodeInput } from '../../components/CodeInput';
@@ -107,6 +107,8 @@ export function ResetPassword() {
     if (busy || code.length !== CODE_LENGTH) return;
     const rule = passwordSchema.safeParse(password);
     if (!rule.success) { setError(rule.error.issues[0]?.message ?? 'Enter a password'); passwordRef.current?.focus(); return; }
+    // The phone case is only known to the server; it answers with the same message.
+    if (passwordIsIdentity(password, email)) { setError(PASSWORD_IS_IDENTITY_MESSAGE); passwordRef.current?.focus(); return; }
     setBusy(true);
     setError(null);
     try {

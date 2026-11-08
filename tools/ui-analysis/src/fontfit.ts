@@ -71,6 +71,14 @@ export const SAMPLES: Sample[] = [
   { id: 'h-tile-small', file: '04-home.png', text: 'Announceme', r: [555, 1130, 200, 36] },
   { id: 'h-tab', file: '04-home.png', text: 'Support', r: [595, 2262, 150, 46] },
   { id: 'h-tab-on', file: '04-home.png', text: 'Home', r: [95, 2262, 115, 46] },
+  { id: 'n-title', file: '05-notifications.png', text: 'Notifications', r: [45, 140, 420, 75] },
+  { id: 'n-date', file: '05-notifications.png', text: '25 OCT 2026', r: [40, 322, 255, 42], caps: true },
+  { id: 'n-row', file: '05-notifications.png', text: 'Attendance Marked', r: [100, 425, 415, 60] },
+  { id: 'n-row-long', file: '05-notifications.png', text: 'Great News: Leave Approved', r: [100, 1055, 600, 60] },
+  { id: 'n-row-read', file: '05-notifications.png', text: 'New Announcement', r: [165, 740, 415, 62] },
+  { id: 'n-time', file: '05-notifications.png', text: '07:24 PM', r: [100, 492, 175, 45] },
+  { id: 'n-time-tnum', file: '05-notifications.png', text: '07:24 PM', r: [100, 492, 175, 45], tnum: true },
+  { id: 'n-tab-on', file: '05-notifications.png', text: 'Notifications', r: [298, 2262, 225, 46] },
   { id: 'h-badge', file: '04-home.png', text: '99+', r: [424, 2182, 60, 34] },
 ];
 if (!PRIVATE.deviceId) {

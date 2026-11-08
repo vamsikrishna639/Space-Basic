@@ -60,13 +60,14 @@
 
 .badge {
   position: absolute;
-  top: -2.667px;
+  top: -2px;          /* pill 726.33 -> 739.33 from the top of the screen (§10, §11) */
   left: 14px;
-  min-width: 24.667px;
+  min-width: 25.333px;
   height: 13px;
-  padding: 0 4px;
+  padding: 0 3.333px;
   border-radius: 6.5px;
   background: var(--badge-bg);
+  box-shadow: 0 0 0 1.3333px var(--tabbar-bg); /* the ring cut into the bell (05-notifications.png) */
   color: var(--badge-text);
   font-size: 9.5px;
   font-weight: 600;

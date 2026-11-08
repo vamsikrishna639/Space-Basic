@@ -206,6 +206,8 @@ describe('POST /users (create)', () => {
     expect(res.body.error.fields.roomCode).toBe('There is no room CS299');
     res = await post({ fullName: 'Same Pass', email: 'samepass@example.com', roles: ['student'], password: 'samepass@example.com' });
     expect(res.body.error.fields.password).toBeDefined();
+    res = await post({ fullName: 'Phone Pass', phone: '+919811122233', roles: ['student'], password: '98111 22233' });
+    expect(res.body.error.fields.password).toBe('The password must not be the email or mobile number');
     res = await post({ fullName: 'Mess Person', email: 'mess@example.com', roles: ['mess_staff'] });
     expect(res.status).toBe(400); // not assignable until the Mess module exists
   });

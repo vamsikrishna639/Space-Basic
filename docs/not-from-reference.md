@@ -20,10 +20,10 @@ The rule (SPEC.md): anything functionally required but not shown in `reference-u
 
 | What | Where | How it's built | Replace when |
 |---|---|---|---|
-| **ComingSoon** screen | Apps, Quick Actions, and (temporarily) the Notifications, Support and My Profile tabs | Header from the Settings screenshot (back chevron, 22 px title, divider), one centred "Coming soon" | Each module's screenshot; the three tabs are supplied screens built at the next checkpoints |
+| **ComingSoon** screen | Apps, Quick Actions, and (temporarily) the Support and My Profile tabs | Header from the Settings screenshot (back chevron, 22 px title, divider), one centred "Coming soon" | Each module's screenshot; the three tabs are supplied screens built at the next checkpoints |
 | **Sign Out** on the My Profile placeholder | `/profile` | The outline button, TEMPORARY so you can sign out | The real My Profile screen (its red "Sign Out" button) |
 | **Light** Home | Home in light theme | Settings-light colours for page, cards, text; tiles, accent and tab bar provisional | A light Home screenshot |
-| **Active** Notifications / Support / My Profile tabs | Tab bar | Phosphor `fill` weight for bell and headset, accent ring around the avatar | Screenshots with those tabs active |
+| **Active** Support / My Profile tabs | Tab bar | Phosphor `fill` weight for the headset, accent ring around the avatar (the active Notifications tab now matches `05-notifications.png`) | Screenshots with those tabs active |
 | Institution with **no logo** | Home header | The white tile, empty | A screenshot of that case |
 
 ## One-time codes and Forgot password (step 6, third checkpoint, 2026-11-08)
@@ -41,6 +41,19 @@ SPEC.md asks for these flows without a screenshot. Every screen reuses the Sign 
 | **Password changed** confirmation: "You've been signed out on every device. Log in with your new password.", "Back to sign in" | After a reset | Title, subtitle and primary button only | Same |
 | A **code link tapped before consent** | Sign in | Nothing is sent; focus moves to the consent checkbox (its helper line already says to tick it) | A screenshot of that state |
 | **Invalid email or number** before a code is sent | Sign in, Forgot password | The shared zod message ("Enter a valid 10-digit mobile number", "Enter a valid email address") in the helper line | A screenshot of that state |
+
+## Notifications (step 6, fourth checkpoint, 2026-11-08)
+
+The list itself matches `05-notifications.png` (0.90%). Only these states have no screenshot:
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| **Empty** list: "No notifications yet" | Notifications | The ComingSoon line style (14 px, secondary text), below the header | A screenshot of an empty list |
+| **Error** when the list can't load | Notifications | The API's message in the same line | A screenshot of that state |
+| **Loading** and **loading more** | Notifications | Nothing extra: the header shows first, rows appear when loaded; more load before the end scrolls into view | Same |
+| **Light** Notifications | Light theme | Settings-light colours; the chevron colour (#B4B8C3) is provisional | A light Notifications screenshot |
+| **Pressed** row | Notifications | No pressed style | A screenshot or video of a tap |
+| Long titles | Notifications | One line, cut with "…" | A screenshot with a long title |
 
 | Entry point | Plan |
 |---|---|

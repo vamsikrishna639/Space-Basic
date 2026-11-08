@@ -296,6 +296,24 @@ describe('passwords', () => {
     expect(await AuditModel.countDocuments({ action: 'password.reset', actorId: student._id })).toBe(1);
   });
 
+  it('reset refuses a new password that is the email or the phone, and the code still works afterwards', async () => {
+    await setup();
+    await request(app).post('/api/v1/auth/password/forgot').send({ email: 'arjun@example.com' });
+    const { code } = await nextCode();
+    const reset = (newPassword: string, c = code) => request(app).post('/api/v1/auth/password/reset').send({ email: 'arjun@example.com', code: c, newPassword });
+
+    for (const same of ['Arjun@Example.com', '98765 43210', '+919876543210']) {
+      const res = await reset(same);
+      expect(res.status).toBe(400);
+      expect(res.body.error.fields.newPassword).toBe('The password must not be the email or mobile number');
+    }
+    // A wrong code is a 401 even when the password is the phone: no way to test an email/phone pair without the code.
+    expect((await reset('9876543210', code === '0000' ? '1111' : '0000')).status).toBe(401);
+    // The refused requests did not use the code up.
+    expect((await reset('NewPass@2026')).status).toBe(204);
+    expect((await login('arjun@example.com', 'NewPass@2026')).status).toBe(200);
+  });
+
   it('a sign-in code cannot be used to reset a password (purpose-bound)', async () => {
     await setup();
     await request(app).post('/api/v1/auth/otp/request').send({ channel: 'email', identifier: 'arjun@example.com', purpose: 'login', consent: CONSENT });
@@ -310,6 +328,11 @@ describe('passwords', () => {
     const auth = { Authorization: `Bearer ${a.body.accessToken}` };
     expect((await request(app).post('/api/v1/auth/password/change').set(auth).send({ currentPassword: 'nope', newPassword: 'NewPass@2026' })).status).toBe(401);
     expect((await request(app).post('/api/v1/auth/password/change').set(auth).send({ currentPassword: 'Student@2026', newPassword: 'Student@2026' })).status).toBe(400);
+    for (const same of ['arjun@example.com', '98765 43210']) {
+      const res = await request(app).post('/api/v1/auth/password/change').set(auth).send({ currentPassword: 'Student@2026', newPassword: same });
+      expect(res.status).toBe(400);
+      expect(res.body.error.fields.newPassword).toBe('The password must not be the email or mobile number');
+    }
     expect((await request(app).post('/api/v1/auth/password/change').set(auth).send({ currentPassword: 'Student@2026', newPassword: 'NewPass@2026' })).status).toBe(204);
     expect((await request(app).get('/api/v1/users/me').set(auth)).status).toBe(200);
     expect((await refresh(otherCookie)).status).toBe(401);

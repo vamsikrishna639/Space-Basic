@@ -81,6 +81,9 @@
   --fs-section: 10.59px;        /* 600, +0.11em */
   --fs-institution: 10.26px;    /* 700, +0.135em */
   --fs-page-title: 22px;        /* 500 (Settings header, §2) */
+  --fs-list-title: 14px;        /* 500 unread, 400 read (Notifications, §11) */
+  --fs-list-time: 12px;         /* 400, tabular digits */
+  --fs-date-heading: 9.85px;    /* 700, +0.16em, upper case */
 }
 
 :root[data-theme='dark'] {
@@ -101,6 +104,8 @@
   --badge-text: #1a121d;
   --avatar-ring: #3f424b;
   --chip-shadow: rgb(0 0 0 / 0.35);
+  --chevron: #494f5d;           /* list-row chevrons (Notifications) */
+  --dot-unread: #4a5ce6;
 }
 
 /* Light: page, card, border and text are measured on settings-light.png. The rest is PROVISIONAL until a light
@@ -123,4 +128,6 @@
   --badge-text: #1a121d;
   --avatar-ring: #e8e7ec;       /* provisional */
   --chip-shadow: rgb(19 22 31 / 0.08); /* provisional */
+  --chevron: #b4b8c3;           /* provisional */
+  --dot-unread: #4a5ce6;
 }

@@ -23,6 +23,17 @@ export const passwordSchema = z
   .min(8, { error: 'Use at least 8 characters' })
   .max(128, { error: 'Use at most 128 characters' });
 
+export const PASSWORD_IS_IDENTITY_MESSAGE = 'The password must not be the email or mobile number';
+
+/**
+ * True when a new password is the account's own email (any case) or mobile number (any accepted format, e.g.
+ * "98765 43210" or "+919876543210"). Applied wherever a password is set: create, import, change and reset.
+ */
+export function passwordIsIdentity(password: string, email?: string | null, phone?: string | null): boolean {
+  const p = password.trim();
+  return (!!email && p.toLowerCase() === email.toLowerCase()) || (!!phone && normalizePhone(p) === phone);
+}
+
 /** Password as typed at sign-in: no rules beyond length bounds (don't leak the policy on login). */
 export const loginPasswordSchema = z.string({ error: 'Enter your password' }).min(1, { error: 'Enter your password' }).max(128);
 

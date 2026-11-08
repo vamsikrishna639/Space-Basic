@@ -1,0 +1,121 @@
+/*
+ * Notifications (reference-ui/05-notifications.png, dark). Measured positions (docs/ui-measurements.md §11), CSS px
+ * from the top of the screen with the 26 px status bar included (--safe-top on a phone that draws under it).
+ */
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(96px + var(--safe-bottom)); /* clear of the tab bar */
+}
+
+/* Header 0 -> 83.667, then a 1 px #2A2D36 line and a 3 px card-coloured band; the list starts at 87.667. */
+.header {
+  position: relative;
+  height: calc(var(--safe-top) + 61.667px);
+  padding: calc(var(--safe-top) + 17.667px) var(--in-gutter) 0;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--surface-card);
+  box-shadow: 0 -1px 0 var(--card-border);
+}
+
+.title {
+  color: var(--text-1);
+  font-size: var(--fs-page-title);
+  font-weight: 500;
+  line-height: 28px;
+}
+
+/* Day heading band: 41.2 tall on the page colour, "25 OCT 2026" 2 device px in from the gutter. */
+.day {
+  height: 41.2px;
+  padding: 19px var(--in-gutter) 0 16.333px;
+  color: var(--text-section);
+  font-size: var(--fs-date-heading);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Rows: 63.6 tall, full width, card colour; a 1 px line inside the top of every row after the first. */
+.item + .item .row {
+  box-shadow: inset 0 1px 0 var(--card-border);
+}
+
+.row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 63.6px;
+  padding: 11.333px 48px 0 36px;
+  border: 0;
+  background: var(--surface-card);
+  color: var(--text-2);
+  text-align: left;
+}
+
+.rowTitle {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: var(--fs-list-title);
+  font-weight: 400;
+  line-height: 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.unread .rowTitle {
+  color: var(--text-1);
+  font-weight: 500;
+}
+
+.time {
+  margin-top: 3.667px;
+  color: var(--text-section);
+  font-size: var(--fs-list-time);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+}
+
+/* 8 px dot at x 16, centred on the title's capitals. */
+.dot {
+  position: absolute;
+  top: 17.667px;
+  left: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot-unread);
+}
+
+/* CaretRight bold 14.77 (§4): ink 6 x 10.67 ending at x 339, centred on the title line. */
+.chevron {
+  position: absolute;
+  top: 14.333px;
+  right: 16.6px;
+  color: var(--chevron);
+}
+
+.note {
+  margin: 48px var(--in-gutter) 0;
+  color: var(--text-2);
+  font-size: var(--fs-chip);
+  font-weight: 400;
+  text-align: center;
+}

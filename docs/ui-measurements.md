@@ -424,7 +424,7 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
 | `visual.ts` | Per-screen visual regression (§9, §10). `npm run test:visual` | No (writes gitignored `client/tests/visual/__output__/`) |
-| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev` (not a visual test) | No |
+| `smoke-signin.ts` | Functional check: signs in through the UI against a running `npm run dev`, including the Notifications list and mark-as-read (not a visual test) | No |
 | `smoke-otp.ts` | Functional check: SMS, WhatsApp and email one-time codes and Forgot password through the UI. Starts `npm run dev` itself and reads the codes from the server console (dev ports must be free; at most 5 codes an hour per address) | No |
 
 Shared modules:
@@ -510,3 +510,22 @@ Measured with `probe.ts` and `fontfit.ts` (`h-*` samples), then corrected from `
 **In-app colours.** Dark (measured): page #101116, card #181B24, border #2A2D36, text #EDEEF3 / #A3A9B7, header divider #232429. Light (from `settings-light.png`): page #F5F6FA, card #FFFFFF, border #EEEFF4, text #13161F / #6D717D; the rest is provisional (`tokens.css`).
 
 **Visual result (Linux image, real DPR 3, 2026-11-08).** Home **1.34%** with the private fixture (exact screenshot data), **1.25%** with the fake fixture and the name masked. Every region's box is within 1 device px. Highest regions: the logo tile (15.5%: the supplied Presidency file differs from the app's mark) and text edges (10–11% on the greeting, date and institution name).
+
+## 11. Notifications (dark)
+
+Measured with `probe.ts` and `fontfit.ts` (`n-*` samples), then corrected from `visual.ts`. Positions are CSS px from the top of the screen (status bar included), as in §10.
+
+| Element | Measurement |
+|---|---|
+| Header | 0 → 83.667 on the page colour #101116, then a 1 px #2A2D36 line and a 3 px #181B24 band; the list starts at 87.667 |
+| Title "Notifications" | 22 / 500, #EDEEF3, ink from (17.67, 50.33), no back button |
+| Day heading | Band 41.2 tall on #101116; "25 OCT 2026" 9.85 / 700 / +0.16em, upper case, #8A909F, ink from x 16.33, cap top 22.67 below the band top. Two-digit day ("09 OCT 2026") |
+| Rows | 63.6 tall, full width, #181B24. Every row after the first in a day has a 1 px #2A2D36 line inside its top edge (it doesn't move the content). Band boundaries fitted from the device-px edges (rows 190.86, headings 123.57 device px) |
+| Row title | 14 px; unread 500 #EDEEF3, read 400 #A3A9B7; ink from x 36, cap top 16.33 below the row top. "👋" is part of the title text and uses the system emoji font (3.7% region mismatch in the Docker image) |
+| Time | "07:24 PM", 12 / 400, **tabular-nums** (16.8% ink mismatch vs 37.8% proportional), #8A909F, cap top 38.33 below the row top |
+| Unread dot | 8 × 8 circle #4A5CE6 at x 16, centred on the title's capitals. Read rows have none |
+| Chevron | CaretRight bold 14.77 (§4), #494F5D (new token `--chevron`), ink 6 × 10.67 ending at x 339, centred on the title line |
+| Active Notifications tab | First reference for it: filled bell #8B96FF, label #8B96FF 600, 28 × 3 indicator #4A5CE6 (as §10) |
+| Badge | Pill 25.333 × 13 at (138.33, 726.33), with a 1.333 px ring in the tab-bar colour cut into the bell. This corrected the badge on Home too (it was 0.667 px high and 0.667 px wide) |
+
+**Visual result (Linux image, real DPR 3, 2026-11-08).** Notifications **0.90%** (fake fixture; the screen shows no personal data). Every region's box is within 1 device px. Highest regions: the "99+" badge text (13.8%), the emoji (3.7%) and text edges. Home went from 1.34% to 1.32% with the badge fix.
