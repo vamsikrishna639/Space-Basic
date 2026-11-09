@@ -34,11 +34,12 @@ services:
       - key: COOKIE_SECURE
         value: "true"
       # The caller's address for rate limits (decisions.md 2026-11-09). Vercel's rewrite passes a visitor's own
-      # X-Forwarded-For through, so the API reads the visitor's address from x-real-ip, a header Vercel sets itself.
-      # Without it, TRUST_PROXY=3 gives the address that connected to Render's edge (Vercel's, for app traffic), which
-      # nobody can fake. Check after any hosting change: https://<app>/api/v1/health/client (README, "Deployment").
+      # X-Forwarded-For through and sends no x-real-ip, but it overwrites x-vercel-forwarded-for with the visitor's
+      # real address (measured with made-up values), so the API reads that. Without it, TRUST_PROXY=3 gives the
+      # address that connected to Render's edge (Vercel's, for app traffic), which nobody can fake. Check after any
+      # hosting change: https://<app>/api/v1/health/client (README, "Deployment").
       - key: CLIENT_IP_HEADER
-        value: x-real-ip
+        value: x-vercel-forwarded-for
       - key: TRUST_PROXY
         value: "3"
       # No OTP_PROVIDER: one-time codes are off and email + password sign-in works (decisions.md 2026-11-07).

@@ -134,7 +134,7 @@ try {
   const prodEnv = {
     ...baseEnv, NODE_ENV: 'production', PORT: String(API_PORT), MONGODB_URI: uri,
     JWT_ACCESS_SECRET: secret(), QR_TOKEN_SECRET: secret(), OTP_PEPPER: secret(),
-    APP_ORIGINS: ORIGIN, COOKIE_SECURE: 'true', TRUST_PROXY: '1', CLIENT_IP_HEADER: 'x-real-ip',
+    APP_ORIGINS: ORIGIN, COOKIE_SECURE: 'true', TRUST_PROXY: '1', CLIENT_IP_HEADER: 'x-vercel-forwarded-for',
   };
   let apiLog = '';
   // The start command has no shell syntax: run it through the platform shell (cmd on Windows, whose process tree
@@ -196,9 +196,10 @@ try {
     const apiRule = vercel.rewrites.find((r) => r.source.startsWith('/api'));
     if (apiRule && toRegex(apiRule.source).test(url.pathname)) {
       // Vercel's rewrite -> Render. The page is presented as the deployed https origin (APP_ORIGINS). As measured on
-      // the real deployment, a visitor's own X-Forwarded-For passes through (here a made-up one), and Vercel sets
-      // x-real-ip itself (here the visitor's "real" address).
-      const headers = { ...req.headers, host: `127.0.0.1:${API_PORT}`, ...(req.headers.origin ? { origin: ORIGIN } : {}), 'x-forwarded-for': '198.51.100.66', 'x-real-ip': '203.0.113.9' };
+      // the real deployment, a visitor's own X-Forwarded-For passes through (here a made-up one), no x-real-ip arrives,
+      // and Vercel overwrites x-vercel-forwarded-for with the visitor's address (here the visitor's "real" address).
+      const { 'x-real-ip': _dropped, ...incoming } = req.headers;
+      const headers = { ...incoming, host: `127.0.0.1:${API_PORT}`, ...(req.headers.origin ? { origin: ORIGIN } : {}), 'x-forwarded-for': '198.51.100.66', 'x-vercel-forwarded-for': '203.0.113.9' };
       const up = http.request({ host: '127.0.0.1', port: API_PORT, path: url.pathname + url.search, method: req.method, headers }, (r) => { res.writeHead(r.statusCode ?? 502, r.headers); r.pipe(res); });
       // The API may stop while a request is in flight (teardown): answer 502 if nothing was sent yet, else just close.
       up.on('error', () => { if (res.headersSent) res.destroy(); else { res.writeHead(502); res.end(); } });
@@ -241,7 +242,7 @@ try {
     check(await page.getByRole('link', { name: 'Verify Admin', exact: true }).waitFor({ timeout: 10_000 }).then(() => true, () => false), 'a reload stays signed in (the refresh cookie works through the rewrite)');
     console.log(`     (auth responses: ${authLog.join(', ')})`);
     const client = (await page.evaluate(() => fetch('/api/v1/health/client').then((r) => r.json()))) as { ip: string; ipFrom: string };
-    check(client.ip === '203.0.113.9' && client.ipFrom === 'x-real-ip', `CLIENT_IP_HEADER: the API uses x-real-ip, not a made-up X-Forwarded-For (${client.ip}, from ${client.ipFrom})`);
+    check(client.ip === '203.0.113.9' && client.ipFrom === 'x-vercel-forwarded-for', `CLIENT_IP_HEADER: the API uses x-vercel-forwarded-for, not a made-up X-Forwarded-For (${client.ip}, from ${client.ipFrom})`);
   } finally {
     await browser.close();
   }
