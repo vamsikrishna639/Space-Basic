@@ -34,6 +34,14 @@ export function createApp() {
 
   const api = express.Router();
   api.get('/health', (_req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ status: 'ok', time: new Date().toISOString() }); });
+  // Deployment check for TRUST_PROXY (docs/decisions.md 2026-11-09): the address the rate limits see for the caller,
+  // and the proxy chain in front of the API. Rate limits key on `ip`, so it must be the caller's own address, not a
+  // proxy's. Shows callers only their own address.
+  api.get('/health/client', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    const forwardedFor = (req.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    res.json({ ip: req.ip, forwardedFor, trustProxy: env.TRUST_PROXY, suggestedTrustProxy: forwardedFor.length });
+  });
   api.use('/auth', authRouter(limiters));
   api.use('/users', usersRouter());
   api.use('/consent', consentRouter());

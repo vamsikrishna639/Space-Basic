@@ -390,6 +390,14 @@ describe('tenant isolation', () => {
 });
 
 describe('app basics', () => {
+  it('health/client shows the address the rate limits use and the proxy chain (TRUST_PROXY check)', async () => {
+    const res = await request(app).get('/api/v1/health/client').set('X-Forwarded-For', '203.0.113.7, 198.51.100.2');
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.body).toMatchObject({ forwardedFor: ['203.0.113.7', '198.51.100.2'], trustProxy: 0, suggestedTrustProxy: 2 });
+    expect(res.body.ip).not.toBe('203.0.113.7'); // TRUST_PROXY=0 in tests: the forwarded chain is not trusted
+  });
+
   it('health, JSON 404 and security headers', async () => {
     const h = await request(app).get('/api/v1/health');
     expect(h.status).toBe(200);

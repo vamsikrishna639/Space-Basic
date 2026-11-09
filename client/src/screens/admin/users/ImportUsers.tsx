@@ -97,7 +97,7 @@ export function ImportUsers() {
               <li><code>email</code> and <code>phone</code>: at least one of them</li>
               <li><code>roles</code> required: <code>student</code>, <code>warden</code> or <code>institution_admin</code>; separate two with <code>|</code></li>
               <li><code>roomCode</code> students only, for example <code>CS240</code>; leave it empty to accept them later</li>
-              <li><code>password</code> optional; without one they sign in with a one-time code</li>
+              <li><code>password</code> a first password; leave it empty only if one-time codes are turned on for your college</li>
             </ul>
             <div className={s.fileRow}>
               <input ref={fileInput} id="csv-file" className={s.fileInput} type="file" accept=".csv,text/csv" onChange={(e) => void choose(e)} />

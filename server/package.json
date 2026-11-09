@@ -12,7 +12,8 @@
     "test": "jest --runInBand",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed": "tsx --conditions=source src/scripts/seed.ts",
-    "import-users": "tsx --conditions=source src/scripts/import-users.ts"
+    "import-users": "tsx --conditions=source src/scripts/import-users.ts",
+    "create-admin": "tsx --conditions=source src/scripts/create-admin.ts"
   },
   "dependencies": {
     "@spacebasic/shared": "*",

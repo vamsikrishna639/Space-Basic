@@ -70,8 +70,9 @@ export const DEV_ROSTER = [
   rosterStudent('Mohit Agarwal', 12, 'CF102', 'disabled'),
 ];
 
-// Placeholder hostel layout (decisions.md: fake until the user confirms the real ranges).
-const FLOORS = [
+// Placeholder hostel layout (decisions.md: fake until the user confirms the real ranges). Also offered to production
+// by `create-admin --layout` (decisions.md 2026-11-09).
+export const PLACEHOLDER_FLOORS = [
   { code: 'CF', name: 'First floor', order: 1, roomNumberMin: 101, roomNumberMax: 200 },
   { code: 'CS', name: 'Second floor', order: 2, roomNumberMin: 201, roomNumberMax: 300 },
   { code: 'CT', name: 'Third floor', order: 3, roomNumberMin: 301, roomNumberMax: 400 },
@@ -99,21 +100,27 @@ export async function seedDevData(opts: { reset?: boolean } = {}): Promise<void>
 
   const inst = await InstitutionModel.create({ name: 'Presidency University', slug: 'presidency-university', timezone: 'Asia/Kolkata' });
   const institutionId = inst._id;
+  const roomCount = await createPlaceholderLayout(institutionId);
+  await seedDevUsers(institutionId);
+  await seedDevNotifications(institutionId);
+  await seedDevSupport(institutionId);
+  await seedDevLogo(institutionId);
+  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomCount} rooms), ${DEV_USERS.length} users, logo, sample notifications, support contacts and FAQs`);
+}
+
+/** Block "West" (code W) with the placeholder floors, 3 beds a room. Returns how many rooms were created. */
+export async function createPlaceholderLayout(institutionId: mongoose.Types.ObjectId): Promise<number> {
   const hostel = await HostelModel.create({ institutionId, name: 'West', code: 'W', order: 1 });
-  const roomIds = new Map<string, mongoose.Types.ObjectId>();
-  for (const f of FLOORS) {
+  let count = 0;
+  for (const f of PLACEHOLDER_FLOORS) {
     const floor = await FloorModel.create({ institutionId, hostelId: hostel._id, bedsPerRoom: 3, ...f });
     const rooms = [];
     for (let n = f.roomNumberMin; n <= f.roomNumberMax; n++) {
       rooms.push({ institutionId, hostelId: hostel._id, floorId: floor._id, number: n, code: roomCodeFor(f.code, n), beds: 3 });
     }
-    for (const r of await RoomModel.insertMany(rooms)) roomIds.set(r.code, r._id);
+    count += (await RoomModel.insertMany(rooms)).length;
   }
-  await seedDevUsers(institutionId);
-  await seedDevNotifications(institutionId);
-  await seedDevSupport(institutionId);
-  await seedDevLogo(institutionId);
-  console.log(`seed: created "${inst.name}", hostel West (3 floors, ${roomIds.size} rooms), ${DEV_USERS.length} users, logo, sample notifications, support contacts and FAQs`);
+  return count;
 }
 
 /**

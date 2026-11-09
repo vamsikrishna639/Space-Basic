@@ -241,7 +241,7 @@ function UserEditor({ id }: { id?: string }) {
         {!editing && (
           <section className={s.card} aria-labelledby="password-title">
             <h2 id="password-title">First password</h2>
-            <p className={s.cardText}>Optional. Leave it empty and they sign in with a one-time code sent to their email or phone.</p>
+            <p className={s.cardText}>Without one they can only sign in with a one-time code sent to their email or phone, so give one unless codes are turned on for your college.</p>
             <Field id="u-password" label="Password" error={errors.password} hint="At least 8 characters, not their email or mobile number.">
               <div className={s.passwordBox}>
                 <input {...inputProps('u-password', errors.password)} type={showPassword ? 'text' : 'password'} value={form.password} onChange={(e) => set('password', e.target.value)} autoComplete="new-password" />

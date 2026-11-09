@@ -8,12 +8,15 @@
     "client"
   ],
   "engines": {
-    "node": ">=20.19"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:relaxed": "node scripts/dev.mjs --relax-rate-limits",
     "build": "npm run build -w shared && npm run build -w server && npm run build -w client",
+    "build:web": "npm run build -w client",
+    "build:api": "npm run build -w shared && npm run build -w server",
+    "start:api": "npm start -w server",
     "test": "npm test -w server && npm test -w client --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "seed": "npm run seed -w server",

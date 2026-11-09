@@ -1,0 +1,40 @@
+# Render Blueprint for the Space Basic API (README, "Deployment"). Render > New > Blueprint > this repository.
+# Free plan: the service sleeps after 15 minutes without requests and takes up to about a minute to wake; the app
+# shows its normal loading state meanwhile (decisions.md). Every variable is validated at startup
+# (server/src/config/env.ts), so a missing or wrong one stops the deploy with a clear message in the log.
+services:
+  - type: web
+    name: spacebasic-api
+    runtime: node
+    plan: free
+    # Closest Render region to India; create the Atlas cluster in AWS Singapore (ap-southeast-1) too.
+    region: singapore
+    branch: main
+    # Dev tools (TypeScript) are needed to build, so they're installed even though NODE_ENV=production.
+    # MONGOMS_DISABLE_POSTINSTALL skips the test database download (mongodb-memory-server, tests only).
+    buildCommand: MONGOMS_DISABLE_POSTINSTALL=1 npm ci --include=dev && npm run build:api
+    startCommand: npm run start:api
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render generates these once (random, 256-bit) and keeps them; nobody needs to see or copy them.
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: QR_TOKEN_SECRET
+        generateValue: true
+      - key: OTP_PEPPER
+        generateValue: true
+      # Asked for in the dashboard when the Blueprint is created (never committed):
+      # the Atlas connection string, and the app's Vercel address (https://<project>.vercel.app).
+      - key: MONGODB_URI
+        sync: false
+      - key: APP_ORIGINS
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+      # Proxies in front of the API (Vercel's rewrite, Render's load balancer). Check it after the first deploy:
+      # https://<app>/api/v1/health/client must show your own address as "ip" (README, "Deployment").
+      - key: TRUST_PROXY
+        value: "2"
+      # No OTP_PROVIDER: one-time codes are off and email + password sign-in works (decisions.md 2026-11-07).

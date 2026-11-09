@@ -45,8 +45,12 @@ async function makeStudent(name: string, roomCode?: string) {
   if (r.status === 201) created.push(r.body.id);
   return r;
 }
+type Room = { code: string; beds: number; occupants: number };
 const firstFreeRoom = async (q: string) =>
-  (await call<{ items: { code: string; beds: number; occupants: number }[] }>('GET', `/hostel/rooms?free=true&q=${q}&limit=1`)).body.items[0]!;
+  (await call<{ items: Room[] }>('GET', `/hostel/rooms?free=true&q=${q}&limit=1`)).body.items[0]!;
+/** A room nobody is in (this test's own rooms, so it doesn't depend on the seed data people change by hand). */
+const emptyRoom = async (q: string, skip: string[] = []) =>
+  (await call<{ items: Room[] }>('GET', `/hostel/rooms?free=true&q=${q}&limit=50`)).body.items.find((r) => r.occupants === 0 && !skip.includes(r.code))!;
 
 const stack = await devStack({ reuse: true });
 const browser: Browser = await chromium.launch();
@@ -69,6 +73,12 @@ try {
   const rows = page.locator('tbody tr');
   const row = (name: string) => rows.filter({ has: page.getByRole('link', { name, exact: true }) });
 
+  // ---- setup: a full room and a room with one student, both this run's own (API) ----
+  const full = await emptyRoom('CT3');
+  for (let i = 0; i < full.beds; i++) await makeStudent(`Smoke Full ${STAMP} ${i}`, full.code);
+  const part = await emptyRoom('CT3', [full.code]);
+  await makeStudent(`Smoke Part ${STAMP}`, part.code);
+
   // ---- list and search ----
   await page.getByRole('navigation', { name: 'Admin sections' }).getByRole('link', { name: 'Users' }).click();
   await page.waitForURL('**/admin/users');
@@ -78,11 +88,11 @@ try {
   await shot(page, 'list-desktop');
 
   const search = page.getByRole('searchbox', { name: 'Search users' });
-  await search.fill('cs242');
-  await page.waitForURL((u) => u.searchParams.get('q') === 'cs242');
-  await page.waitForFunction(() => document.querySelectorAll('tbody tr').length === 3, null, { timeout: 8_000 }).catch(() => undefined);
+  await search.fill(full.code.toLowerCase());
+  await page.waitForURL((u) => u.searchParams.get('q') === full.code.toLowerCase());
+  await page.waitForFunction((n) => document.querySelectorAll('tbody tr').length === n, full.beds, { timeout: 8_000 }).catch(() => undefined);
   const inRoom = await rows.allTextContents();
-  check(inRoom.length === 3 && inRoom.every((t) => t.includes('CS242')), `searching a room code lists its 3 students (${inRoom.length})`);
+  check(inRoom.length === full.beds && inRoom.every((t) => t.includes(full.code)), `searching a room code lists its ${full.beds} students (${inRoom.length})`);
   await search.fill('zzzz-nobody');
   check(await seen(page.getByText('No users match "zzzz-nobody".')), 'an empty search says so');
   await page.reload();
@@ -104,12 +114,11 @@ try {
   const options = dialog.getByRole('radio');
   check(await seen(options), 'the picker lists rooms');
   const roomSearch = dialog.getByRole('searchbox', { name: 'Search rooms by code' });
-  await roomSearch.fill('cs24');
-  await page.waitForTimeout(600);
-  const codes = await dialog.locator('label').allTextContents();
-  check(codes.every((t) => !t.startsWith('CS242')), 'the full room CS242 is not offered');
-  const cs243 = codes.find((t) => t.startsWith('CS243')) ?? '';
-  check(/1 of 3 beds free/.test(cs243), `CS243 shows its free beds (${cs243 || 'not listed'})`);
+  await roomSearch.fill(full.code);
+  check(await seen(dialog.getByText(`No room starting with ${full.code} has a free bed.`)), `the full room ${full.code} is not offered`);
+  await roomSearch.fill(part.code);
+  const partCard = dialog.locator('label').filter({ hasText: part.code });
+  check(await seen(partCard) && /2 of 3 beds free/.test((await partCard.textContent()) ?? ''), `${part.code} shows its free beds (2 of 3)`);
   check((await dialog.getByRole('button', { name: /^Assign/ }).isDisabled()), 'Assign waits for a choice');
   await shot(page, 'picker');
   const target = await firstFreeRoom('CT3');
@@ -135,7 +144,7 @@ try {
   check(await seen(lateDialog.getByText(`No room starting with ${room.code} has a free bed.`)), 'and the picker shows the rooms as they are now');
   check((await call<UserSummary>('GET', `/users/${late.body.id}`)).body.room === null, 'the student is still without a room');
   await lateDialog.getByRole('button', { name: 'Close' }).click();
-  check((await call('PATCH', `/users/${late.body.id}`, { roomCode: 'CS242' })).status === 409, 'the API refuses a full room directly too (409)');
+  check((await call('PATCH', `/users/${late.body.id}`, { roomCode: full.code })).status === 409, 'the API refuses a full room directly too (409)');
 
   // ---- Add user ----
   await page.getByRole('link', { name: 'Add user' }).click();

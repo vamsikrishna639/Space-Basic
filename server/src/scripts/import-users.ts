@@ -3,8 +3,9 @@
 //
 //   npm run import-users -w server -- <file.csv> --accept-privacy-policy [--api http://localhost:4000/api/v1]
 //
-// The admin's credentials come from the environment, never from the command line or the file:
-//   SB_ADMIN_EMAIL, SB_ADMIN_PASSWORD   (an institution_admin of the institution the users join)
+// The admin's credentials are asked in the terminal (the password typed hidden), or read from the environment
+// (SB_ADMIN_EMAIL, SB_ADMIN_PASSWORD); never from the command line or the file. Against production, pass the app's
+// URL: --api https://<your-app>.vercel.app/api/v1 (README, "Deployment").
 // Signing in requires accepting the privacy policy, exactly as in the app, hence --accept-privacy-policy.
 //
 // CSV header (any order; only fullName and roles are required, plus email or phone):
@@ -14,6 +15,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { batches, CONSENT_POLICY_VERSION, CLIENT_HEADER, parseCsv, recordsToRows, type ImportUsersResult } from '@spacebasic/shared';
+import { ask, askHidden } from './prompt';
 
 // The parser, the column rules and the batching live in shared/src/csv.ts: the admin Users screen imports a file
 // the same way in the browser.
@@ -26,21 +28,22 @@ function arg(name: string): string | undefined {
 async function main() {
   const file = process.argv.slice(2).find((a) => !a.startsWith('--') && a !== arg('--api'));
   const api = (arg('--api') ?? 'http://localhost:4000/api/v1').replace(/\/+$/, '');
-  const { SB_ADMIN_EMAIL: email, SB_ADMIN_PASSWORD: password } = process.env;
   if (!file) throw new Error('Usage: npm run import-users -w server -- <file.csv> --accept-privacy-policy [--api <base url>]');
   if (!process.argv.includes('--accept-privacy-policy')) throw new Error('Signing in accepts the privacy policy. Re-run with --accept-privacy-policy.');
-  if (!email || !password) throw new Error('Set SB_ADMIN_EMAIL and SB_ADMIN_PASSWORD in the environment (never on the command line).');
 
   const rows = recordsToRows(parseCsv(fs.readFileSync(path.resolve(file), 'utf8')));
   if (!rows.length) throw new Error('The CSV file has a header but no rows');
   console.log(`import: ${rows.length} row(s) from ${file} -> ${api}`);
+  const email = process.env.SB_ADMIN_EMAIL?.trim() || (await ask('Admin email'));
+  const password = process.env.SB_ADMIN_PASSWORD || (await askHidden('Admin password (typed hidden)'));
+  if (!email || !password) throw new Error('An admin email and password are needed to sign in.');
 
   const login = await fetch(`${api}/auth/login`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email, password, consent: { accepted: true, policyVersion: CONSENT_POLICY_VERSION } }),
   });
-  if (!login.ok) throw new Error(`Sign-in failed (${login.status}). Check SB_ADMIN_EMAIL / SB_ADMIN_PASSWORD.`);
+  if (!login.ok) throw new Error(`Sign-in failed (${login.status}). Check the admin email and password${login.status === 502 || login.status === 504 ? ' (or the API is still waking up: try again in a minute)' : ''}.`);
   const { accessToken } = (await login.json()) as { accessToken: string };
   const cookie = login.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
 
@@ -69,5 +72,5 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch((err) => { console.error('import failed:', err instanceof Error ? err.message : err); process.exit(1); });
+  main().then(() => process.exit(process.exitCode ?? 0), (err) => { console.error('import failed:', err instanceof Error ? err.message : err); process.exit(1); });
 }
