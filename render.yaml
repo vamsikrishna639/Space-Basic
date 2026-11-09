@@ -33,8 +33,10 @@ services:
         sync: false
       - key: COOKIE_SECURE
         value: "true"
-      # Proxies in front of the API (Vercel's rewrite, Render's load balancer). Check it after the first deploy:
-      # https://<app>/api/v1/health/client must show your own address as "ip" (README, "Deployment").
+      # Proxies in front of the API (Vercel's rewrite and Render's edge and load balancer). Measured on the first
+      # deploy (2026-11-09): 4 forwarded hops. Counted from the right, so a visitor's made-up X-Forwarded-For entries
+      # are ignored. Recheck after any hosting change: https://<app>/api/v1/health/client must show your own address
+      # as "ip" (README, "Deployment").
       - key: TRUST_PROXY
-        value: "2"
+        value: "4"
       # No OTP_PROVIDER: one-time codes are off and email + password sign-in works (decisions.md 2026-11-07).

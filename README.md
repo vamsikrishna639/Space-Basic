@@ -41,7 +41,7 @@ The client needs no variables. The API refuses to start if any of these is missi
 | `JWT_ACCESS_SECRET`, `QR_TOKEN_SECRET`, `OTP_PEPPER` | 256-bit random | Render generates them (`generateValue`); nobody sees or copies them |
 | `APP_ORIGINS` | `https://<project>.vercel.app` (https, no trailing slash; several separated by commas) | you, in the Render dashboard |
 | `COOKIE_SECURE` | `true` | `render.yaml` |
-| `TRUST_PROXY` | `2` (Vercel's rewrite + Render's load balancer) | `render.yaml`; confirm after the first deploy (below) |
+| `TRUST_PROXY` | `4` (the forwarded hops measured on the first deploy: Vercel's rewrite and Render's edge and load balancer) | `render.yaml`; recheck after any hosting change (below) |
 | `OTP_PROVIDER` | not set: email + password sign-in only, one-time codes off | (later: `gmail-api` and the four `GMAIL_API_*` variables) |
 | `ALLOW_CONSOLE_OTP`, `RELAX_RATE_LIMITS`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` | never in production | |
 
