@@ -130,21 +130,26 @@
 
 | Method | Path | Permission | Request | Response |
 |---|---|---|---|---|
-| GET | `/hostel/structure` | `hostel:read` (inst) | – | `200 [{ hostel, floors: [{ code, name, roomNumberMin, roomNumberMax, bedsPerRoom, roomCount }] }]` |
-| GET | `/hostel/rooms` | `hostel:read` (inst) | `?hostel=&floor=CS&q=CS2&free=true&cursor=&limit=` | `200 { items: [{ code, number, beds, occupants }], nextCursor }` |
+| GET | `/hostel/structure` | `hostel:read` (inst) | – | `200 [{ hostel, floors: [{ code, name, order, roomNumberMin, roomNumberMax, bedsPerRoom, roomCount, beds, occupied }] }]` |
+| GET | `/hostel/rooms` | `hostel:read` (inst) | `?hostel=&floor=CS&q=CS2&free=true&cursor=&limit=` (≤ 200) | `200 { items: [{ code, number, beds, occupants }], nextCursor }` |
 | POST | `/hostel/hostels` | `hostel:manage` | `{ name, code }` | `201` |
 | POST | `/hostel/floors` | `hostel:manage` | `{ hostelCode, code, name, roomNumberMin, roomNumberMax, bedsPerRoom }` | `201` |
 | POST | `/hostel/floors/:code/rooms/generate` | `hostel:manage` | `{ hostelCode }` | `200 { created }`: creates every room in the floor's range (idempotent) |
 | PATCH | `/hostel/rooms/:code` | `hostel:manage` | `{ beds }` | `200` |
+| POST | `/hostel/rooms/range` | `hostel:manage` | `{ hostelCode, floorCode, floorName?, from, to, beds, dryRun? }` | `201` (`200` for a dry run) `{ dryRun, floor: { code, name, isNew }, created: [codes], skipped: [codes], beds }` |
+| POST | `/hostel/rooms/range/delete` | `hostel:manage` | `{ floorCode, from, to, dryRun? }` | `200 { dryRun, deleted: [codes], blocked: [{ code, users: [{ id, fullName, status }] }] }`; `409` while any room has someone assigned |
+| DELETE | `/hostel/rooms/:code` | `hostel:manage` | – | `200 { deleted: [code] }`; `409` naming who is assigned |
+| DELETE | `/hostel/floors/:code` | `hostel:manage` | – | `204`; `409` while the floor has rooms |
 
 A student's own room is in `GET /users/me`.
 
 **Built behaviour (Hostel module, 2026-11-08):**
 - **Access:** reads need `hostel:read` (wardens and admins). Students get `403`; their room comes with `/users/me`.
+- **`GET /hostel/structure`** (2026-11-09): each floor also has `beds` (all its rooms' beds) and `occupied` (beds held by active users). `roomNumberMin` / `roomNumberMax` follow the floor's rooms after a range is added or removed.
 - **`GET /hostel/rooms`:**
   - Rows are `{ code, number, floorCode, hostelCode, beds, occupants }`. `occupants` counts active users only.
   - Optional `?hostel=W` and `?floor=CS` filters; an unknown hostel or floor is `404`.
-  - Sorted by room code, with an opaque cursor; `limit` is at most 50.
+  - Sorted by room code, with an opaque cursor; `limit` is at most 200 (a whole floor in Admin > Hostel).
   - `q` is the start of a room code (letters then digits, e.g. `cs2`, upper-cased; anything else is `400`). `free=true` lists only rooms with a free bed, counted in the database so each page is full (the admin room picker, 2026-11-09).
 - **Creating:**
   - Codes are upper-cased. Hostel codes are 1–6 letters or digits, and floor codes are 2 letters.
@@ -153,7 +158,18 @@ A student's own room is in `GET /users/me`.
   - `POST /hostel/floors` returns `201` with the floor and `roomCount: 0`.
 - **Generate** inserts only the missing room numbers, with `beds` from the floor's `bedsPerRoom`. Running it again returns `{ created: 0 }`. It needs the floor in the named hostel (`404` otherwise).
 - **`PATCH /hostel/rooms/:code`** returns the `RoomSummary`. `beds` is 1–12 and can't go below the current occupants (`409`). It uses the room's `rev` like a bed assignment, so a student placed in the room at the same moment makes it answer `409` instead of leaving the room over capacity.
-- **Audit:** `hostel.create`, `floor.create`, `rooms.generate` (only when rooms were created) and `room.update` (beds from and to).
+- **Rooms by range** (`POST /hostel/rooms/range`, 2026-11-09, Admin > Hostel):
+  - Creates the rooms `floorCode` + `from`..`to` (`CF` 101..180 → `CF101`..`CF180`) with `beds` each, in block `hostelCode`. Rooms that already exist are left as they are and listed in `skipped`. At most 500 rooms a request; numbers 1–999; `to ≥ from`.
+  - A floor code that doesn't exist yet creates the floor first; then `floorName` is required (`400` on `floorName`). A floor code in another block is `409` (on `floorCode`). The floor's stored range widens to include the new rooms and its `bedsPerRoom` becomes `beds`.
+  - `dryRun: true` changes nothing and returns what would happen: the screen's preview.
+  - Two requests creating the same rooms at once: the unique room code keeps one of each; each answer lists only the rooms it created.
+- **Deleting rooms** (`POST /hostel/rooms/range/delete`, `DELETE /hostel/rooms/:code`):
+  - A room can go only when nobody is assigned to it, **including disabled users** (they keep their room). While any room in the request has someone, nothing is deleted: `409` with a message naming them; the dry run returns them in `blocked` with each user's `id`, `fullName` and `status`.
+  - Each delete is a compare-and-set on the room's `rev`, like a bed assignment: a student placed in the room after the check makes that room stay (it is then listed in `blocked` of a `200`, the others are deleted). An assignment racing a delete that wins fails with `400` "There is no room …" and leaves the student without a room.
+  - The floor's stored range shrinks to its remaining rooms.
+- **`DELETE /hostel/floors/:code`:** only a floor with no rooms (`409` otherwise), for example a mistyped prefix.
+- **Audit:** `hostel.create`, `floor.create`, `rooms.generate` (only when rooms were created), `room.update` (beds from and to), `rooms.create` (`{ floor, from, to, beds, created, skipped }`), `rooms.delete` (`{ floor, from, to, deleted, rooms, kept }`), `room.delete` (`{ code, beds }`) and `floor.delete` (`{ code, name }`). Dry runs write nothing.
+- **Who:** every write needs `hostel:manage`, which only `institution_admin` has (and the platform `super_admin`, which has every permission; none exists in production). Wardens and students get `403`.
 - **Other institutions:** their rooms and floors are `404` and never listed.
 
 ## Notifications (`/notifications`)
