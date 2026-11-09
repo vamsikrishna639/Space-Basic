@@ -31,7 +31,7 @@
 
 ## Health
 
-`GET /api/v1/health/client` (2026-11-09, deployment check): `{ ip, forwardedFor, trustProxy, suggestedTrustProxy }`, the caller's own address as the rate limits see it and the proxy chain in front of the API. `ip` must be the caller's own public address; otherwise set `TRUST_PROXY` to `suggestedTrustProxy`. `Cache-Control: no-store`.
+`GET /api/v1/health/client` (2026-11-09, deployment check): `{ ip, ipFrom, clientIpHeader, headers: { 'x-real-ip', 'x-vercel-forwarded-for' }, forwardedFor, trustProxy }`: the caller's own address as the rate limits see it, where it came from (`CLIENT_IP_HEADER` or the `TRUST_PROXY` chain), and what the caller's own request carried in the candidate headers. `ip` must be the caller's own public address, also when the caller sends made-up values in those headers. `Cache-Control: no-store`.
 
 | Method | Path | Permission | Request | Response |
 |---|---|---|---|---|

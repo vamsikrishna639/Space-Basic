@@ -13,6 +13,10 @@ const optionalString = z
   .optional()
   .transform((v) => (v && v.trim() ? v.trim() : undefined));
 
+/** Headers a proxy in front of the API sets itself, carrying the visitor's address (core/middleware/clientIp.ts). */
+export const CLIENT_IP_HEADERS = ['x-real-ip', 'x-vercel-forwarded-for'] as const;
+export type ClientIpHeader = (typeof CLIENT_IP_HEADERS)[number];
+
 const rawSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
@@ -24,6 +28,11 @@ const rawSchema = z.object({
   APP_ORIGINS: z.string().default('http://localhost:5173'),
   COOKIE_SECURE: optionalString,
   TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
+  CLIENT_IP_HEADER: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim().toLowerCase() : undefined))
+    .pipe(z.enum(CLIENT_IP_HEADERS).optional()),
   OTP_PROVIDER: z
     .string()
     .optional()
@@ -52,6 +61,8 @@ export interface Env {
   APP_ORIGINS: string[];
   COOKIE_SECURE: boolean;
   TRUST_PROXY: number;
+  /** A header the proxy sets itself with the visitor's address; when present and valid it is the caller's address. */
+  CLIENT_IP_HEADER: ClientIpHeader | undefined;
   OTP_PROVIDER: 'console' | 'gmail-api' | 'gmail-smtp' | undefined;
   ALLOW_CONSOLE_OTP: boolean;
   GMAIL_USER?: string;
@@ -132,6 +143,7 @@ export function parseEnv(raw: NodeJS.ProcessEnv, devSecretStore?: (name: string)
     APP_ORIGINS: origins,
     COOKIE_SECURE: v.COOKIE_SECURE === undefined ? isProd : v.COOKIE_SECURE === 'true' || v.COOKIE_SECURE === '1',
     TRUST_PROXY: v.TRUST_PROXY,
+    CLIENT_IP_HEADER: v.CLIENT_IP_HEADER,
     // Development with no OTP_PROVIDER variable at all (fresh clone, no .env): print codes to the console.
     // An explicit empty value still means "password sign-in only". Production never gets a default.
     OTP_PROVIDER: v.OTP_PROVIDER ?? (v.NODE_ENV === 'development' && raw.OTP_PROVIDER === undefined ? 'console' : undefined),

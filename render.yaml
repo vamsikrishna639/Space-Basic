@@ -33,10 +33,12 @@ services:
         sync: false
       - key: COOKIE_SECURE
         value: "true"
-      # Proxies in front of the API (Vercel's rewrite and Render's edge and load balancer). Measured on the first
-      # deploy (2026-11-09): 4 forwarded hops. Counted from the right, so a visitor's made-up X-Forwarded-For entries
-      # are ignored. Recheck after any hosting change: https://<app>/api/v1/health/client must show your own address
-      # as "ip" (README, "Deployment").
+      # The caller's address for rate limits (decisions.md 2026-11-09). Vercel's rewrite passes a visitor's own
+      # X-Forwarded-For through, so the API reads the visitor's address from x-real-ip, a header Vercel sets itself.
+      # Without it, TRUST_PROXY=3 gives the address that connected to Render's edge (Vercel's, for app traffic), which
+      # nobody can fake. Check after any hosting change: https://<app>/api/v1/health/client (README, "Deployment").
+      - key: CLIENT_IP_HEADER
+        value: x-real-ip
       - key: TRUST_PROXY
-        value: "4"
+        value: "3"
       # No OTP_PROVIDER: one-time codes are off and email + password sign-in works (decisions.md 2026-11-07).

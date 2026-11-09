@@ -41,7 +41,8 @@ The client needs no variables. The API refuses to start if any of these is missi
 | `JWT_ACCESS_SECRET`, `QR_TOKEN_SECRET`, `OTP_PEPPER` | 256-bit random | Render generates them (`generateValue`); nobody sees or copies them |
 | `APP_ORIGINS` | `https://<project>.vercel.app` (https, no trailing slash; several separated by commas) | you, in the Render dashboard |
 | `COOKIE_SECURE` | `true` | `render.yaml` |
-| `TRUST_PROXY` | `4` (the forwarded hops measured on the first deploy: Vercel's rewrite and Render's edge and load balancer) | `render.yaml`; recheck after any hosting change (below) |
+| `CLIENT_IP_HEADER` | `x-real-ip`: the visitor's address, from a header Vercel sets itself (Vercel passes a visitor's own `X-Forwarded-For` through, so that can't be used) | `render.yaml`; check after any hosting change (below) |
+| `TRUST_PROXY` | `3`: the fallback when that header is missing, the address that connected to Render's edge (can't be faked) | `render.yaml` |
 | `OTP_PROVIDER` | not set: email + password sign-in only, one-time codes off | (later: `gmail-api` and the four `GMAIL_API_*` variables) |
 | `ALLOW_CONSOLE_OTP`, `RELAX_RATE_LIMITS`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` | never in production | |
 
@@ -62,7 +63,7 @@ Changing `JWT_ACCESS_SECRET` signs everyone out; changing `OTP_PEPPER` voids cod
    - Connect → Drivers: copy the `mongodb+srv://…` string, put the password in, and add the database name: `…mongodb.net/spacebasic?retryWrites=true&w=majority…`.
 3. **Render** (render.com): New → **Blueprint** → the repository. Render reads `render.yaml` and asks for `MONGODB_URI` and `APP_ORIGINS` (`https://<project>.vercel.app`, the name you'll give the Vercel project). The first deploy takes a few minutes; then `https://spacebasic-api.onrender.com/api/v1/health` answers `{"status":"ok"}`. If Render gave the service another address, change the rewrite's `destination` in `vercel.json` to it and push.
 4. **Vercel** (vercel.com): Add New → Project → the repository. Leave Root Directory as the repository root and Framework Preset as "Other": `vercel.json` sets the rest. No environment variables. Deploy. If the address isn't the one in `APP_ORIGINS`, change `APP_ORIGINS` on Render to it (Render redeploys).
-5. **Check:** `https://<project>.vercel.app/api/v1/health` (through the rewrite), and `https://<project>.vercel.app/api/v1/health/client`: its `ip` must be **your own public address**. If it isn't, set `TRUST_PROXY` on Render to the `suggestedTrustProxy` it shows. (Rate limits count per address: a wrong value makes all users share one limit.)
+5. **Check:** `https://<project>.vercel.app/api/v1/health` (through the rewrite), and `https://<project>.vercel.app/api/v1/health/client`: its `ip` must be **your own public address** and `ipFrom` `x-real-ip`. Then the spoofing test: `curl.exe -s -H "X-Forwarded-For: 203.0.113.7" -H "X-Real-IP: 203.0.113.8" -H "X-Vercel-Forwarded-For: 203.0.113.9" https://<project>.vercel.app/api/v1/health/client` must still show your own address as `ip`. (Rate limits count per address: a proxy's address makes all users share one limit, and a made-up one lets a caller dodge the limits.) The `headers` field shows what each candidate header carried; `docs/decisions.md` 2026-11-09 says what to change if the test fails.
 
 The free Render service sleeps after 15 minutes without requests; the next request wakes it in up to about a minute, and the app shows its loading state meanwhile (Vercel waits up to 120 s for a proxied request).
 

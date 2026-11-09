@@ -46,7 +46,7 @@ const render = { build: yamlValue('buildCommand'), start: yamlValue('startComman
 
 // A clean environment: nothing from this machine's own configuration leaks into the builds.
 const baseEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) =>
-  !/^(MONGODB_URI|JWT_|QR_|OTP_|APP_ORIGINS|COOKIE_|TRUST_PROXY|RELAX_|ALLOW_CONSOLE|GMAIL_|SB_|NODE_ENV|PORT)/.test(k)));
+  !/^(MONGODB_URI|JWT_|QR_|OTP_|APP_ORIGINS|COOKIE_|TRUST_PROXY|CLIENT_IP_HEADER|RELAX_|ALLOW_CONSOLE|GMAIL_|SB_|NODE_ENV|PORT)/.test(k)));
 const shell = process.platform === 'win32' ? 'bash' : 'sh';
 
 function run(cmd: string, cwd: string, env: NodeJS.ProcessEnv, input?: string): Promise<{ code: number; out: string }> {
@@ -134,7 +134,7 @@ try {
   const prodEnv = {
     ...baseEnv, NODE_ENV: 'production', PORT: String(API_PORT), MONGODB_URI: uri,
     JWT_ACCESS_SECRET: secret(), QR_TOKEN_SECRET: secret(), OTP_PEPPER: secret(),
-    APP_ORIGINS: ORIGIN, COOKIE_SECURE: 'true', TRUST_PROXY: '1',
+    APP_ORIGINS: ORIGIN, COOKIE_SECURE: 'true', TRUST_PROXY: '1', CLIENT_IP_HEADER: 'x-real-ip',
   };
   let apiLog = '';
   // The start command has no shell syntax: run it through the platform shell (cmd on Windows, whose process tree
@@ -195,10 +195,13 @@ try {
     for (const rule of vercel.headers) if (toRegex(rule.source).test(url.pathname)) for (const h of rule.headers) res.setHeader(h.key, h.value);
     const apiRule = vercel.rewrites.find((r) => r.source.startsWith('/api'));
     if (apiRule && toRegex(apiRule.source).test(url.pathname)) {
-      // Vercel's rewrite -> Render. The page is presented as the deployed https origin (APP_ORIGINS).
-      const headers = { ...req.headers, host: `127.0.0.1:${API_PORT}`, ...(req.headers.origin ? { origin: ORIGIN } : {}), 'x-forwarded-for': '203.0.113.9' };
+      // Vercel's rewrite -> Render. The page is presented as the deployed https origin (APP_ORIGINS). As measured on
+      // the real deployment, a visitor's own X-Forwarded-For passes through (here a made-up one), and Vercel sets
+      // x-real-ip itself (here the visitor's "real" address).
+      const headers = { ...req.headers, host: `127.0.0.1:${API_PORT}`, ...(req.headers.origin ? { origin: ORIGIN } : {}), 'x-forwarded-for': '198.51.100.66', 'x-real-ip': '203.0.113.9' };
       const up = http.request({ host: '127.0.0.1', port: API_PORT, path: url.pathname + url.search, method: req.method, headers }, (r) => { res.writeHead(r.statusCode ?? 502, r.headers); r.pipe(res); });
-      up.on('error', () => { res.writeHead(502); res.end(); });
+      // The API may stop while a request is in flight (teardown): answer 502 if nothing was sent yet, else just close.
+      up.on('error', () => { if (res.headersSent) res.destroy(); else { res.writeHead(502); res.end(); } });
       req.pipe(up);
       return;
     }
@@ -237,8 +240,8 @@ try {
     await page.reload();
     check(await page.getByRole('link', { name: 'Verify Admin', exact: true }).waitFor({ timeout: 10_000 }).then(() => true, () => false), 'a reload stays signed in (the refresh cookie works through the rewrite)');
     console.log(`     (auth responses: ${authLog.join(', ')})`);
-    const client = (await page.evaluate(() => fetch('/api/v1/health/client').then((r) => r.json()))) as { ip: string };
-    check(client.ip === '203.0.113.9', `TRUST_PROXY: the API sees the forwarded caller address (${client.ip})`);
+    const client = (await page.evaluate(() => fetch('/api/v1/health/client').then((r) => r.json()))) as { ip: string; ipFrom: string };
+    check(client.ip === '203.0.113.9' && client.ipFrom === 'x-real-ip', `CLIENT_IP_HEADER: the API uses x-real-ip, not a made-up X-Forwarded-For (${client.ip}, from ${client.ipFrom})`);
   } finally {
     await browser.close();
   }

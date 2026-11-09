@@ -390,12 +390,18 @@ describe('tenant isolation', () => {
 });
 
 describe('app basics', () => {
-  it('health/client shows the address the rate limits use and the proxy chain (TRUST_PROXY check)', async () => {
-    const res = await request(app).get('/api/v1/health/client').set('X-Forwarded-For', '203.0.113.7, 198.51.100.2');
+  it('health/client shows the address the rate limits use, where it came from, and the proxy headers', async () => {
+    const res = await request(app).get('/api/v1/health/client')
+      .set('X-Forwarded-For', '203.0.113.7, 198.51.100.2').set('X-Real-IP', '203.0.113.8');
     expect(res.status).toBe(200);
     expect(res.headers['cache-control']).toBe('no-store');
-    expect(res.body).toMatchObject({ forwardedFor: ['203.0.113.7', '198.51.100.2'], trustProxy: 0, suggestedTrustProxy: 2 });
-    expect(res.body.ip).not.toBe('203.0.113.7'); // TRUST_PROXY=0 in tests: the forwarded chain is not trusted
+    expect(res.body).toMatchObject({
+      forwardedFor: ['203.0.113.7', '198.51.100.2'], trustProxy: 0, clientIpHeader: null,
+      ipFrom: 'proxy chain (TRUST_PROXY=0)', headers: { 'x-real-ip': '203.0.113.8', 'x-vercel-forwarded-for': null },
+    });
+    // TRUST_PROXY=0 and no CLIENT_IP_HEADER in tests: neither header is trusted.
+    expect(res.body.ip).not.toBe('203.0.113.7');
+    expect(res.body.ip).not.toBe('203.0.113.8');
   });
 
   it('health, JSON 404 and security headers', async () => {

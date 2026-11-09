@@ -3,10 +3,11 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { CLIENT_HEADER } from '@spacebasic/shared';
-import { env } from './config/env';
+import { CLIENT_IP_HEADERS, env } from './config/env';
 import { requestId, notFound, errorHandler } from './core/http/handlers';
 import { sanitize } from './core/middleware/sanitize';
 import { createLimiters } from './core/middleware/rateLimit';
+import { clientIp, headerIp } from './core/middleware/clientIp';
 import { authRouter } from './modules/auth/auth.routes';
 import { usersRouter } from './modules/users/users.routes';
 import { consentRouter } from './modules/consent/consent.routes';
@@ -25,6 +26,7 @@ export function createApp() {
 
   const limiters = createLimiters();
   app.use(requestId);
+  app.use(clientIp(env.CLIENT_IP_HEADER)); // before every rate limiter
   app.use(helmet());
   app.use(cors({ origin: env.APP_ORIGINS, credentials: true, allowedHeaders: ['content-type', 'authorization', CLIENT_HEADER, 'x-request-id'] }));
   app.use(express.json({ limit: '100kb' }));
@@ -34,13 +36,21 @@ export function createApp() {
 
   const api = express.Router();
   api.get('/health', (_req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json({ status: 'ok', time: new Date().toISOString() }); });
-  // Deployment check for TRUST_PROXY (docs/decisions.md 2026-11-09): the address the rate limits see for the caller,
-  // and the proxy chain in front of the API. Rate limits key on `ip`, so it must be the caller's own address, not a
-  // proxy's. Shows callers only their own address.
+  // Deployment check for the caller's address (docs/decisions.md 2026-11-09): the address the rate limits use, where
+  // it came from, and the headers a proxy may set. Rate limits key on `ip`, so it must be the caller's own address,
+  // not a proxy's, and not one the caller can make up. Shows callers only what their own request carried.
   api.get('/health/client', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     const forwardedFor = (req.get('x-forwarded-for') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-    res.json({ ip: req.ip, forwardedFor, trustProxy: env.TRUST_PROXY, suggestedTrustProxy: forwardedFor.length });
+    const fromHeader = env.CLIENT_IP_HEADER && headerIp(req.get(env.CLIENT_IP_HEADER)) !== undefined;
+    res.json({
+      ip: req.ip,
+      ipFrom: fromHeader ? env.CLIENT_IP_HEADER : `proxy chain (TRUST_PROXY=${env.TRUST_PROXY})`,
+      clientIpHeader: env.CLIENT_IP_HEADER ?? null,
+      headers: Object.fromEntries(CLIENT_IP_HEADERS.map((h) => [h, req.get(h) ?? null])),
+      forwardedFor,
+      trustProxy: env.TRUST_PROXY,
+    });
   });
   api.use('/auth', authRouter(limiters));
   api.use('/users', usersRouter());
