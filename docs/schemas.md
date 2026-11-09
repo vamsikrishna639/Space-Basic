@@ -125,6 +125,7 @@ Phase 1 implements the collections in §1. §2 lists the later collections, so P
 | `number` | Number | Validated against the floor's `[roomNumberMin, roomNumberMax]` |
 | `code` | String | Floor code + 3-digit number, e.g. "CS240". `^[A-Z]{2}\d{3}$`, and the prefix must equal the floor code |
 | `beds` | Number, 1–12 | Defaults to the floor's `bedsPerRoom` |
+| `rev` | Number, default 0 (missing on older rooms = 0) | Bumped by every write that fills a bed or changes `beds`; a compare-and-set on it keeps simultaneous requests from overfilling the room (2026-11-09, `server/src/modules/hostel/beds.ts`) |
 
 - **Indexes:** unique `{ institutionId, code }`, and `{ institutionId, floorId, number }`.
 - **Seed (fake placeholder values):** hostel "West"; floors CF 101–200, CS 201–300, CT 301–400; 3 beds per room.

@@ -4,9 +4,9 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-09, end of session):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Current phase (2026-11-09, at the admin users CHECKPOINT, waiting for the user):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
 - **Done:**
-  - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, the password rule (not the account's email or phone; create, import, change, reset), the compact 96-character HMAC QR token (approved, a test per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, `npm run dev:relaxed`; refused in production). **175 Jest tests.**
+  - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, the password rule (not the account's email or phone; create, import, change, reset), the compact 96-character HMAC QR token (approved, a test per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, `npm run dev:relaxed`; refused in production), race-safe beds (room `rev` compare-and-set, `server/src/modules/hostel/beds.ts`), `GET /users/:id`, the `room=none` and free-room filters. **185 Jest tests.**
   - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
 
     | Screen | Route | Visual |
@@ -23,12 +23,13 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
     | Change Password, Privacy & Consent | `/profile/password`, `/profile/privacy` | no screenshot (plain) |
 
     Screens and states without a screenshot are listed in `docs/not-from-reference.md`. My Profile's My Information and About rows, and Settings' Accessibility and Check connection rows, open ComingSoon.
-  - **Role routing and plain staff homes:** one app per role (`client/src/auth/areas.ts`): students `/home`, wardens `/warden`, admins `/admin`; cross-role URLs redirect to the user's own app; staff have no tab bar. Two roles: "Continue as" (`/choose`), remembered per user on the device; switch from the staff account menu or the "Switch role" row (multi-role accounts only) in My Profile. Server role separation: `server/src/test/role-separation.test.ts`. Staff section pages are "Coming soon".
+  - **Role routing and plain staff homes:** one app per role (`client/src/auth/areas.ts`): students `/home`, wardens `/warden`, admins `/admin`; cross-role URLs redirect to the user's own app; staff have no tab bar. Two roles: "Continue as" (`/choose`), remembered per user on the device; switch from the staff account menu or the "Switch role" row (multi-role accounts only) in My Profile. Server role separation: `server/src/test/role-separation.test.ts`. The other staff section pages are "Coming soon".
+  - **Admin Users screens (free design, 2026-11-09):** `/admin/users` (search, views incl. "Waiting for a room", Accept with the room picker), `/admin/users/new`, `/admin/users/:id` (edit, roles, room, disable/enable), `/admin/users/import` (CSV in the browser via `shared/src/csv.ts`). "Accept" = give a waiting student a room (no pending status; flagged in `docs/decisions.md`).
   - **Reload sign-out fix (approved):** for 10 s after a rotation the immediately previous refresh token works once more; the client refreshes one tab at a time (Web Locks). `/auth/logout` accepts an older token of the session.
-  - **Tests:** server 175/175; client unit tests 40/40; `smoke-settings.ts` and `smoke-roles.ts` pass after the last changes. **Not re-run since the last changes: `smoke-signin.ts` and `smoke-otp.ts`.** The smoke scripts start the dev stack themselves with relaxed sign-in limits (`tools/ui-analysis/src/dev-stack.ts`), or `smoke-signin` / `smoke-roles` / `smoke-settings` reuse a running one (start it with `npm run dev:relaxed`); `smoke-otp` needs the ports free.
+  - **Tests (2026-11-09, after the admin users screens):** server 185/185; client unit tests 52/52; `smoke-admin-users.ts` 51/51 and `smoke-roles.ts` pass; `smoke-signin.ts` and `smoke-otp.ts` passed at the start of the session (before these changes, which don't touch student screens); visual tests unchanged (all 12 screens, same numbers). The smoke scripts start the dev stack themselves with relaxed sign-in limits (`tools/ui-analysis/src/dev-stack.ts`), or `smoke-signin` / `smoke-roles` / `smoke-settings` reuse a running one (start it with `npm run dev:relaxed`); `smoke-otp` needs the ports free. `smoke-admin-users` starts or reuses one too, and disables and moves out the users it creates.
   - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
 - **Next, in this order (user plan 2026-11-09):**
-  1. **(a) Admin users screens** (free design, desktop-friendly, admins only, functional tests): users list and search, add and edit, accept a user and assign a room (room picker showing free beds, enforced server-side), disable, CSV import. No student self-signup in this phase. Then **CHECKPOINT**.
+  1. ~~(a) Admin users screens~~: built; **at the CHECKPOINT, waiting for the user's reply.**
   2. **(b) Deployment** on Vercel (client), Render (server) and MongoDB Atlas. In the repo: `vercel.json` with the `/api` rewrite, Render build and start commands, health check, the production env var list in `.env.example` and the README; verify both builds from a clean clone. Then walk the user through creating the Atlas cluster and setting the environment variables, one step at a time; never ask for a secret. Then **CHECKPOINT**.
   - **Postponed until after deployment:** the warden scanner and other warden screens (`qr-scanner`, MIT, approved, not installed yet), and the rest of the admin screens (hostel structure, support content, audit log).
 - **Open items (waiting on the user):**
@@ -39,7 +40,8 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   - Seeded dev notifications get read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up).
   - Before a smoke run, make sure ports 5173 / 4000 / 27027 are free, or reuse the running stack; on Windows stop the stack with `taskkill /PID <root> /T /F`.
   - Two-role dev user (student + warden): `devika.menon@example.com` / `Both@2026`.
-  - Every decision is in `docs/decisions.md` (latest rows, 2026-11-09: the refresh grace fix, the new plan, Settings values and visual stamping, the shared header, measured light tokens, haptics/sounds, Clear stored data, Change Password and Privacy & Consent).
+  - The dev seed has 12 FAKE roster students (`DEV_ROSTER`): CS242 full, CS243 with one free bed, four waiting for a room, one disabled.
+  - Every decision is in `docs/decisions.md` (latest rows, 2026-11-09: "accept" = assign a room, race-safe beds, enabling needs a bed, the API additions, the CSV parser in `shared`, the admin Users screens, the dev seed roster, the NUL byte in `api.md`).
 - **Workflow:** gated. Stop for the user's approval after each of these:
   1. Analysis
   2. Architecture

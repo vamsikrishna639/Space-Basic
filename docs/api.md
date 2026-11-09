@@ -72,7 +72,8 @@
 | GET | `/users/me/avatar` | auth (own) | – | `200 image/*` (ETag) · `404` = use the default avatar |
 | PUT | `/users/me/avatar` | `profile:update` | raw body `image/png\|jpeg\|webp` ≤ 1 MB | `200 { avatarUrl }` · `413` · `415` |
 | DELETE | `/users/me/avatar` | `profile:update` | – | `204` |
-| GET | `/users` | `users:read` | `?role=&q=&cursor=&limit=` | `200 { items: UserSummary[], nextCursor }` (wardens see students only) |
+| GET | `/users` | `users:read` | `?role=&status=&room=none\|assigned&q=&cursor=&limit=` | `200 { items: UserSummary[], nextCursor }` (wardens see students only) |
+| GET | `/users/:id` | `users:read` | – | `200 UserSummary` · `404` for users the caller can't list |
 | POST | `/users` | `users:create` | `{ fullName, email?, phone?, roles, roomCode?, password? }` | `201 UserSummary` · `409` duplicate email/phone |
 | POST | `/users/import` | `users:import` | `{ users: [same as POST /users] }` (≤ 500; the CSV script calls this) | `200 { created, skipped: [{ row, reason }] }` |
 | PATCH | `/users/:id` | `users:update` | `{ fullName?, email?, phone?, roomCode?, status? }` | `200 UserSummary` (disabling revokes sessions) |
@@ -91,18 +92,22 @@
   - `q` searches the name (contains), the email (prefix), the phone (3 or more digits, contains) and the exact room code. Regex characters are treated literally.
   - Wardens get students only (`?role=` other than `student` is `403`).
   - `super_admin` users are left out unless the caller is `super_admin`.
+  - `room=none` lists users without a room (with `role=student&status=active`: the students waiting for a room, the admin screen's "Waiting for a room"); `room=assigned` the ones with one (2026-11-09).
+- **One user** (`GET /users/:id`, 2026-11-09): the same `UserSummary` as the list. Platform staff (for non-`super_admin` callers), non-students (for wardens) and other institutions' users are `404`.
 - **Create and import:**
   - Roles are limited to `student`, `warden`, `institution_admin` and `super_admin`. `mess_staff` comes with the Mess module.
   - `roomCode` is for students only. The room must exist (`400`) and have a free bed (`409`).
+  - **Beds can't be overfilled, even by simultaneous requests** (2026-11-09): every write that fills a bed (create, import, a room change, enabling a user who keeps a room) and every bed-count change goes through a compare-and-set on the room's `rev` (`server/src/modules/hostel/beds.ts`). The loser of a race is undone and retried, and answers `409` with `fields.roomCode` ("Room CT301 is full (3 of 3 beds taken)").
   - Email and phone are checked across all institutions (`409` with `fields`).
   - Import handles rows one at a time, so capacity and duplicate checks see the earlier rows. The result's `row` is 1-based.
 - **Update:**
   - `null` clears `email`, `phone` or `roomCode`, but one of email or phone must remain.
-  - Disabling a user revokes all of their sessions.
+  - Disabling a user revokes all of their sessions. A disabled user keeps their room, but not the bed: enabling them again needs a free bed in it (`409` otherwise; send `roomCode` with `status: 'active'` to enable them in another room).
   - An admin can't disable themself, edit a `super_admin`, or change their own roles.
   - A user with no `student` role leaves their room.
   - Another institution's user gives `404`.
 - **Audit:** `user.create`, `user.import` (counts only), `user.update` (field names, not values), `user.disable`, `user.enable` and `user.role_change` (from and to).
+- **CSV import in the app:** Admin > Users > Import CSV reads the file in the browser with the same parser and column rules (`shared/src/csv.ts`), previews every row with its first problem, and sends the ready rows in batches.
 - **CSV import script:** `npm run import-users -w server -- <file.csv> --accept-privacy-policy [--api <base>]`. It reads `SB_ADMIN_EMAIL` and `SB_ADMIN_PASSWORD` from the environment, signs in, posts batches that fit both the 500-row and 100 kB limits, prints skipped rows with their CSV line numbers, and signs out. Columns: `fullName,email,phone,roles,roomCode,password`, with roles separated by `|`. A fake example is in `server/src/scripts/users.example.csv`.
 
 ## Consent (`/consent`)
@@ -124,7 +129,7 @@
 | Method | Path | Permission | Request | Response |
 |---|---|---|---|---|
 | GET | `/hostel/structure` | `hostel:read` (inst) | – | `200 [{ hostel, floors: [{ code, name, roomNumberMin, roomNumberMax, bedsPerRoom, roomCount }] }]` |
-| GET | `/hostel/rooms` | `hostel:read` (inst) | `?floor=CS&cursor=&limit=` | `200 { items: [{ code, number, beds, occupants }], nextCursor }` |
+| GET | `/hostel/rooms` | `hostel:read` (inst) | `?hostel=&floor=CS&q=CS2&free=true&cursor=&limit=` | `200 { items: [{ code, number, beds, occupants }], nextCursor }` |
 | POST | `/hostel/hostels` | `hostel:manage` | `{ name, code }` | `201` |
 | POST | `/hostel/floors` | `hostel:manage` | `{ hostelCode, code, name, roomNumberMin, roomNumberMax, bedsPerRoom }` | `201` |
 | POST | `/hostel/floors/:code/rooms/generate` | `hostel:manage` | `{ hostelCode }` | `200 { created }`: creates every room in the floor's range (idempotent) |
@@ -138,13 +143,14 @@ A student's own room is in `GET /users/me`.
   - Rows are `{ code, number, floorCode, hostelCode, beds, occupants }`. `occupants` counts active users only.
   - Optional `?hostel=W` and `?floor=CS` filters; an unknown hostel or floor is `404`.
   - Sorted by room code, with an opaque cursor; `limit` is at most 50.
+  - `q` is the start of a room code (letters then digits, e.g. `cs2`, upper-cased; anything else is `400`). `free=true` lists only rooms with a free bed, counted in the database so each page is full (the admin room picker, 2026-11-09).
 - **Creating:**
   - Codes are upper-cased. Hostel codes are 1–6 letters or digits, and floor codes are 2 letters.
   - A floor code is unique across the whole institution, so room codes like `CS240` stay unambiguous (`409`).
   - `order` defaults to the next position.
   - `POST /hostel/floors` returns `201` with the floor and `roomCount: 0`.
 - **Generate** inserts only the missing room numbers, with `beds` from the floor's `bedsPerRoom`. Running it again returns `{ created: 0 }`. It needs the floor in the named hostel (`404` otherwise).
-- **`PATCH /hostel/rooms/:code`** returns the `RoomSummary`. `beds` is 1–12 and can't go below the current occupants (`409`).
+- **`PATCH /hostel/rooms/:code`** returns the `RoomSummary`. `beds` is 1–12 and can't go below the current occupants (`409`). It uses the room's `rev` like a bed assignment, so a student placed in the room at the same moment makes it answer `409` instead of leaving the room over capacity.
 - **Audit:** `hostel.create`, `floor.create`, `rooms.generate` (only when rooms were created) and `room.update` (beds from and to).
 - **Other institutions:** their rooms and floors are `404` and never listed.
 
@@ -179,7 +185,7 @@ A student's own room is in `GET /users/me`.
 The QR token is **not a JWT** (changed 2026-11-08, `docs/decisions.md` "Compact QR token"). It is always exactly 96 characters, so the Entry Pass QR is always version 6-M (41 × 41 modules), as in the screenshot:
 
 ```
-base64url(body, 39 bytes) "." base64url(HMAC-SHA256(QR_TOKEN_SECRET, "spacebasic-qr/v1 " || body), 32 bytes)
+base64url(body, 39 bytes) "." base64url(HMAC-SHA256(QR_TOKEN_SECRET, "spacebasic-qr/v1\0" || body), 32 bytes)
 body = 0x01 (format) | sub: student ObjectId (12) | inst: institution ObjectId (12) | jti: random (10) | iat: uint32 BE seconds (4)
 ```
 
