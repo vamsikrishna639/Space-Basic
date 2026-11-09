@@ -208,7 +208,9 @@ try {
     }
     const file = path.join(dist, decodeURIComponent(url.pathname));
     const target = file.startsWith(dist) && fs.existsSync(file) && fs.statSync(file).isFile() ? file : path.join(dist, 'index.html');
-    res.writeHead(200, { 'content-type': types[path.extname(target)] ?? 'application/octet-stream' });
+    // A Content-Type from vercel.json's headers wins, as on Vercel (assetlinks.json, the manifest).
+    if (!res.hasHeader('content-type')) res.setHeader('content-type', types[path.extname(target)] ?? 'application/octet-stream');
+    res.writeHead(200);
     fs.createReadStream(target).pipe(res);
   }).listen(WEB_PORT);
 
@@ -226,6 +228,25 @@ try {
     check(deep?.status() === 200, 'a deep link is served the app (SPA fallback)');
     await page.waitForURL((u) => u.pathname === '/', { timeout: 10_000 }).catch(() => undefined);
     check(new URL(page.url()).pathname === '/', 'signed out, the deep link goes to Welcome');
+
+    // Installable app (Android / Trusted Web Activity): manifest, icons, service worker, Digital Asset Links.
+    const fetchWeb = (p: string) => page.request.get(`http://localhost:${WEB_PORT}${p}`);
+    const man = await fetchWeb('/manifest.webmanifest');
+    const manifest = (await man.json().catch(() => null)) as { name?: string; display?: string; theme_color?: string; icons?: { src: string; sizes: string; purpose?: string }[] } | null;
+    check(man.status() === 200 && man.headers()['content-type'] === 'application/manifest+json' && manifest?.name === 'Space Basic' && manifest.display === 'standalone' && !!manifest.theme_color,
+      'manifest.webmanifest: application/manifest+json, "Space Basic", standalone, theme colour');
+    const icons = manifest?.icons ?? [];
+    const iconOk = await Promise.all(icons.map(async (i) => { const r = await fetchWeb(i.src); return r.status() === 200 && r.headers()['content-type'] === 'image/png'; }));
+    check(['192x192', '512x512'].every((s) => icons.some((i) => i.sizes === s && i.purpose !== 'maskable') && icons.some((i) => i.sizes === s && i.purpose === 'maskable')) && iconOk.every(Boolean),
+      'icons 192 and 512, plain and maskable, all served as PNG');
+    check(await page.evaluate(() => document.querySelector('link[rel="manifest"]')?.getAttribute('href')) === '/manifest.webmanifest', 'index.html links the manifest');
+    const sw = await fetchWeb('/sw.js');
+    check(sw.status() === 200 && /javascript/.test(sw.headers()['content-type'] ?? '') && sw.headers()['cache-control'] === 'no-cache', 'sw.js served as JavaScript with Cache-Control no-cache');
+    const links = await fetchWeb('/.well-known/assetlinks.json');
+    const al = (await links.json().catch(() => null)) as { relation?: string[]; target?: { namespace?: string; package_name?: string; sha256_cert_fingerprints?: string[] } }[] | null;
+    check(links.status() === 200 && links.headers()['content-type'] === 'application/json' && al?.[0]?.relation?.includes('delegate_permission/common.handle_all_urls') === true && al[0].target?.namespace === 'android_app',
+      '.well-known/assetlinks.json served as application/json (a file, not the SPA fallback)');
+    if (al?.[0]?.target?.sha256_cert_fingerprints?.some((f) => !/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/.test(f))) console.log('     (assetlinks.json: the SHA-256 fingerprint is still the placeholder)');
     await page.goto(`http://localhost:${WEB_PORT}/sign-in/email`);
     await page.getByPlaceholder('name@college.edu').fill('verify.admin@example.com');
     await page.getByPlaceholder('Enter your password').fill(adminPassword);

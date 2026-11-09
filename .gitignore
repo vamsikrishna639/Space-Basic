@@ -13,6 +13,12 @@ reference-ui/*.png
 !reference-ui/assets/
 !reference-ui/redacted/
 
+# --- Android app signing (Trusted Web Activity): never commit the key or its passwords ---
+*.keystore
+*.jks
+*.p12
+signing-key-info.txt
+
 # --- build / deps ---
 node_modules/
 dist/
