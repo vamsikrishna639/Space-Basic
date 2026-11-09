@@ -30,8 +30,8 @@ export function firstNameOf(fullName: string): string {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Admin user management (docs/api.md "Users and profile"). No admin screens in Phase 1: the API and the
-// CSV import script (server/src/scripts/import-users.ts) are the only callers.
+// Admin user management (docs/api.md "Users and profile"): the admin Users screens (client/src/screens/admin) and
+// the CSV import script (server/src/scripts/import-users.ts).
 
 /** Roles an admin can assign in Phase 1 (mess_staff arrives with the Mess module). */
 export const ASSIGNABLE_ROLES = ['student', 'warden', 'institution_admin', 'super_admin'] as const satisfies readonly Role[];
@@ -127,4 +127,6 @@ export const listUsersQuerySchema = paginationQuerySchema.extend({
   role: z.enum(ROLES).optional(),
   status: z.enum(['active', 'disabled']).optional(),
   q: z.string().trim().max(60).optional().transform((v) => (v ? v : undefined)),
+  /** `none`: users without a room (with role=student: the students waiting for one); `assigned`: with a room. */
+  room: z.enum(['none', 'assigned']).optional(),
 });

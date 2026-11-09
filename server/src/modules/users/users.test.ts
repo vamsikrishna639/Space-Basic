@@ -8,6 +8,7 @@ import { CONSENT, makeInstitution, makeRoom, makeUser } from '../../test/factory
 import { AuditModel } from '../../core/audit/audit';
 import { AssetModel } from '../assets/asset.model';
 import { SessionModel } from '../auth/auth.models';
+import { RoomModel } from '../hostel/hostel.models';
 import { UserModel } from './user.model';
 
 useTestDb();
@@ -348,5 +349,125 @@ describe('PATCH /users/:id/roles', () => {
     expect((await request(app).patch(`/api/v1/users/${admin._id}/roles`).set(auth(token.admin)).send({ roles: ['student'] })).status).toBe(403);
     expect((await request(app).patch(`/api/v1/users/${student._id}/roles`).set(auth(token.admin)).send({ roles: [] })).status).toBe(400);
     expect((await request(app).patch(`/api/v1/users/${student._id}/roles`).set(auth(token.super)).send({ roles: ['super_admin'] })).status).toBe(200);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------
+// Admin Users screens (2026-11-09): one user, the "waiting for a room" list, and beds that can't be overfilled.
+
+describe('GET /users/:id', () => {
+  it('admins read any user they can list; platform staff, other institutions and bad ids are 404 / 400', async () => {
+    const { token, student, warden, superAdmin } = await world();
+    const res = await request(app).get(`/api/v1/users/${student._id}`).set(auth(token.admin));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ id: String(student._id), fullName: 'Arjun Rao', roles: ['student'], room: { code: 'CS240', display: 'West CS240' }, hasPassword: true });
+    expect(res.body.passwordHash).toBeUndefined();
+    expect(res.headers['cache-control']).toBe('no-store');
+    expect((await request(app).get(`/api/v1/users/${warden._id}`).set(auth(token.admin))).status).toBe(200);
+    expect((await request(app).get(`/api/v1/users/${superAdmin._id}`).set(auth(token.admin))).status).toBe(404);
+    expect((await request(app).get(`/api/v1/users/${superAdmin._id}`).set(auth(token.super))).status).toBe(200);
+    const other = await makeInstitution('Other University');
+    const outsider = await makeUser(other._id, { roles: ['student'] });
+    expect((await request(app).get(`/api/v1/users/${outsider._id}`).set(auth(token.admin))).status).toBe(404);
+    expect((await request(app).get('/api/v1/users/not-an-id').set(auth(token.admin))).status).toBe(400);
+  });
+
+  it('wardens read students only; students cannot read users', async () => {
+    const { token, student, admin } = await world();
+    expect((await request(app).get(`/api/v1/users/${student._id}`).set(auth(token.warden))).status).toBe(200);
+    expect((await request(app).get(`/api/v1/users/${admin._id}`).set(auth(token.warden))).status).toBe(404);
+    expect((await request(app).get(`/api/v1/users/${student._id}`).set(auth(token.student))).status).toBe(403);
+  });
+});
+
+describe('GET /users?room=', () => {
+  it('room=none lists the students waiting for a room; room=assigned the ones with one', async () => {
+    const { token, inst } = await world();
+    await makeUser(inst._id, { roles: ['student'], fullName: 'Bina Waiting' });
+    await makeUser(inst._id, { roles: ['student'], fullName: 'Chetan Waiting', status: 'disabled' });
+    const waiting = await request(app).get('/api/v1/users?role=student&room=none').set(auth(token.admin));
+    expect(waiting.status).toBe(200);
+    expect(waiting.body.items.map((u: { fullName: string }) => u.fullName)).toEqual(['Bina Waiting', 'Chetan Waiting']);
+    const activeWaiting = await request(app).get('/api/v1/users?role=student&room=none&status=active').set(auth(token.admin));
+    expect(activeWaiting.body.items.map((u: { fullName: string }) => u.fullName)).toEqual(['Bina Waiting']);
+    const housed = await request(app).get('/api/v1/users?room=assigned').set(auth(token.admin));
+    expect(housed.body.items.map((u: { fullName: string }) => u.fullName)).toEqual(['Arjun Rao']);
+    expect((await request(app).get('/api/v1/users?room=maybe').set(auth(token.admin))).status).toBe(400);
+  });
+});
+
+describe('beds are enforced on the server, even under races', () => {
+  /** world() plus room CT301 with `free` of its 3 beds free, and `n` students without a room. */
+  async function crowd(free: number, n: number) {
+    const w = await world();
+    const room = await makeRoom(w.inst._id, 'CT301');
+    for (let i = 0; i < 3 - free; i++) await makeUser(w.inst._id, { roles: ['student'], roomId: room._id });
+    const waiting = [];
+    for (let i = 0; i < n; i++) waiting.push(await makeUser(w.inst._id, { roles: ['student'], fullName: `Waiting ${i}` }));
+    const occupants = () => UserModel.countDocuments({ institutionId: w.inst._id, roomId: room._id, status: 'active' });
+    return { ...w, room, waiting, occupants };
+  }
+
+  it('eight admins assigning the last bed at once: exactly one wins, the rest get 409 and keep no room', async () => {
+    const { token, waiting, occupants, inst } = await crowd(1, 8);
+    const results = await Promise.all(waiting.map((u) => request(app).patch(`/api/v1/users/${u._id}`).set(auth(token.admin)).send({ roomCode: 'CT301' })));
+    expect(results.filter((r) => r.status === 200)).toHaveLength(1);
+    expect(results.filter((r) => r.status === 409)).toHaveLength(7);
+    expect(results.filter((r) => r.status === 409).every((r) => /CT301/.test(r.body.error.fields.roomCode as string))).toBe(true);
+    expect(await occupants()).toBe(3);
+    expect(await UserModel.countDocuments({ institutionId: inst._id, fullName: /^Waiting/, roomId: { $ne: null } })).toBe(1);
+  });
+
+  it('creating users into the last two beds at once never overfills the room, and refused creates leave nothing', async () => {
+    const { token, occupants, inst } = await crowd(2, 0);
+    const results = await Promise.all(Array.from({ length: 6 }, (_, i) =>
+      request(app).post('/api/v1/users').set(auth(token.admin)).send({ fullName: `New Student ${i}`, email: `new${i}@example.com`, roles: ['student'], roomCode: 'CT301' })));
+    expect(results.filter((r) => r.status === 201)).toHaveLength(2);
+    expect(results.filter((r) => r.status === 409)).toHaveLength(4);
+    expect(await occupants()).toBe(3);
+    expect(await UserModel.countDocuments({ institutionId: inst._id, email: /^new\d@/ })).toBe(2);
+  });
+
+  it('shrinking a room while students are assigned to it never ends over capacity', async () => {
+    const { token, waiting, occupants, room, inst } = await crowd(2, 2);
+    const results = await Promise.all([
+      request(app).patch(`/api/v1/users/${waiting[0]!._id}`).set(auth(token.admin)).send({ roomCode: 'CT301' }),
+      request(app).patch(`/api/v1/users/${waiting[1]!._id}`).set(auth(token.admin)).send({ roomCode: 'CT301' }),
+      request(app).patch('/api/v1/hostel/rooms/CT301').set(auth(token.admin)).send({ beds: 1 }),
+    ]);
+    expect(results.every((r) => r.status === 200 || r.status === 409)).toBe(true);
+    const beds = (await RoomModel.findOne({ institutionId: inst._id, _id: room._id }).lean())!.beds;
+    expect(await occupants()).toBeLessThanOrEqual(beds);
+  });
+
+  it('a disabled student keeps the room but not the bed; enabling them again needs a free bed', async () => {
+    const { token, inst, room, occupants } = await crowd(1, 0);
+    const holder = await makeUser(inst._id, { roles: ['student'], roomId: room._id, fullName: 'Dev Holder' });
+    expect(await occupants()).toBe(3);
+    expect((await request(app).patch(`/api/v1/users/${holder._id}`).set(auth(token.admin)).send({ status: 'disabled' })).status).toBe(200);
+    const newcomer = await makeUser(inst._id, { roles: ['student'], fullName: 'Esha Newcomer' });
+    expect((await request(app).patch(`/api/v1/users/${newcomer._id}`).set(auth(token.admin)).send({ roomCode: 'CT301' })).status).toBe(200);
+
+    const back = await request(app).patch(`/api/v1/users/${holder._id}`).set(auth(token.admin)).send({ status: 'active' });
+    expect(back.status).toBe(409);
+    expect(back.body.error.fields.roomCode).toMatch(/CT301 is full/);
+    expect((await UserModel.findOne({ institutionId: inst._id, _id: holder._id }).lean())!.status).toBe('disabled');
+
+    await makeRoom(inst._id, 'CT302');
+    const moved = await request(app).patch(`/api/v1/users/${holder._id}`).set(auth(token.admin)).send({ status: 'active', roomCode: 'CT302' });
+    expect(moved.status).toBe(200);
+    expect(moved.body).toMatchObject({ status: 'active', room: { code: 'CT302' } });
+    expect(await occupants()).toBe(3);
+    const entry = await AuditModel.findOne({ action: 'user.update', targetId: holder._id }).sort({ _id: -1 }).lean();
+    expect(entry?.meta).toEqual({ fields: ['status', 'room'] });
+  });
+
+  it('"moving" a student to the room they are already in is not "full" and changes nothing', async () => {
+    const { token, student, inst, room } = await world();
+    await makeUser(inst._id, { roles: ['student'], roomId: room._id });
+    await makeUser(inst._id, { roles: ['student'], roomId: room._id });
+    const res = await request(app).patch(`/api/v1/users/${student._id}`).set(auth(token.admin)).send({ roomCode: 'CS240' });
+    expect(res.status).toBe(200);
+    expect(await AuditModel.exists({ action: 'user.update', targetId: student._id })).toBeNull();
   });
 });

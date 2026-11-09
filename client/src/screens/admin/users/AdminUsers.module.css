@@ -1,0 +1,781 @@
+/*
+ * Admin Users screens (FREE DESIGN, docs/not-from-reference.md): the in-app tokens in both themes, the card and
+ * field style of Settings / Change Password. Desktop first for the table, but every screen works at 360 px.
+ */
+
+/* ---- page head ---- */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.head h1 {
+  margin: 0;
+  font-size: var(--fs-page-title);
+  font-weight: 500;
+  line-height: 28px;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-left: -10px;
+  border-radius: 999px;
+  color: var(--text-1);
+}
+
+.back:hover {
+  background: var(--tile-bg);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tile-bg);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.btn:focus-visible,
+.view:focus-visible,
+.link:focus-visible,
+.roomOption:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.primary {
+  background: var(--toggle-on);
+  color: #ffffff;
+}
+
+.outline {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+
+.dangerBtn {
+  background: var(--danger-tile);
+  color: var(--danger);
+}
+
+.small {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.big {
+  min-height: 46px;
+  padding: 0 22px;
+  font-size: 15px;
+}
+
+/* ---- list toolbar: search + views ---- */
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.search {
+  position: relative;
+  max-width: 520px;
+}
+
+.search svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  color: var(--text-2);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.search .input {
+  padding-left: 42px;
+}
+
+.views {
+  display: flex;
+  gap: 6px;
+  margin: 0 calc(-1 * var(--in-gutter));
+  padding: 0 var(--in-gutter) 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.view {
+  flex: none;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.view[aria-pressed='true'] {
+  background: var(--tile-bg);
+  box-shadow: none;
+  color: var(--accent);
+}
+
+/* ---- users table (a table from 760 px, cards below) ---- */
+.tableCard {
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), var(--card-shadow);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  padding: 12px 16px;
+  color: var(--text-section);
+  font-size: var(--fs-date-heading);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--card-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--tile-bg) 45%, transparent);
+}
+
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.link {
+  color: var(--text-1);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.sub {
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--tile-bg);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pillOff {
+  background: var(--danger-tile);
+  color: var(--danger);
+}
+
+.pillWait {
+  background: var(--beta-bg);
+  color: var(--beta-text);
+}
+
+.rowAction {
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 759.98px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .table tr {
+    display: grid;
+    grid-template-areas:
+      'name action'
+      'roles action'
+      'room action';
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 12px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .table tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .table td {
+    padding: 0;
+    border: 0;
+  }
+
+  .table .colName { grid-area: name; }
+  .table .colRoles { grid-area: roles; }
+  .table .colRoom { grid-area: room; font-size: 13px; }
+  .table .rowAction { grid-area: action; }
+
+  .table .colPhone {
+    display: none;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: 36px 16px;
+  color: var(--text-2);
+  font-size: 14px;
+  text-align: center;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border-top: 1px solid var(--card-border);
+}
+
+/* A short line after an action ("Gaurav Joshi is now in West CS243."). */
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--tile-bg);
+  color: var(--text-1);
+  font-size: 14px;
+}
+
+.notice svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.error {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--danger-tile);
+  color: var(--danger);
+  font-size: 14px;
+}
+
+/* ---- forms ---- */
+.form {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.card {
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), var(--card-shadow);
+}
+
+.card h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.cardText {
+  margin: 0 0 14px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.grid2 {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .grid2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid2 .wideField {
+    grid-column: 1 / -1;
+  }
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-1);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--seg-track);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-2);
+  opacity: 0.8;
+}
+
+.input:focus-visible {
+  box-shadow: inset 0 0 0 1.333px var(--accent);
+}
+
+.input[aria-invalid='true'] {
+  box-shadow: inset 0 0 0 1.333px var(--danger);
+}
+
+.fieldError {
+  margin: 6px 0 0;
+  color: var(--danger);
+  font-size: 12.5px;
+  line-height: 16px;
+}
+
+.hint {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 17px;
+}
+
+.checks {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  cursor: pointer;
+}
+
+.check:has(input:checked) {
+  background: var(--tile-bg);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.check:has(input:disabled) {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--toggle-on);
+}
+
+.checkText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.checkText small {
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 17px;
+}
+
+.roomRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roomNow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.roomNow svg {
+  color: var(--accent);
+}
+
+.formFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.passwordBox {
+  position: relative;
+}
+
+.passwordBox .input {
+  padding-right: 48px;
+}
+
+.eye {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+/* ---- dialogs (room picker, confirm) ---- */
+.dialog {
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(720px, calc(100dvh - 24px));
+  padding: 0;
+  border: 0;
+  border-radius: 22px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), 0 24px 64px rgb(0 0 0 / 0.35);
+  color: var(--text-1);
+}
+
+.dialog::backdrop {
+  background: var(--scrim);
+}
+
+.dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 10px;
+}
+
+.dialogHead h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.dialogHead p {
+  margin: 2px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sheet-close-bg);
+  color: var(--text-1);
+  cursor: pointer;
+}
+
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 0 18px;
+}
+
+.dialogFoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px 18px;
+}
+
+.confirm {
+  width: min(440px, calc(100vw - 24px));
+}
+
+.confirm .dialogBody p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.roomList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 2px;
+  overflow-y: auto;
+  border: 0;
+  min-height: 120px;
+  max-height: 360px;
+}
+
+.roomOption {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  cursor: pointer;
+}
+
+.roomOption:has(input:checked) {
+  background: var(--tile-bg);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.roomOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.roomCode {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.beds {
+  display: flex;
+  gap: 4px;
+}
+
+.bed {
+  width: 14px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--toggle-on);
+}
+
+.bedFree {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.333px var(--text-2);
+}
+
+.roomFree {
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.floorChips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* ---- import ---- */
+.columns {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.columns code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--tile-bg);
+  color: var(--accent);
+  font-size: 12.5px;
+}
+
+.fileRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.preview {
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+
+.preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.preview th,
+.preview td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--card-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.preview th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-card);
+  color: var(--text-section);
+  font-size: var(--fs-date-heading);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.preview td.problem {
+  color: var(--danger);
+  white-space: normal;
+}
+
+.ready {
+  color: var(--accent);
+  font-weight: 600;
+}

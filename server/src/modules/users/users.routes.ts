@@ -77,6 +77,13 @@ export function usersRouter(): Router {
     } catch (e) { next(e); }
   });
 
+  r.get('/:id', authenticate, requirePermission('users:read'), noStore, validate({ params: userIdParamsSchema }), async (req, res, next) => {
+    try {
+      const { params } = valid(req, { params: userIdParamsSchema });
+      res.json(await users.getUser(req.ctx!, params.id));
+    } catch (e) { next(e); }
+  });
+
   r.patch('/:id', authenticate, requirePermission('users:update'), noStore, validate({ params: userIdParamsSchema, body: updateUserBodySchema }), async (req, res, next) => {
     try {
       const { params, body } = valid(req, { params: userIdParamsSchema, body: updateUserBodySchema });

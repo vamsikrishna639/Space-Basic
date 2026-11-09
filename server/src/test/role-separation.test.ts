@@ -26,7 +26,10 @@ const ADMIN_ONLY: Call[] = [
   ['get', '/support/faqs?includeUnpublished=true'],
 ];
 /** Warden and admin: the scanner, the day's attendance, user and hostel lookups. */
-const STAFF: Call[] = [['post', '/attendance/scan'], ['get', '/attendance'], ['get', '/users'], ['get', '/hostel/structure'], ['get', '/hostel/rooms']];
+const STAFF: Call[] = [
+  ['post', '/attendance/scan'], ['get', '/attendance'], ['get', '/users'], ['get', `/users/${ID}`], ['get', '/users?room=none'],
+  ['get', '/hostel/structure'], ['get', '/hostel/rooms'], ['get', '/hostel/rooms?free=true&q=CS'],
+];
 /** Student-only: the Entry Pass and one's own attendance history. */
 const STUDENT_ONLY: Call[] = [['get', '/attendance/qr-token'], ['get', '/attendance/me']];
 

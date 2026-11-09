@@ -12,3 +12,4 @@ export * from './schemas/hostel';
 export * from './schemas/notifications';
 export * from './schemas/attendance';
 export * from './schemas/support';
+export * from './csv';

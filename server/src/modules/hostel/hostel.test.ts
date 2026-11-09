@@ -185,3 +185,40 @@ describe('PATCH /hostel/rooms/:code', () => {
     expect((await request(app).patch('/api/v1/hostel/rooms/CF101').set(auth(a.token.warden)).send({ beds: 4 })).status).toBe(403);
   });
 });
+
+describe('GET /hostel/rooms (the admin room picker)', () => {
+  it('free=true lists only rooms with a free bed (a disabled user holds none); q matches the start of the code', async () => {
+    const { token, inst } = await institution();
+    await layout(token.admin);
+    const room = async (code: string) => (await RoomModel.findOne({ institutionId: inst._id, code }).lean())!._id;
+    for (let i = 0; i < 3; i++) await makeUser(inst._id, { roles: ['student'], roomId: await room('CF101') }); // full
+    for (let i = 0; i < 2; i++) await makeUser(inst._id, { roles: ['student'], roomId: await room('CF102') });
+    await makeUser(inst._id, { roles: ['student'], roomId: await room('CF102'), status: 'disabled' });
+    await makeUser(inst._id, { roles: ['student'], roomId: await room('CF103') });
+
+    const first = await request(app).get('/api/v1/hostel/rooms?free=true&q=cf10&limit=2').set(auth(token.admin));
+    expect(first.status).toBe(200);
+    expect(first.body.items.map((r: { code: string; occupants: number; beds: number }) => `${r.code} ${r.occupants}/${r.beds}`)).toEqual(['CF102 2/3', 'CF103 1/3']);
+    const second = await request(app).get(`/api/v1/hostel/rooms?free=true&q=CF10&limit=2&cursor=${first.body.nextCursor}`).set(auth(token.admin));
+    expect(second.body).toEqual({ items: [expect.objectContaining({ code: 'CF104', occupants: 0 })], nextCursor: null });
+
+    const any = await request(app).get('/api/v1/hostel/rooms?q=CF&limit=2').set(auth(token.admin));
+    expect(any.body.items.map((r: { code: string }) => r.code)).toEqual(['CF101', 'CF102']);
+    const everyFree = await request(app).get('/api/v1/hostel/rooms?free=true').set(auth(token.warden));
+    expect(everyFree.body.items.map((r: { code: string }) => r.code)).toEqual(['CF102', 'CF103', 'CF104', 'CS201', 'CS202']);
+    for (const bad of ['C$', '.*', 'CS2400', '2CS']) {
+      expect((await request(app).get(`/api/v1/hostel/rooms?q=${encodeURIComponent(bad)}`).set(auth(token.admin))).status).toBe(400);
+    }
+  });
+
+  it("never counts or shows another institution's rooms or users", async () => {
+    const a = await institution('A University', 'a-');
+    const b = await institution('B University', 'b-');
+    await layout(a.token.admin);
+    await layout(b.token.admin);
+    const aRoom = (await RoomModel.findOne({ institutionId: a.inst._id, code: 'CS201' }).lean())!;
+    for (let i = 0; i < 2; i++) await makeUser(a.inst._id, { roles: ['student'], roomId: aRoom._id });
+    const res = await request(app).get('/api/v1/hostel/rooms?free=true&q=CS').set(auth(b.token.admin));
+    expect(res.body.items.map((r: { code: string; occupants: number }) => `${r.code} ${r.occupants}`)).toEqual(['CS201 0', 'CS202 0']);
+  });
+});

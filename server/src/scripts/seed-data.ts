@@ -12,10 +12,10 @@ import { createNotification } from '../modules/notifications/notifications.servi
 import { FaqModel, SupportContactModel } from '../modules/support/support.models';
 import { setLogo } from '../modules/institutions/institutions.service';
 
-/** Creates the DEV_USERS that don't exist yet (by email). Returns how many were added. */
+/** Creates the DEV_USERS and DEV_ROSTER users that don't exist yet (by email). Returns how many were added. */
 async function seedDevUsers(institutionId: mongoose.Types.ObjectId): Promise<number> {
   let added = 0;
-  for (const u of DEV_USERS) {
+  for (const u of [...DEV_USERS, ...DEV_ROSTER]) {
     if (await UserModel.exists({ institutionId, email: u.email })) continue;
     const room = u.roomCode ? await RoomModel.findOne({ institutionId, code: u.roomCode }, { _id: 1 }).lean() : null;
     await UserModel.create({
@@ -23,8 +23,9 @@ async function seedDevUsers(institutionId: mongoose.Types.ObjectId): Promise<num
       fullName: u.fullName,
       email: u.email,
       phone: u.phone,
-      passwordHash: await hashPassword(u.password),
+      passwordHash: 'password' in u ? await hashPassword(u.password) : null,
       roles: u.roles,
+      status: 'status' in u ? u.status : 'active',
       roomId: room?._id ?? null,
     });
     added++;
@@ -43,6 +44,30 @@ export const DEV_USERS: { roles: Role[]; fullName: string; email: string; phone:
   { roles: ['super_admin'], fullName: 'Space Basic Admin', email: 'admin@spacebasic.example', phone: '+919000000004', password: 'Super@2026' },
   // Two roles (a senior student who is also a floor warden): signs in to the "Continue as" chooser (decisions.md 2026-11-09).
   { roles: ['student', 'warden'], fullName: 'Devika Menon', email: 'devika.menon@example.com', phone: '+919000000005', password: 'Both@2026', roomCode: 'CS241' },
+];
+
+/**
+ * FAKE students for the admin Users screens (2026-11-09): CS242 full, CS243 with one free bed, four students
+ * waiting for a room, one disabled. No passwords (they would sign in with a code). Names differ from
+ * users.example.csv so that file still imports cleanly.
+ */
+const rosterStudent = (fullName: string, n: number, roomCode?: string, status?: 'disabled') => ({
+  roles: ['student'] as Role[], fullName, email: `${fullName.toLowerCase().replace(' ', '.')}@example.com`,
+  phone: `+9190000002${String(n).padStart(2, '0')}`, ...(roomCode ? { roomCode } : {}), ...(status ? { status } : {}),
+});
+export const DEV_ROSTER = [
+  rosterStudent('Aditi Kulkarni', 1, 'CS242'),
+  rosterStudent('Bhavesh Patel', 2, 'CS242'),
+  rosterStudent('Chitra Iyer', 3, 'CS242'),
+  rosterStudent('Deepak Singh', 4, 'CS243'),
+  rosterStudent('Farah Khan', 5, 'CS243'),
+  rosterStudent('Karthik Reddy', 6, 'CF101'),
+  rosterStudent('Lakshmi Pillai', 7, 'CT301'),
+  rosterStudent('Gaurav Joshi', 8),
+  rosterStudent('Harini Subramanian', 9),
+  rosterStudent('Ishaan Malhotra', 10),
+  rosterStudent('Jyoti Rawat', 11),
+  rosterStudent('Mohit Agarwal', 12, 'CF102', 'disabled'),
 ];
 
 // Placeholder hostel layout (decisions.md: fake until the user confirms the real ranges).

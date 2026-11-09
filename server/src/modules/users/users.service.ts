@@ -8,7 +8,8 @@ import type { z } from 'zod';
 import { AppError, errors } from '../../core/http/errors';
 import { audit } from '../../core/audit/audit';
 import { hashPassword } from '../../core/security/password';
-import { HostelModel, RoomModel, type Room } from '../hostel/hostel.models';
+import { HostelModel, RoomModel } from '../hostel/hostel.models';
+import { withFreeBed } from '../hostel/beds';
 import { revokeAllSessions } from '../auth/auth.service';
 import { UserModel, type User } from './user.model';
 
@@ -56,6 +57,15 @@ async function summaryOf(institutionId: Types.ObjectId, userId: Types.ObjectId):
   return (await toSummaries(institutionId, [u]))[0]!;
 }
 
+/** One user, as the list shows them. Users the caller can't list (platform staff; non-students for wardens) are 404. */
+export async function getUser(ctx: Ctx, id: string): Promise<UserSummary> {
+  const u = await UserModel.findOne({ _id: id, institutionId: ctx.institutionId }).select('+passwordHash').lean();
+  if (!u) throw errors.notFound();
+  if (u.roles.includes('super_admin') && !isSuperAdmin(ctx)) throw errors.notFound();
+  if (studentsOnly(ctx) && !u.roles.includes('student')) throw errors.notFound();
+  return (await toSummaries(ctx.institutionId, [u]))[0]!;
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // list
 
@@ -85,6 +95,8 @@ export async function listUsers(ctx: Ctx, q: z.output<typeof listUsersQuerySchem
   if (!isSuperAdmin(ctx)) and.push({ roles: { $ne: 'super_admin' } }); // platform staff stay out of institution lists
 
   if (q.status) and.push({ status: q.status });
+  if (q.room === 'none') and.push({ roomId: null }); // null or missing
+  if (q.room === 'assigned') and.push({ roomId: { $ne: null } });
   if (q.q) {
     const text = escapeRegex(q.q);
     const or: Record<string, unknown>[] = [{ fullName: { $regex: text, $options: 'i' } }, { email: { $regex: `^${text}`, $options: 'i' } }];
@@ -121,17 +133,6 @@ function assertCanGrant(ctx: Ctx, roles: readonly Role[]): void {
   if (roles.includes('super_admin') && !isSuperAdmin(ctx)) throw errors.forbidden('Only SpaceBasic staff can grant super_admin.');
 }
 
-/** Find the room by code in the caller's institution and check it has a free bed (ignoring `exceptUserId`). */
-async function roomWithFreeBed(institutionId: Types.ObjectId, code: string, exceptUserId?: Types.ObjectId): Promise<Room> {
-  const room = await RoomModel.findOne({ institutionId, code }).lean();
-  if (!room) throw errors.validation({ roomCode: `There is no room ${code}` });
-  const filter: Record<string, unknown> = { institutionId, roomId: room._id, status: 'active' };
-  if (exceptUserId) filter._id = { $ne: exceptUserId };
-  const occupants = await UserModel.countDocuments(filter);
-  if (occupants >= room.beds) throw errors.conflict(`Room ${code} is full`, { roomCode: `Room ${code} is full (${room.beds} of ${room.beds} beds taken)` });
-  return room;
-}
-
 /** Email and phone are unique across ALL institutions (decisions.md), so this check is deliberately unscoped. */
 async function assertIdentifiersFree(email: string | null | undefined, phone: string | null | undefined, exceptUserId?: Types.ObjectId): Promise<void> {
   const fields: Record<string, string> = {};
@@ -159,22 +160,22 @@ function duplicateKeyToConflict(err: unknown): never {
 // create / import
 
 async function createOne(ctx: Ctx, body: z.output<typeof createUserBodySchema>): Promise<User> {
+  const { institutionId } = ctx;
   assertCanGrant(ctx, body.roles);
   await assertIdentifiersFree(body.email, body.phone);
-  const room = body.roomCode ? await roomWithFreeBed(ctx.institutionId, body.roomCode) : null;
-  try {
-    return await UserModel.create({
-      institutionId: ctx.institutionId,
-      fullName: body.fullName,
-      email: body.email,
-      phone: body.phone,
-      passwordHash: body.password ? await hashPassword(body.password) : null,
-      roles: body.roles,
-      roomId: room?._id ?? null,
-    });
-  } catch (err) {
-    return duplicateKeyToConflict(err);
-  }
+  const passwordHash = body.password ? await hashPassword(body.password) : null;
+  const insert = async (roomId: Types.ObjectId | null): Promise<User> => {
+    try {
+      return await UserModel.create({ institutionId, fullName: body.fullName, email: body.email, phone: body.phone, passwordHash, roles: body.roles, roomId });
+    } catch (err) {
+      return duplicateKeyToConflict(err);
+    }
+  };
+  if (!body.roomCode) return insert(null);
+  return withFreeBed(institutionId, body.roomCode, undefined, async (room) => {
+    const user = await insert(room._id);
+    return { result: user, undo: async () => { await UserModel.deleteOne({ institutionId, _id: user._id }); } };
+  });
 }
 
 export async function createUser(ctx: Ctx, body: z.output<typeof createUserBodySchema>, meta: Meta): Promise<UserSummary> {
@@ -225,7 +226,10 @@ async function loadManagedUser(ctx: Ctx, id: string) {
   return user;
 }
 
+type UserFields = Pick<User, 'fullName' | 'status'> & { email: string | null; phone: string | null; roomId: Types.ObjectId | null };
+
 export async function updateUser(ctx: Ctx, id: string, body: z.output<typeof updateUserBodySchema>, meta: Meta): Promise<UserSummary> {
+  const { institutionId } = ctx;
   const user = await loadManagedUser(ctx, id);
   const self = user._id.equals(ctx.userId);
   if (self && body.status === 'disabled') throw errors.forbidden("You can't disable your own account.");
@@ -239,32 +243,56 @@ export async function updateUser(ctx: Ctx, id: string, body: z.output<typeof upd
     user._id,
   );
 
-  const changed: string[] = [];
-  if (body.fullName !== undefined && body.fullName !== user.fullName) { user.fullName = body.fullName; changed.push('fullName'); }
-  if (body.email !== undefined && body.email !== (user.email ?? null)) { user.email = body.email; changed.push('email'); }
-  if (body.phone !== undefined && body.phone !== (user.phone ?? null)) { user.phone = body.phone; changed.push('phone'); }
-  if (body.roomCode !== undefined) {
-    if (body.roomCode === null) {
-      if (user.roomId) { user.roomId = null; changed.push('room'); }
-    } else {
-      if (!user.roles.includes('student')) throw errors.validation({ roomCode: 'Only students have a room' });
-      const room = await roomWithFreeBed(ctx.institutionId, body.roomCode, user._id);
-      if (!user.roomId?.equals(room._id)) { user.roomId = room._id; changed.push('room'); }
-    }
-  }
-  const wasStatus = user.status;
-  if (body.status !== undefined && body.status !== user.status) { user.status = body.status; changed.push('status'); }
+  const before: UserFields = {
+    fullName: user.fullName, status: user.status, email: user.email ?? null, phone: user.phone ?? null, roomId: user.roomId ?? null,
+  };
+  const set: Partial<UserFields> = {};
+  if (body.fullName !== undefined && body.fullName !== before.fullName) set.fullName = body.fullName;
+  if (body.email !== undefined && body.email !== before.email) set.email = body.email;
+  if (body.phone !== undefined && body.phone !== before.phone) set.phone = body.phone;
+  if (body.status !== undefined && body.status !== before.status) set.status = body.status;
 
+  // A bed to take: a new room, or the user's own room again when they're enabled (a disabled user keeps the room
+  // but not the bed, which someone else may have taken since).
+  let claim: string | null = null;
+  if (body.roomCode === null) {
+    if (before.roomId) set.roomId = null;
+  } else if (body.roomCode !== undefined) {
+    if (!user.roles.includes('student')) throw errors.validation({ roomCode: 'Only students have a room' });
+    claim = body.roomCode;
+  } else if (set.status === 'active' && before.roomId) {
+    claim = (await RoomModel.findOne({ institutionId, _id: before.roomId }, { code: 1 }).lean())?.code ?? null;
+  }
+
+  const write = async (values: Partial<UserFields>) => {
+    if (!Object.keys(values).length) return;
+    try {
+      await UserModel.updateOne({ institutionId, _id: user._id }, { $set: values }, { runValidators: true });
+    } catch (err) {
+      duplicateKeyToConflict(err);
+    }
+  };
+  if (claim) {
+    await withFreeBed(institutionId, claim, user._id, async (room) => {
+      if (!before.roomId?.equals(room._id)) set.roomId = room._id;
+      await write(set);
+      const undo = Object.fromEntries(Object.keys(set).map((k) => [k, before[k as keyof UserFields]])) as Partial<UserFields>;
+      return { result: undefined, undo: () => write(undo) };
+    });
+  } else {
+    await write(set);
+  }
+
+  const changed = Object.keys(set).map((k) => (k === 'roomId' ? 'room' : k));
   if (changed.length) {
-    try { await user.save(); } catch (err) { duplicateKeyToConflict(err); }
-    await audit({ institutionId: ctx.institutionId, actorId: ctx.userId, action: 'user.update', targetType: 'user', targetId: user._id, meta: { fields: changed }, requestId: meta.requestId });
+    await audit({ institutionId, actorId: ctx.userId, action: 'user.update', targetType: 'user', targetId: user._id, meta: { fields: changed }, requestId: meta.requestId });
   }
-  if (wasStatus !== user.status) {
+  if (set.status) {
     // Disabling takes effect at once: authenticate() checks the status on every request and every session is revoked.
-    if (user.status === 'disabled') await revokeAllSessions({ institutionId: ctx.institutionId, userId: user._id }, 'disabled');
-    await audit({ institutionId: ctx.institutionId, actorId: ctx.userId, action: user.status === 'disabled' ? 'user.disable' : 'user.enable', targetType: 'user', targetId: user._id, requestId: meta.requestId });
+    if (set.status === 'disabled') await revokeAllSessions({ institutionId, userId: user._id }, 'disabled');
+    await audit({ institutionId, actorId: ctx.userId, action: set.status === 'disabled' ? 'user.disable' : 'user.enable', targetType: 'user', targetId: user._id, requestId: meta.requestId });
   }
-  return summaryOf(ctx.institutionId, user._id);
+  return summaryOf(institutionId, user._id);
 }
 
 export async function assignRoles(ctx: Ctx, id: string, body: z.output<typeof assignRolesBodySchema>, meta: Meta): Promise<UserSummary> {

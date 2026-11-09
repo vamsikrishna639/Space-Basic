@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Types, type PipelineStage } from 'mongoose';
 import {
   roomCodeFor,
   type HostelStructure, type Page, type RoomSummary,
@@ -8,7 +8,8 @@ import type { z } from 'zod';
 import { errors } from '../../core/http/errors';
 import { audit } from '../../core/audit/audit';
 import { UserModel } from '../users/user.model';
-import { FloorModel, HostelModel, RoomModel, type Floor, type Hostel } from './hostel.models';
+import { FloorModel, HostelModel, RoomModel, type Floor, type Hostel, type Room } from './hostel.models';
+import { activeOccupants, revIs } from './beds';
 
 // Hostel -> Floor -> Room (docs/schemas.md §1.7, docs/api.md "Hostel"). Everything is scoped by the caller's
 // institutionId. Floor codes are unique across the institution (not only per hostel) because room codes,
@@ -75,9 +76,27 @@ export async function listRooms(ctx: Ctx, q: z.output<typeof listRoomsQuerySchem
     if (!floor) throw errors.notFound(`There is no floor ${q.floor}.`);
     filter.floorId = floor._id;
   }
-  if (q.cursor) filter.code = { $gt: decodeCursor(q.cursor) };
+  const code: Record<string, unknown> = {};
+  if (q.q) code.$regex = `^${q.q}`; // the schema allows only letters and digits
+  if (q.cursor) code.$gt = decodeCursor(q.cursor);
+  if (Object.keys(code).length) filter.code = code;
 
-  const rows = await RoomModel.find(filter).sort({ code: 1 }).limit(q.limit + 1).lean();
+  // `free`: the room picker. Occupants are counted in the database so the page holds `limit` rooms with a free bed.
+  const pipeline: PipelineStage[] = [{ $match: filter }, { $sort: { code: 1 } }];
+  if (q.free) {
+    pipeline.push(
+      {
+        $lookup: {
+          from: UserModel.collection.collectionName, localField: '_id', foreignField: 'roomId', as: 'occupied',
+          pipeline: [{ $match: { institutionId, status: 'active' } }, { $project: { _id: 1 } }],
+        },
+      },
+      { $match: { $expr: { $lt: [{ $size: '$occupied' }, '$beds'] } } },
+      { $project: { occupied: 0 } },
+    );
+  }
+  pipeline.push({ $limit: q.limit + 1 });
+  const rows = await RoomModel.aggregate<Room>(pipeline);
   const page = rows.slice(0, q.limit);
   const [occupied, floors, hostels] = await Promise.all([
     occupancy(institutionId, page.map((r) => r._id)),
@@ -173,14 +192,16 @@ export async function updateRoom(ctx: Ctx, code: string, beds: number, meta: Met
   const { institutionId } = ctx;
   const room = await RoomModel.findOne({ institutionId, code });
   if (!room) throw errors.notFound(`There is no room ${code}.`);
-  const occupants = (await occupancy(institutionId, [room._id])).get(String(room._id)) ?? 0;
+  const occupants = await activeOccupants(institutionId, room._id);
   if (beds < occupants) {
     throw errors.conflict(`Room ${code} has ${occupants} occupants.`, { beds: `At least ${occupants}: the room has ${occupants} occupants` });
   }
   const from = room.beds;
   if (from !== beds) {
+    // Same revision rule as filling a bed (beds.ts): a user placed in the room after the count above makes this fail.
+    const saved = await RoomModel.updateOne({ institutionId, _id: room._id, rev: revIs(room.rev) }, { $set: { beds }, $inc: { rev: 1 } });
+    if (saved.modifiedCount !== 1) throw errors.conflict(`Room ${code} changed while saving. Try again.`);
     room.beds = beds;
-    await room.save();
     await audit({ institutionId, actorId: ctx.userId, action: 'room.update', targetType: 'room', targetId: room._id, meta: { code, beds: { from, to: beds } }, requestId: meta.requestId });
   }
   const [floor, hostel] = await Promise.all([

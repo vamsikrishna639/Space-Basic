@@ -3,7 +3,7 @@ import { FLOOR_CODE_PATTERN, ROOM_CODE_PATTERN } from '../hostel';
 import { paginationQuerySchema } from './common';
 
 // Hostel -> Floor -> Room (docs/schemas.md §1.7, docs/api.md "Hostel"). The layout is data: admins create
-// hostels and floors through the API (no admin screens in Phase 1); the dev seed creates block "West".
+// hostels and floors through the API (the hostel admin screen comes after deployment); the dev seed creates block "West".
 
 export const HOSTEL_CODE_PATTERN = /^[A-Z0-9]{1,6}$/;
 export const MAX_BEDS_PER_ROOM = 12;
@@ -70,4 +70,15 @@ export const updateRoomBodySchema = z.object({ beds: bedsSchema });
 export const listRoomsQuerySchema = paginationQuerySchema.extend({
   hostel: hostelCodeSchema.optional(),
   floor: floorCodeSchema.optional(),
+  /** Start of a room code ("CS2", "cs24"): the room picker's search. */
+  q: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .max(5)
+    .regex(/^[A-Z]{0,2}\d{0,3}$/, { error: 'Type the start of a room code, like CS2' })
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  /** `true`: only rooms with at least one free bed (the room picker). */
+  free: z.enum(['true', 'false']).optional().transform((v) => v === 'true'),
 });

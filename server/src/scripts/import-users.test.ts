@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseCsv, CsvError } from './csv';
-import { batches, recordsToRows } from './import-users';
+import { batches, CsvError, parseCsv, recordsToRows } from '@spacebasic/shared';
 
 describe('parseCsv', () => {
   it('handles quotes, escaped quotes, commas and newlines inside quotes, CRLF, a BOM and blank lines', () => {

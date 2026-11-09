@@ -45,6 +45,11 @@ export const FloorModel = model<Floor>('Floor', floorSchema, 'floors');
 export interface Room {
   _id: Types.ObjectId; institutionId: Types.ObjectId; hostelId: Types.ObjectId; floorId: Types.ObjectId;
   number: number; code: string; beds: number;
+  /**
+   * Bumped by every write that can fill a bed or shrink the room (users.service `withFreeBed`, hostel `updateRoom`):
+   * a compare-and-set on it keeps two requests from both taking the last bed. Missing on older rooms = 0.
+   */
+  rev?: number;
 }
 const roomSchema = new Schema<Room>(
   {
@@ -54,6 +59,7 @@ const roomSchema = new Schema<Room>(
     number: { type: Number, required: true, min: 1, max: 999 },
     code: { type: String, required: true, uppercase: true, match: ROOM_CODE_PATTERN },
     beds: { type: Number, required: true, min: 1, max: 12 },
+    rev: { type: Number, default: 0 },
   },
   { timestamps: true, versionKey: false },
 );

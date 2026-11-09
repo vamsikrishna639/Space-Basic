@@ -1,4 +1,5 @@
-// Import users from a CSV file through the API (POST /api/v1/users/import). No admin screens in Phase 1.
+// Import users from a CSV file through the API (POST /api/v1/users/import). Admins can also import in the app
+// (Admin > Users > Import CSV).
 //
 //   npm run import-users -w server -- <file.csv> --accept-privacy-policy [--api http://localhost:4000/api/v1]
 //
@@ -12,46 +13,10 @@
 // password: optional initial password. Without it the user signs in with a one-time code.
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONSENT_POLICY_VERSION, CLIENT_HEADER, IMPORT_MAX_ROWS, type ImportUsersResult } from '@spacebasic/shared';
-import { parseCsv, type CsvRecord } from './csv';
+import { batches, CONSENT_POLICY_VERSION, CLIENT_HEADER, parseCsv, recordsToRows, type ImportUsersResult } from '@spacebasic/shared';
 
-export const CSV_COLUMNS = ['fullName', 'email', 'phone', 'roles', 'roomCode', 'password'] as const;
-const MAX_BATCH_BYTES = 90_000; // the API accepts JSON bodies up to 100 kB
-
-/** CSV records -> API rows, keeping each row's CSV line number. Throws on a bad header. */
-export function recordsToRows(records: CsvRecord[]): { line: number; row: Record<string, unknown> }[] {
-  const [header, ...data] = records;
-  if (!header) throw new Error('The CSV file is empty');
-  const columns = header.fields.map((f) => f.trim());
-  const unknown = columns.filter((c) => !(CSV_COLUMNS as readonly string[]).includes(c));
-  if (unknown.length) throw new Error(`Unknown column(s): ${unknown.join(', ')}. Allowed: ${CSV_COLUMNS.join(', ')}`);
-  for (const required of ['fullName', 'roles']) if (!columns.includes(required)) throw new Error(`Missing column: ${required}`);
-  if (new Set(columns).size !== columns.length) throw new Error('A column appears twice in the header');
-
-  return data.map((rec) => {
-    const row: Record<string, unknown> = {};
-    columns.forEach((col, i) => {
-      const value = (rec.fields[i] ?? '').trim();
-      row[col] = col === 'roles' ? value.split('|').map((r) => r.trim()).filter(Boolean) : value;
-    });
-    return { line: rec.line, row };
-  });
-}
-
-/** Split rows into batches that respect both the row limit and the request-size limit. */
-export function batches<T>(items: T[], maxRows = IMPORT_MAX_ROWS, maxBytes = MAX_BATCH_BYTES): T[][] {
-  const out: T[][] = [];
-  let current: T[] = [];
-  let bytes = 20;
-  for (const item of items) {
-    const size = Buffer.byteLength(JSON.stringify(item)) + 1;
-    if (current.length && (current.length >= maxRows || bytes + size > maxBytes)) { out.push(current); current = []; bytes = 20; }
-    current.push(item);
-    bytes += size;
-  }
-  if (current.length) out.push(current);
-  return out;
-}
+// The parser, the column rules and the batching live in shared/src/csv.ts: the admin Users screen imports a file
+// the same way in the browser.
 
 function arg(name: string): string | undefined {
   const i = process.argv.indexOf(name);

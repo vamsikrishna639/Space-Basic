@@ -19,6 +19,9 @@ import { Settings } from './screens/settings/Settings';
 import { ChooseArea, NoAccess } from './screens/app/ChooseArea';
 import { AdminHome, ADMIN_NAV, WardenHome } from './screens/staff/StaffHomes';
 import { StaffSoon } from './screens/staff/StaffLayout';
+import { UsersList } from './screens/admin/users/UsersList';
+import { AddUser, EditUser } from './screens/admin/users/UserEditor';
+import { ImportUsers } from './screens/admin/users/ImportUsers';
 
 /**
  * Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes to their own app:
@@ -121,7 +124,10 @@ const router = createBrowserRouter([
         element: <RequireArea area="admin" />,
         children: [
           { path: '/admin', element: <AdminHome /> },
-          { path: '/admin/users', element: <StaffSoon area="admin" title="Users" nav={ADMIN_NAV} /> },
+          { path: '/admin/users', element: <UsersList /> },
+          { path: '/admin/users/new', element: <AddUser /> },
+          { path: '/admin/users/import', element: <ImportUsers /> },
+          { path: '/admin/users/:id', element: <EditUser /> },
           { path: '/admin/hostel', element: <StaffSoon area="admin" title="Hostel" nav={ADMIN_NAV} /> },
           { path: '/admin/support', element: <StaffSoon area="admin" title="Support" nav={ADMIN_NAV} /> },
           { path: '/admin/audit', element: <StaffSoon area="admin" title="Audit log" nav={ADMIN_NAV} /> },
