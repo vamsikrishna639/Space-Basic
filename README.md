@@ -1,6 +1,110 @@
 # Space Basic
 
-Space Basic is a college hostel management PWA. The `client/` and `server/` folders arrive in Phase 1.
+Space Basic is a college hostel management PWA: React + Vite client (`client/`), Express + MongoDB API (`server/`), shared zod schemas and types (`shared/`), one npm workspace. Specification: `SPEC.md`; decisions: `docs/decisions.md`; API: `docs/api.md`.
+
+## Run it locally
+
+Node 24 (`engines` in `package.json`). No accounts or `.env` needed:
+
+```
+npm ci
+npm run dev            # client http://localhost:5173, API http://localhost:4000/api/v1
+```
+
+The first start creates a local MongoDB in `server/.data/` (gitignored) and seeds FAKE data; the sign-ins are printed in the console. `npm run dev:relaxed` raises the sign-in limits for repeated smoke runs. Tests: `npm test` (server Jest + client Vitest), `npm run typecheck`, `npm run test:visual` (Docker, below).
+
+## Deployment (Vercel + Render + MongoDB Atlas, all free plans)
+
+```
+browser ── https://<project>.vercel.app ──┬── static client (client/dist)
+                                           └── /api/*  ── rewrite ──> https://spacebasic-api.onrender.com/api/*  ──> MongoDB Atlas
+```
+
+The browser only ever talks to the Vercel address, so the refresh cookie is first-party. The repository holds all the configuration:
+
+| File | What it sets |
+|---|---|
+| `vercel.json` | install `MONGOMS_DISABLE_POSTINSTALL=1 npm ci --include=dev`, build `npm run build:web`, output `client/dist`, the `/api/*` rewrite to Render, the SPA fallback, cache and security headers |
+| `render.yaml` | a Blueprint: Node web service `spacebasic-api`, free plan, Singapore; build `npm ci --include=dev && npm run build:api`, start `npm run start:api`, health check `/api/v1/health`, the environment below |
+| `server/.env.example` | every server variable, with the production values |
+| `package.json` | `build:web`, `build:api`, `start:api`; Node `24.x` (both hosts read it) |
+
+### Production environment (Render)
+
+The client needs no variables. The API refuses to start if any of these is missing or wrong, and says which.
+
+| Variable | Value | Who sets it |
+|---|---|---|
+| `NODE_ENV` | `production` | `render.yaml` |
+| `PORT` | given by Render | Render |
+| `MONGODB_URI` | `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/spacebasic?retryWrites=true&w=majority` | you, in the Render dashboard (from Atlas) |
+| `JWT_ACCESS_SECRET`, `QR_TOKEN_SECRET`, `OTP_PEPPER` | 256-bit random | Render generates them (`generateValue`); nobody sees or copies them |
+| `APP_ORIGINS` | `https://<project>.vercel.app` (https, no trailing slash; several separated by commas) | you, in the Render dashboard |
+| `COOKIE_SECURE` | `true` | `render.yaml` |
+| `TRUST_PROXY` | `2` (Vercel's rewrite + Render's load balancer) | `render.yaml`; confirm after the first deploy (below) |
+| `OTP_PROVIDER` | not set: email + password sign-in only, one-time codes off | (later: `gmail-api` and the four `GMAIL_API_*` variables) |
+| `ALLOW_CONSOLE_OTP`, `RELAX_RATE_LIMITS`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` | never in production | |
+
+To make a secret yourself (for example to rotate one), run this and paste the output straight into the Render dashboard, nowhere else:
+
+```
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+Changing `JWT_ACCESS_SECRET` signs everyone out; changing `OTP_PEPPER` voids codes in flight; changing `QR_TOKEN_SECRET` voids Entry Pass codes for at most 15 s.
+
+### Steps (first deployment)
+
+1. **GitHub:** push the repository (private) to GitHub. Render and Vercel build from it.
+2. **MongoDB Atlas** (cloud.mongodb.com): a free **M0** cluster on **AWS, Singapore (ap-southeast-1)**, next to the Render region.
+   - Database Access: a user with **Specific Privileges → `readWrite` on database `spacebasic`** only; "Autogenerate Secure Password".
+   - Network Access: `0.0.0.0/0`. Render's free plan has no fixed outgoing addresses; the long generated password is the protection.
+   - Connect → Drivers: copy the `mongodb+srv://…` string, put the password in, and add the database name: `…mongodb.net/spacebasic?retryWrites=true&w=majority…`.
+3. **Render** (render.com): New → **Blueprint** → the repository. Render reads `render.yaml` and asks for `MONGODB_URI` and `APP_ORIGINS` (`https://<project>.vercel.app`, the name you'll give the Vercel project). The first deploy takes a few minutes; then `https://spacebasic-api.onrender.com/api/v1/health` answers `{"status":"ok"}`. If Render gave the service another address, change the rewrite's `destination` in `vercel.json` to it and push.
+4. **Vercel** (vercel.com): Add New → Project → the repository. Leave Root Directory as the repository root and Framework Preset as "Other": `vercel.json` sets the rest. No environment variables. Deploy. If the address isn't the one in `APP_ORIGINS`, change `APP_ORIGINS` on Render to it (Render redeploys).
+5. **Check:** `https://<project>.vercel.app/api/v1/health` (through the rewrite), and `https://<project>.vercel.app/api/v1/health/client`: its `ip` must be **your own public address**. If it isn't, set `TRUST_PROXY` on Render to the `suggestedTrustProxy` it shows. (Rate limits count per address: a wrong value makes all users share one limit.)
+
+The free Render service sleeps after 15 minutes without requests; the next request wakes it in up to about a minute, and the app shows its loading state meanwhile (Vercel waits up to 120 s for a proxied request).
+
+### First admin (production has no seed data)
+
+From your own computer, in this repository, with the Atlas connection string held only by this terminal:
+
+```
+# PowerShell
+$env:MONGODB_URI = Read-Host "Atlas connection string"      # paste it here; it isn't saved in the history
+npm run create-admin -w server -- --logo ../reference-ui/assets/logo-presidency.png
+Remove-Item Env:MONGODB_URI
+```
+
+```
+# bash
+read -rs -p "Atlas connection string: " MONGODB_URI && export MONGODB_URI && echo
+npm run create-admin -w server -- --logo ../reference-ui/assets/logo-presidency.png
+unset MONGODB_URI
+```
+
+It asks for the institution's name and time zone, then the admin's name, email, optional mobile number and password (typed hidden, twice), and creates the institution and that admin, nothing else. Options: `--logo <file>` (PNG/JPEG/WebP ≤ 1 MB, path relative to `server/`), and `--layout` to also create block West with the placeholder floors (CF101–CF200, CS201–CS300, CT301–CT400, 3 beds a room; `docs/decisions.md` 2026-11-07). Run it again with another email for a second admin; the institution is reused. Then sign in on `https://<project>.vercel.app`.
+
+### Users in production
+
+- **In the app (simplest):** Admin → Users → Import CSV (or Add user).
+- **With the script**, against the deployed app; it asks for the admin email and password (hidden):
+
+  ```
+  npm run import-users -w server -- path/to/users.csv --accept-privacy-policy --api https://<project>.vercel.app/api/v1
+  ```
+
+- **Passwords:** with one-time codes off (no `OTP_PROVIDER`), a user can only sign in with a password, and "Forgot password" can't send a code. Give every user a first password (the `password` column, or the Add user form) until email codes are set up with `gmail-api`. A CSV with passwords is sensitive: delete it after the import.
+
+### Rehearse a deployment locally
+
+`node tools/ui-analysis/src/verify-deploy.ts` copies exactly what git would commit into two empty folders, runs Render's and Vercel's commands from `render.yaml` and `vercel.json`, starts the API in production mode against a throwaway database, creates an admin with `create-admin`, checks sign-in, cookie flags, the Origin check and production rate limits, then serves the client with `vercel.json`'s rules and signs in through Chromium. Ports 4100 and 4180 must be free.
+
+### Updating
+
+Push to `main`: Render and Vercel both build and deploy it. The API's indexes are created at startup. Watch Render's log for the startup line and `GET /api/v1/health`.
+
 
 ## Visual tests (Docker)
 

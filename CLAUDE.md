@@ -4,7 +4,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-09, at the admin users CHECKPOINT, waiting for the user):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Current phase (2026-11-09, at the deployment (b) CHECKPOINT: repo prepared and rehearsed; the user is doing the hosted setup step by step):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
 - **Done:**
   - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, the password rule (not the account's email or phone; create, import, change, reset), the compact 96-character HMAC QR token (approved, a test per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, `npm run dev:relaxed`; refused in production), race-safe beds (room `rev` compare-and-set, `server/src/modules/hostel/beds.ts`), `GET /users/:id`, the `room=none` and free-room filters. **185 Jest tests.**
   - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
@@ -29,8 +29,8 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   - **Tests (2026-11-09, after the admin users screens):** server 185/185; client unit tests 52/52; `smoke-admin-users.ts` 51/51 and `smoke-roles.ts` pass; `smoke-signin.ts` and `smoke-otp.ts` passed at the start of the session (before these changes, which don't touch student screens); visual tests unchanged (all 12 screens, same numbers). The smoke scripts start the dev stack themselves with relaxed sign-in limits (`tools/ui-analysis/src/dev-stack.ts`), or `smoke-signin` / `smoke-roles` / `smoke-settings` reuse a running one (start it with `npm run dev:relaxed`); `smoke-otp` needs the ports free. `smoke-admin-users` starts or reuses one too, and disables and moves out the users it creates.
   - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
 - **Next, in this order (user plan 2026-11-09):**
-  1. ~~(a) Admin users screens~~: built; **at the CHECKPOINT, waiting for the user's reply.**
-  2. **(b) Deployment** on Vercel (client), Render (server) and MongoDB Atlas. In the repo: `vercel.json` with the `/api` rewrite, Render build and start commands, health check, the production env var list in `.env.example` and the README; verify both builds from a clean clone. Then walk the user through creating the Atlas cluster and setting the environment variables, one step at a time; never ask for a secret. Then **CHECKPOINT**.
+  1. ~~(a) Admin users screens~~: done; "accept" = give a waiting student a room (approved).
+  2. **(b) Deployment**: repo side DONE (`vercel.json`, `render.yaml`, `create-admin`, `/health/client`, README "Deployment", `verify-deploy.ts` 33/33). Walkthrough in progress: (0) push to GitHub, (1) Atlas, (2) Render Blueprint, (3) Vercel, (4) checks incl. `TRUST_PROXY`, (5) first admin with `create-admin`, (6) users. Original plan text: on Vercel (client), Render (server) and MongoDB Atlas. In the repo: `vercel.json` with the `/api` rewrite, Render build and start commands, health check, the production env var list in `.env.example` and the README; verify both builds from a clean clone. Then walk the user through creating the Atlas cluster and setting the environment variables, one step at a time; never ask for a secret. Then **CHECKPOINT**.
   - **Postponed until after deployment:** the warden scanner and other warden screens (`qr-scanner`, MIT, approved, not installed yet), and the rest of the admin screens (hostel structure, support content, audit log).
 - **Open items (waiting on the user):**
   - The original **Presidency logo** file: the supplied one is wider than the app's mark (logo tile region ~15%).
@@ -40,6 +40,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   - Seeded dev notifications get read by smoke runs: `npm run seed -w server -- --reset` restores the dev data (run it while `npm run dev` is up).
   - Before a smoke run, make sure ports 5173 / 4000 / 27027 are free, or reuse the running stack; on Windows stop the stack with `taskkill /PID <root> /T /F`.
   - Two-role dev user (student + warden): `devika.menon@example.com` / `Both@2026`.
+  - Production has one-time codes off: every user needs a first password until `gmail-api` is set up (flagged in `docs/decisions.md`).
   - The dev seed has 12 FAKE roster students (`DEV_ROSTER`): CS242 full, CS243 with one free bed, four waiting for a room, one disabled.
   - Every decision is in `docs/decisions.md` (latest rows, 2026-11-09: "accept" = assign a room, race-safe beds, enabling needs a bed, the API additions, the CSV parser in `shared`, the admin Users screens, the dev seed roster, the NUL byte in `api.md`).
 - **Workflow:** gated. Stop for the user's approval after each of these:

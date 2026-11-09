@@ -31,6 +31,8 @@
 
 ## Health
 
+`GET /api/v1/health/client` (2026-11-09, deployment check): `{ ip, forwardedFor, trustProxy, suggestedTrustProxy }`, the caller's own address as the rate limits see it and the proxy chain in front of the API. `ip` must be the caller's own public address; otherwise set `TRUST_PROXY` to `suggestedTrustProxy`. `Cache-Control: no-store`.
+
 | Method | Path | Permission | Request | Response |
 |---|---|---|---|---|
 | GET | `/health` | public | – | `200 { status: "ok", time }` (no DB call; used to wake Render) |
