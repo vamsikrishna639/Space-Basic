@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "app.vercel.spacebasic_presidency.twa",
-      "sha256_cert_fingerprints": ["REPLACE_WITH_SHA256_FINGERPRINT"]
+      "sha256_cert_fingerprints": ["E4:89:95:C2:99:CE:58:72:DB:27:39:42:9F:F2:70:3D:D2:D9:6C:B3:81:4A:23:E1:A6:C0:B3:CB:D7:5B:6C:FC"]
     }
   }
 ]
