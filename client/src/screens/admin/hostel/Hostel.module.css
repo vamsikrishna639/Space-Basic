@@ -1,0 +1,189 @@
+/*
+ * Admin > Hostel (FREE DESIGN, docs/not-from-reference.md). Builds on the admin Users styles (AdminUsers.module.css:
+ * buttons, cards, fields, dialogs, bed marks) and the in-app tokens in both themes. Desktop first, works at 360 px.
+ */
+
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 16px;
+}
+
+.floors {
+  margin-bottom: 14px;
+}
+
+.floorCard {
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), var(--card-shadow);
+}
+
+.floorHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 0;
+}
+
+.floorHead h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.floorStats {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.floorTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.floorTools > :first-child {
+  flex: 1 1 240px;
+}
+
+.roomGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 14px 18px 18px;
+  list-style: none;
+}
+
+/* Two columns on a phone (360 px): a floor of 80 rooms stays a short scroll. */
+@media (max-width: 480px) {
+  .roomGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 12px;
+  }
+
+  .floorHead,
+  .floorTools {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 8px 12px 12px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+
+.tileTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.tileActions {
+  display: flex;
+  flex: none;
+}
+
+.iconBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: var(--tile-bg);
+  color: var(--text-1);
+}
+
+.iconBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.tileText {
+  color: var(--text-2);
+  font-size: 12px;
+}
+
+.start {
+  max-width: 640px;
+}
+
+/* the preview in Add rooms / Remove rooms */
+.previewBox {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--tile-bg);
+  color: var(--text-1);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.previewBox p {
+  margin: 0;
+}
+
+.previewBox p + p {
+  margin-top: 6px;
+}
+
+.previewMuted {
+  color: var(--text-2);
+}
+
+.blocked {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blocked li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.blocked strong {
+  min-width: 56px;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.select {
+  /* the native arrow; the field look comes from .input */
+  padding-right: 8px;
+}

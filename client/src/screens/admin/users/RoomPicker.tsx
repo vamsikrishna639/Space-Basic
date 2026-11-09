@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { MagnifyingGlassIcon } from '@phosphor-icons/react/dist/csr/MagnifyingGlass';
-import type { HostelStructure, RoomSummary } from '@spacebasic/shared';
+import type { RoomSummary } from '@spacebasic/shared';
 import { ApiError } from '../../../api/client';
 import { freeRooms, hostelStructure } from './usersApi';
 import { freeBedsText, roomSearchText } from './usersText';
@@ -29,8 +30,6 @@ function Beds({ room }: { room: RoomSummary }) {
   );
 }
 
-let structureCache: Promise<HostelStructure[]> | null = null;
-
 /**
  * Choose a room with a free bed (GET /hostel/rooms?free=true). Only rooms with a free bed are listed, but the
  * server checks again when the choice is saved: if the bed went in the meantime, `onPick` throws and the message
@@ -49,6 +48,8 @@ export function RoomPicker({ open, title, subtitle, current, action, onPick, onC
   const dialog = useModal(open);
   const id = useId();
   const [floors, setFloors] = useState<{ code: string; label: string }[]>([]);
+  /** No rooms at all yet (Admin > Hostel creates them): a different empty message. */
+  const [noRooms, setNoRooms] = useState(false);
   const [floor, setFloor] = useState('');
   const [q, setQ] = useState('');
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
@@ -61,12 +62,16 @@ export function RoomPicker({ open, title, subtitle, current, action, onPick, onC
 
   useEffect(() => {
     if (!open) return;
-    setChosen(null); setError(null); setQ(''); setFloor('');
-    structureCache ??= hostelStructure().catch((err) => { structureCache = null; throw err; });
-    structureCache
-      .then((list) => setFloors(list.flatMap((h) => h.floors.map((f) => ({
-        code: f.code, label: list.length > 1 ? `${h.hostel.name} · ${f.name}` : f.name,
-      })))))
+    setChosen(null); setError(null); setQ(''); setFloor(''); setNoRooms(false);
+    // Fetched on every open (small): rooms added in Admin > Hostel show up without a reload.
+    hostelStructure()
+      .then((list) => {
+        const floorsWithRooms = list.flatMap((h) => h.floors.filter((f) => f.roomCount > 0).map((f) => ({
+          code: f.code, label: list.length > 1 ? `${h.hostel.name} · ${f.name}` : f.name,
+        })));
+        setFloors(floorsWithRooms);
+        setNoRooms(floorsWithRooms.length === 0);
+      })
       .catch(() => setFloors([]));
   }, [open]);
 
@@ -161,7 +166,8 @@ export function RoomPicker({ open, title, subtitle, current, action, onPick, onC
             ))}
             {!loading && shown.length === 0 && (
               <p className={s.empty} style={{ gridColumn: '1 / -1' }}>
-                {q ? `No room starting with ${q} has a free bed.` : 'No room has a free bed.'}
+                {noRooms ? <>There are no rooms yet. Create them in <Link to="/admin/hostel" className={s.link}>Hostel</Link>.</>
+                  : q ? `No room starting with ${q} has a free bed.` : 'No room has a free bed.'}
               </p>
             )}
           </fieldset>

@@ -22,6 +22,7 @@ import { StaffSoon } from './screens/staff/StaffLayout';
 import { UsersList } from './screens/admin/users/UsersList';
 import { AddUser, EditUser } from './screens/admin/users/UserEditor';
 import { ImportUsers } from './screens/admin/users/ImportUsers';
+import { HostelPage } from './screens/admin/hostel/HostelPage';
 
 /**
  * Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes to their own app:
@@ -128,7 +129,7 @@ const router = createBrowserRouter([
           { path: '/admin/users/new', element: <AddUser /> },
           { path: '/admin/users/import', element: <ImportUsers /> },
           { path: '/admin/users/:id', element: <EditUser /> },
-          { path: '/admin/hostel', element: <StaffSoon area="admin" title="Hostel" nav={ADMIN_NAV} /> },
+          { path: '/admin/hostel', element: <HostelPage /> },
           { path: '/admin/support', element: <StaffSoon area="admin" title="Support" nav={ADMIN_NAV} /> },
           { path: '/admin/audit', element: <StaffSoon area="admin" title="Audit log" nav={ADMIN_NAV} /> },
           { path: '/admin/*', element: <Navigate to="/admin" replace /> },

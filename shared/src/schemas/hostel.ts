@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { FLOOR_CODE_PATTERN, ROOM_CODE_PATTERN } from '../hostel';
 import { paginationQuerySchema } from './common';
 
-// Hostel -> Floor -> Room (docs/schemas.md §1.7, docs/api.md "Hostel"). The layout is data: admins create
-// hostels and floors through the API (the hostel admin screen comes after deployment); the dev seed creates block "West".
+// Hostel -> Floor -> Room (docs/schemas.md §1.7, docs/api.md "Hostel"). The layout is data: admins build it in
+// Admin > Hostel (blocks, then rooms by number range); the dev seed creates block "West".
 
 export const HOSTEL_CODE_PATTERN = /^[A-Z0-9]{1,6}$/;
 export const MAX_BEDS_PER_ROOM = 12;
@@ -12,10 +12,15 @@ export interface FloorSummary {
   code: string;
   name: string;
   order: number;
+  /** The floor's room numbers: the range it was created with, then lowest and highest of its rooms. */
   roomNumberMin: number;
   roomNumberMax: number;
+  /** Beds per room for the floor's newest range (the default when adding more). */
   bedsPerRoom: number;
   roomCount: number;
+  /** Beds in all the floor's rooms, and how many of them active users hold. */
+  beds: number;
+  occupied: number;
 }
 
 /** GET /hostel/structure: hostels in order, each with its floors in order. */
@@ -67,7 +72,73 @@ export const floorCodeParamsSchema = z.object({ code: floorCodeSchema });
 export const roomCodeParamsSchema = z.object({ code: roomCodeSchema });
 export const updateRoomBodySchema = z.object({ beds: bedsSchema });
 
+/** Rooms one request may create or delete (a floor of up to 500 rooms in one go). */
+export const MAX_ROOMS_PER_RANGE = 500;
+
+type Range = { from: number; to: number };
+const toAfterFrom = (v: Range) => v.to >= v.from;
+const toAfterFromIssue = { path: ['to'], error: 'Must be at least the first room number' };
+const notTooMany = (v: Range) => v.to - v.from < MAX_ROOMS_PER_RANGE;
+const notTooManyIssue = { path: ['to'], error: `At most ${MAX_ROOMS_PER_RANGE} rooms at a time` };
+
+/**
+ * POST /hostel/rooms/range: create rooms `floorCode` + `from`..`to` (CF101..CF180) in a block. Rooms that already
+ * exist are skipped. A new floor code needs `floorName`. `dryRun: true` only reports what would happen (the preview).
+ */
+export const createRoomRangeBodySchema = z
+  .object({
+    hostelCode: hostelCodeSchema,
+    floorCode: floorCodeSchema,
+    floorName: nameSchema.optional(),
+    from: roomNumberSchema,
+    to: roomNumberSchema,
+    beds: bedsSchema,
+    dryRun: z.boolean().optional().default(false),
+  })
+  .refine(toAfterFrom, toAfterFromIssue)
+  .refine(notTooMany, notTooManyIssue);
+export type CreateRoomRangeBody = z.input<typeof createRoomRangeBodySchema>;
+
+export interface CreateRoomRangeResult {
+  dryRun: boolean;
+  floor: { code: string; name: string; isNew: boolean };
+  /** Rooms created (or, in a dry run, that would be). */
+  created: string[];
+  /** Rooms in the range that already exist, left as they are. */
+  skipped: string[];
+  /** Beds in the created rooms. */
+  beds: number;
+}
+
+/** POST /hostel/rooms/range/delete: delete the floor's rooms numbered `from`..`to` that exist. */
+export const deleteRoomRangeBodySchema = z
+  .object({
+    floorCode: floorCodeSchema,
+    from: roomNumberSchema,
+    to: roomNumberSchema,
+    dryRun: z.boolean().optional().default(false),
+  })
+  .refine(toAfterFrom, toAfterFromIssue)
+  .refine(notTooMany, notTooManyIssue);
+export type DeleteRoomRangeBody = z.input<typeof deleteRoomRangeBodySchema>;
+
+/** A room that can't be deleted, and who is assigned to it (disabled users keep their room, so they count). */
+export interface RoomBlocker {
+  code: string;
+  users: { id: string; fullName: string; status: 'active' | 'disabled' }[];
+}
+
+export interface DeleteRoomRangeResult {
+  dryRun: boolean;
+  /** Rooms deleted (or, in a dry run, that would be when nothing blocks). */
+  deleted: string[];
+  /** Rooms with someone assigned: nothing is deleted while any are listed (before the delete starts). */
+  blocked: RoomBlocker[];
+}
+
 export const listRoomsQuerySchema = paginationQuerySchema.extend({
+  /** Up to 200 rooms a page: a whole floor in the Hostel screen. */
+  limit: z.coerce.number().int().min(1).max(200).default(20),
   hostel: hostelCodeSchema.optional(),
   floor: floorCodeSchema.optional(),
   /** Start of a room code ("CS2", "cs24"): the room picker's search. */

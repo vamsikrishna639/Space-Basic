@@ -269,7 +269,7 @@ function UserEditor({ id }: { id?: string }) {
             <p className={s.cardText} style={{ margin: 0 }}>
               {disabled
                 ? "Disabled: they can't sign in. Their room is kept, but the bed counts as free."
-                : original!.hasPassword ? 'Active. Signs in with a password or a one-time code.' : 'Active. Signs in with a one-time code.'}
+                : original!.hasPassword ? 'Active. Signs in with their password.' : 'Active, but no password: they can sign in only with a one-time code, and only if your college has codes turned on.'}
             </p>
             {self ? (
               <span className={s.muted} style={{ fontSize: 13 }}>You can't disable your own account.</span>

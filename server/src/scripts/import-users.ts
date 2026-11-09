@@ -11,7 +11,8 @@
 // CSV header (any order; only fullName and roles are required, plus email or phone):
 //   fullName,email,phone,roles,roomCode,password
 // roles: one or more of student, warden, institution_admin separated by "|" (e.g. "student" or "warden|student").
-// password: optional initial password. Without it the user signs in with a one-time code.
+// password: initial password. Without it the user can only sign in with a one-time code, which needs OTP_PROVIDER
+// (off in production for now, so give every production user a password).
 import fs from 'node:fs';
 import path from 'node:path';
 import { batches, CONSENT_POLICY_VERSION, CLIENT_HEADER, parseCsv, recordsToRows, type ImportUsersResult } from '@spacebasic/shared';

@@ -1,7 +1,7 @@
 import { Router, type RequestHandler } from 'express';
 import {
-  createFloorBodySchema, createHostelBodySchema, floorCodeParamsSchema, generateRoomsBodySchema, listRoomsQuerySchema,
-  roomCodeParamsSchema, updateRoomBodySchema,
+  createFloorBodySchema, createHostelBodySchema, createRoomRangeBodySchema, deleteRoomRangeBodySchema, floorCodeParamsSchema,
+  generateRoomsBodySchema, listRoomsQuerySchema, roomCodeParamsSchema, updateRoomBodySchema,
 } from '@spacebasic/shared';
 import { authenticate, requirePermission } from '../../core/middleware/auth';
 import { validate, valid } from '../../core/middleware/validate';
@@ -53,6 +53,37 @@ export function hostelRouter(): Router {
     try {
       const { params, body } = valid(req, { params: roomCodeParamsSchema, body: updateRoomBodySchema });
       res.json(await hostel.updateRoom(req.ctx!, params.code, body.beds, { requestId: req.requestId }));
+    } catch (e) { next(e); }
+  });
+
+  // Admin > Hostel: rooms by number range (dryRun = the preview), deleting rooms and empty floors.
+  r.post('/rooms/range', requirePermission('hostel:manage'), validate({ body: createRoomRangeBodySchema }), async (req, res, next) => {
+    try {
+      const { body } = valid(req, { body: createRoomRangeBodySchema });
+      const result = await hostel.createRoomRange(req.ctx!, body, { requestId: req.requestId });
+      res.status(result.dryRun ? 200 : 201).json(result);
+    } catch (e) { next(e); }
+  });
+
+  r.post('/rooms/range/delete', requirePermission('hostel:manage'), validate({ body: deleteRoomRangeBodySchema }), async (req, res, next) => {
+    try {
+      const { body } = valid(req, { body: deleteRoomRangeBodySchema });
+      res.json(await hostel.deleteRoomRange(req.ctx!, body, { requestId: req.requestId }));
+    } catch (e) { next(e); }
+  });
+
+  r.delete('/rooms/:code', requirePermission('hostel:manage'), validate({ params: roomCodeParamsSchema }), async (req, res, next) => {
+    try {
+      const { params } = valid(req, { params: roomCodeParamsSchema });
+      res.json(await hostel.deleteRoom(req.ctx!, params.code, { requestId: req.requestId }));
+    } catch (e) { next(e); }
+  });
+
+  r.delete('/floors/:code', requirePermission('hostel:manage'), validate({ params: floorCodeParamsSchema }), async (req, res, next) => {
+    try {
+      const { params } = valid(req, { params: floorCodeParamsSchema });
+      await hostel.deleteFloor(req.ctx!, params.code, { requestId: req.requestId });
+      res.status(204).end();
     } catch (e) { next(e); }
   });
 
