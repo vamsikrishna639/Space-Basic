@@ -123,6 +123,13 @@ Settings matches `settings-dark.png` (0.93%) and `settings-light.png` (1.04%). N
 | **Change Password** screen | `/profile/password` | Settings header and card; three password fields (current, new, again) on the segmented-track colour, a rules line, "Show passwords", a primary button; "Password changed" card with Done | A Change Password screenshot |
 | **Privacy & Consent** screen | `/profile/privacy` | A card with the consent statement, when it was given and the policy version; a History card when there's more than one record; "Withdraw consent" (danger) with a confirm | A Privacy & Consent screenshot |
 
+## Installable app (Android, Trusted Web Activity, 2026-11-09)
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| **App icons** | Home screen, app drawer, splash | The supplied Space Basic logo on white (`client/public/icons/`, from `app-icons.ts`) | A supplied app icon |
+| **"You're offline"** page | Any page load without a connection (installed app or browser, production builds) | Built into `public/sw.js`: a card with "You're offline", one line and a "Try again" button; light or dark from the system; token colours | The full PWA step's offline screens |
+
 ## Admin Users screens (step 6, staff group (a), 2026-11-09)
 
 **Free design**, admins only (`institution_admin`, `super_admin`), desktop-friendly and working at 360 px, light and dark. Functional tests only: `tools/ui-analysis/src/smoke-admin-users.ts` and `client/src/screens/admin/users/usersText.test.ts`.

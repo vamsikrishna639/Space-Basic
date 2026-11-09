@@ -108,6 +108,14 @@ It asks for the institution's name and time zone, then the admin's name, email, 
 Push to `main`: Render and Vercel both build and deploy it. The API's indexes are created at startup. Watch Render's log for the startup line and `GET /api/v1/health`.
 
 
+### Android app (Trusted Web Activity)
+
+The web app is installable (manifest, icons, a service worker that stores nothing) and the Android app is a Trusted Web Activity: a thin APK that opens https://spacebasic-presidency.vercel.app full screen in Chrome. It is built with PWABuilder (pwabuilder.com, free; its Android packaging is Google's Bubblewrap, Apache-2.0), so the APK needs no app code in this repo.
+
+- **Package ID:** `app.vercel.spacebasic_presidency.twa`, the same as in `client/public/.well-known/assetlinks.json`. The two must match.
+- **Digital Asset Links:** replace `REPLACE_WITH_SHA256_FINGERPRINT` in `assetlinks.json` with the signing key's SHA-256 fingerprint (`AA:BB:...`, 32 pairs) and push. Check it at `https://spacebasic-presidency.vercel.app/.well-known/assetlinks.json`. Until it matches, the app opens with a browser address bar. If the app goes to Google Play with Play App Signing, add Play's app-signing fingerprint as a second entry in the list.
+- **The signing key never goes in git** (`.gitignore` excludes `*.keystore`, `*.jks`, `*.p12`, `signing-key-info.txt`). Losing it means no updates to the installed app under the same package.
+
 ## Visual tests (Docker)
 
 Visual comparisons run **only** inside Playwright's official Linux image. Its Chromium renders text the same way as Android Chrome, where the reference screenshots were captured, and every run gets the same browser, fonts and settings. Mismatch numbers from Windows or macOS are not comparable and are not reported.
