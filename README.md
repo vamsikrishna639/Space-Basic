@@ -73,7 +73,8 @@ From your own computer, in this repository, with the Atlas connection string hel
 
 ```
 # PowerShell
-$env:MONGODB_URI = Read-Host "Atlas connection string"      # paste it here; it isn't saved in the history
+$s = Read-Host "Atlas connection string" -AsSecureString   # paste it; hidden, not saved in the history
+$env:MONGODB_URI = (New-Object System.Net.NetworkCredential("", $s)).Password; Remove-Variable s
 npm run create-admin -w server -- --logo ../reference-ui/assets/logo-presidency.png
 Remove-Item Env:MONGODB_URI
 ```
