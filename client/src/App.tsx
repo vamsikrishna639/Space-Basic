@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useParams } from 'react-router';
 import { MODULE_KEYS, MODULES, type ModuleKey } from '@spacebasic/shared';
 import { AuthProvider, useAuth, useMe } from './auth/AuthContext';
@@ -23,6 +24,7 @@ import { UsersList } from './screens/admin/users/UsersList';
 import { AddUser, EditUser } from './screens/admin/users/UserEditor';
 import { ImportUsers } from './screens/admin/users/ImportUsers';
 import { HostelPage } from './screens/admin/hostel/HostelPage';
+import { syncStatusBar } from './theme/statusBar';
 
 /**
  * Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes to their own app:
@@ -144,6 +146,8 @@ const router = createBrowserRouter([
 ]);
 
 export function App() {
+  // The phone's status bar follows the screen (theme/statusBar.ts).
+  useEffect(() => syncStatusBar(router), []);
   return (
     <AuthProvider>
       <RouterProvider router={router} />

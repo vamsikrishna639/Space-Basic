@@ -115,6 +115,16 @@ The web app is installable (manifest, icons, a service worker that stores nothin
 - **Package ID:** `app.vercel.spacebasic_presidency.twa`, the same as in `client/public/.well-known/assetlinks.json`. The two must match.
 - **Digital Asset Links:** replace `REPLACE_WITH_SHA256_FINGERPRINT` in `assetlinks.json` with the signing key's SHA-256 fingerprint (`AA:BB:...`, 32 pairs) and push. Check it at `https://spacebasic-presidency.vercel.app/.well-known/assetlinks.json`. Until it matches, the app opens with a browser address bar. If the app goes to Google Play with Play App Signing, add Play's app-signing fingerprint as a second entry in the list.
 - **The signing key never goes in git** (`.gitignore` excludes `*.keystore`, `*.jks`, `*.p12`, `signing-key-info.txt`). Losing it means no updates to the installed app under the same package.
+- **System bars:** the status bar follows the page's `theme-color`, set per screen and theme by `client/src/theme/statusBar.ts` from `tokens.css`, so colour changes there need no new APK. The navigation bar can only come from the APK: `navigationColor` / `navigationColorDark` in `android/twa-manifest.json` (docs/ui-measurements.md §16).
+
+**Building a new APK** (since 1.0.1 it is built from `android/twa-manifest.json`, not on pwabuilder.com). Needs Node, a JDK (21 works) and the Android SDK build tools (Android Studio installs them). Bubblewrap is installed in its own folder, outside the repo:
+
+1. Raise `appVersionCode` (and `appVersion`) in `android/twa-manifest.json`; every update needs a higher code.
+2. `npm install --prefix <tools folder> @bubblewrap/core@1.27.0`, then `BUBBLEWRAP_DIR=<tools folder> node android/generate.mjs <empty folder>`.
+3. In that folder: `local.properties` with `sdk.dir=C:/Users/<you>/AppData/Local/Android/Sdk`, then `gradlew assembleRelease` (behind an HTTPS-scanning antivirus, set `JAVA_TOOL_OPTIONS=-Djavax.net.ssl.trustStoreType=Windows-ROOT` so Java uses the Windows certificate store).
+4. `zipalign -p -f 4 app/build/outputs/apk/release/app-release-unsigned.apk <aligned.apk>` (SDK build-tools).
+5. Sign with the existing key: `powershell -ExecutionPolicy Bypass -File android\sign-apk.ps1 -Keystore <signing.keystore> -Unsigned <aligned.apk>`. It asks for the passwords (hidden), and replaces `client/public/downloads/Space-Basic.apk` only if the certificate matches `assetlinks.json`.
+6. On the phone, open the new APK and tap **Update**: same package and key with a higher version code installs over the old app and keeps sign-ins. Don't uninstall first.
 
 ## Seasonal Home
 

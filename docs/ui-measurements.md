@@ -440,7 +440,7 @@ Shared modules:
 - `dev-stack.ts`: starts the dev stack for a smoke script with relaxed sign-in limits (`RELAX_RATE_LIMITS=true`, development only), or reuses a running one
 - `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
 
-One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`, and for Settings (§15) `settings-shadow.ts`, `pjs-metrics.ts`, `menu-probe.ts`, `nav-probe.ts`, `refresh-race.ts`, `entry-states.ts`, and for the Diwali Home (§10a) `diwali-probe.ts`, `diwali-measure.ts`, `diwali-shift.ts`, `diwali-card.ts`, `diwali-gaps.ts`, `diwali-glow.ts`, `diwali-crops.ts`, `diwali-six.ts`, `side.ts`.
+One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`, and for Settings (§15) `settings-shadow.ts`, `pjs-metrics.ts`, `menu-probe.ts`, `nav-probe.ts`, `refresh-race.ts`, `entry-states.ts`, and for the Diwali Home (§10a) `diwali-probe.ts`, `diwali-measure.ts`, `diwali-shift.ts`, `diwali-card.ts`, `diwali-gaps.ts`, `diwali-glow.ts`, `diwali-crops.ts`, `diwali-six.ts`, `side.ts`, and for the system bars (§16) `bars-measure.mjs`, `bars-edges.mjs`, `bars-shot.mjs`.
 
 `fontfit.ts` reads the Settings device ID from the gitignored `tools/ui-analysis/private/screenshot-text.json` (`{ "deviceId": "..." }`); without it, those samples are skipped.
 
@@ -644,3 +644,24 @@ Two screenshots: `07-profile.png` (top) and `07-profile(1).png` (the same screen
 | Page end | 24 px under the last card (9.333 + the 14.667 px gesture bar), so the page scrolls exactly 298.667 |
 
 **Visual result (Linux image, real DPR 3, 2026-11-09), private fixture.** Settings dark **0.93%**, light **1.04%**. Every region's box is within 1 device px except the BETA text box (0.67 px narrower; region 4.7%). The rest is text edges (row labels 1.3%, link text 2.1%).
+
+## 16. System bars in the Android app (status bar and navigation bar)
+
+Measured with `scratch/bars-measure.mjs` and `scratch/bars-edges.mjs` (device px, mode of a band of rows). `bars-original-notifications.png` and `bars-pwa-notifications.png` are used **only** for these two bar colours; they are not UI references.
+
+| Screenshot | Status bar (rows 0–20) | Navigation bar (bottom rows) |
+|---|---|---|
+| `bars-original-notifications.png` (original app) | #101116 = dark `--app-bg` | #181B24 = dark `--tabbar-bg` (the tab bar runs under the gesture pill) |
+| `bars-pwa-notifications.png` (our TWA, v1) | #384BD5 (brand blue) | #384BD5 |
+| `01`–`03` sign-in screens | #FAFAFA → `--statusbar-auth` | #FAFAFA |
+| `04-home.png` | #3D4FD7 = `--hero-top` | #181B24 |
+| `home-diwali-dark.png` | #3A2280 ≈ `--diwali-hero-top` #3A2380 | #181B24 |
+| `05`, `06`, `07` (Notifications, Help, My Profile), `settings-dark.png` | #101116 | #181B24 |
+| `QR_entry-pass.png` (sheet open) | #090A0E → dark `--statusbar-sheet` (the scrim over the page) | #181B24 |
+| `settings-light.png` | #F5F6FA = light `--app-bg` | (content) |
+
+**Who sets which bar (tested 2026-11-11, Android 16 emulator, Chrome 133, verified TWA):**
+- **Status bar = the page's `theme-color`.** On a verified origin Chrome uses it in preference to the APK's colour (Chromium commit 71357f7, "Allow TWA sites to theme the status bar color"), and follows changes at run time: setting the meta to #FF0000 from DevTools turned the bar red. The APK's `themeColor` / `themeColorDark` only show before the page sets one. `client/src/theme/statusBar.ts` sets it per screen and theme from the tokens above; light `--statusbar-sheet` #939496 is provisional (the scrim over the light `--app-bg`).
+- **Navigation bar = the APK only** (`navigationColor` / `navigationColorDark` in `android/twa-manifest.json`; Android's light / dark mode picks one). A page can't change it, so it follows the phone's dark mode, not Settings > Appearance; with Appearance = System (the default) they agree.
+
+Measured on the emulator with the new APK (`scratch/bars-shot.mjs`, corner pixels): dark mode — Diwali Home #3A2380, Notifications / My Profile / Settings #101116, Entry Pass #090A0E, navigation bar #181B24 on all; light mode — sign-in #FAFAFA, Notifications #F5F6FA, Home #3A2380, navigation bar #FFFFFF. All equal the original's values above.
