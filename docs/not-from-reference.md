@@ -24,6 +24,17 @@ The rule (SPEC.md): anything functionally required but not shown in `reference-u
 | **Light** Home | Home in light theme | Settings-light colours for page, cards, text; tiles, accent and tab bar provisional | A light Home screenshot |
 | Institution with **no logo** | Home header | The white tile, empty | A screenshot of that case |
 
+## Seasonal Home, Diwali (2026-11-10)
+
+Built from `home-diwali-dark.png` (dark only). Switch: `client/src/config/seasonal.ts`.
+
+| What | Where | How it's built | Replace when |
+|---|---|---|---|
+| **Light** Diwali Home | Home in light theme, switch on | Header gradient (#3A2380 → #22165A), lamps and tile (#3A2280) as in dark; card `--surface-card` (#FFFFFF) with the `--card-border` ring (#EEEEF0), title `--text-1`, line `--text-2` | A light Diwali screenshot |
+| **Long first names** in the card title | Home, switch on | The title wraps (the card grows); the header greeting keeps its ellipsis | A screenshot with a long name |
+| **Static flames** | Home, switch on | The lamps are a still crop; in the screenshot the six flames differ like flicker frames, which may mean the original animates them | A recording, if they should flicker |
+| No **Quick actions** module enabled | Home, switch on | APPS takes QUICK ACTIONS' place 19.333 px under the card | A screenshot of that case |
+
 ## One-time codes and Forgot password (step 6, third checkpoint, 2026-11-08)
 
 SPEC.md asks for these flows without a screenshot. Every screen reuses the Sign in layout (back button, 25.4 px title, subtitle, primary button pinned to the bottom, helper line under it) and the existing components; the only new component is the code boxes.

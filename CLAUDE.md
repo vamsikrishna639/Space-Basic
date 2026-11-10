@@ -4,7 +4,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
 
 ## Status
 
-- **Current phase (2026-11-09, Android app prep (Trusted Web Activity) built and checked locally; at the CHECKPOINT, the user pushes it, builds the APK with PWABuilder and fills in the signing fingerprint):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
+- **Current phase (2026-11-10, seasonal Diwali Home built and checked locally, switch ON; at the CHECKPOINT, the user pushes it. Earlier: Android app prep (TWA), the user builds the APK with PWABuilder):** Phase 1, step 6 (frontend), go mode with runnable checkpoints (`SPEC.md`, "Go mode and checkpoints"; the gated list below is superseded). The user does all git (see "Open items" → Git); check `git status` for what is uncommitted.
 - **Done:**
   - **Backend, all Phase 1 modules:** Auth, Users/Profile, Consent, Hostel/Floor/Room, Notifications, QR/Attendance, Support/FAQ, the institution logo endpoints, the password rule (not the account's email or phone; create, import, change, reset), the compact 96-character HMAC QR token (approved, a test per property), relaxed dev/test sign-in limits (`RELAX_RATE_LIMITS`, `npm run dev:relaxed`; refused in production), race-safe beds (room `rev` compare-and-set, `server/src/modules/hostel/beds.ts`), `GET /users/:id`, the `room=none` and free-room filters, rooms by range and room/floor deletes (race-safe, `hostel.service.ts`). **201 Jest tests.**
   - **Student screens (strict pixel-perfect), visual % from `npm run test:visual` (Docker, real DPR 3):**
@@ -15,6 +15,7 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
     | Sign in, Mobile / Email | `/sign-in/mobile`, `/sign-in/email` | 1.28% / 1.59% |
     | One-time codes (SMS, WhatsApp, email) and Forgot password | `/sign-in/code`, `/forgot-password`, `/forgot-password/code` | no screenshot |
     | Home + tab bar | `/home` | 1.32% |
+    | Home, seasonal Diwali (switch on) | `/home` | 1.38% |
     | Notifications | `/notifications` | 0.90% |
     | Help, plus Contact us and Common questions | `/support`, `/support/contact`, `/support/faqs` | 0.98% (sub-screens: no screenshot) |
     | My Profile, top / scrolled | `/profile` | 1.14% / 1.11% |
@@ -28,6 +29,8 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   - **Admin > Hostel (free design, 2026-11-09):** `/admin/hostel` (`client/src/screens/admin/hostel/`): add block; add rooms by range with the server's dry-run preview (existing rooms skipped, a new prefix creates the floor); remove a range or one room (refused while anyone, disabled users included, is assigned, naming them); delete an empty floor; change a room's beds (not below the beds taken); search; per-floor totals. Room picker refetches floors on open and says when there are no rooms. Smoke: `smoke-hostel.ts`.
   - **Installable app / Android TWA prep (2026-11-09):** `client/public/manifest.webmanifest` (Space Basic, standalone, #384BD5, icons 192/512 plain and maskable from the supplied logo via `app-icons.ts`), `client/public/sw.js` (hand-written, stores nothing, offline page for failed page loads, production only via `client/src/pwa/registerServiceWorker.ts`), `client/public/.well-known/assetlinks.json` (package `app.vercel.spacebasic_presidency.twa`, fingerprint PLACEHOLDER), content types in `vercel.json`, signing keys in `.gitignore`. Chrome installability: no errors; Lighthouse 11.7.1 PWA: 1; visual tests unchanged; `verify-deploy.ts` checks it all. README "Android app (Trusted Web Activity)".
   - **Reload sign-out fix (approved):** for 10 s after a rotation the immediately previous refresh token works once more; the client refreshes one tab at a time (Web Locks). `/auth/logout` accepts an older token of the session.
+  - **Seasonal Home, Diwali (2026-11-10, user request, temporary):** switch `SEASONAL_HOME` / `SEASONAL_HOME_ENDS` in `client/src/config/seasonal.ts` (`null` = today's Home exactly; normal Home code kept, Diwali parts beside it in `client/src/screens/home/DiwaliHome.tsx`). Lamps are approved raster cut-outs (`reference-ui/assets/seasonal/`, written by `diwali-assets.ts`). The visual-test build ignores the switch (`__VISUAL_TEST__`, `localStorage['sb.visual.seasonalHome']`), so `home` tests the normal design and `home-diwali` the Diwali one. Light Diwali Home is derived (`not-from-reference.md`). Measurements: `docs/ui-measurements.md` §10a.
+  - **Tests (2026-11-10, after the Diwali Home):** server 201/201; client 68/68; typecheck clean; visual: the 11 earlier screens identical to the pre-change run (total and every region), `home-diwali` 1.38%; Lighthouse 11.7.1 PWA 1; Chrome installability no errors; `verify-deploy.ts` all passed.
   - **Tests (2026-11-09, after Admin > Hostel):** server 201/201; client 61/61; typecheck clean; `smoke-hostel.ts` and `smoke-admin-users.ts` pass; visual tests unchanged (11 screens, same numbers).
   - **Tests (2026-11-09, after the admin users screens):** server 185/185; client unit tests 52/52; `smoke-admin-users.ts` 51/51 and `smoke-roles.ts` pass; `smoke-signin.ts` and `smoke-otp.ts` passed at the start of the session (before these changes, which don't touch student screens); visual tests unchanged (all 12 screens, same numbers). The smoke scripts start the dev stack themselves with relaxed sign-in limits (`tools/ui-analysis/src/dev-stack.ts`), or `smoke-signin` / `smoke-roles` / `smoke-settings` reuse a running one (start it with `npm run dev:relaxed`); `smoke-otp` needs the ports free. `smoke-admin-users` starts or reuses one too, and disables and moves out the users it creates.
   - Git history was rewritten earlier (approved) to remove the screenshot owner's name and device ID; the scan of every ref was clean.
@@ -171,8 +174,9 @@ Space Basic is a college hostel management PWA. **Student screens** must be a **
   | `badge.ts` | Avatar and camera badge |
   | `logo-transparent.ts` | Transparent logo |
   | `avatar-v2.ts` | Default avatar |
+  | `diwali-assets.ts` | Diwali lamp cut-outs |
 
-  `avatar-v2.ts` and `logo-transparent.ts` **write asset files**, so only rerun them on purpose.
+  `avatar-v2.ts`, `logo-transparent.ts` and `diwali-assets.ts` **write asset files**, so only rerun them on purpose.
 - `tools/ui-analysis/scratch/` holds one-off debug probes. It is **gitignored**; don't commit it. Every committed script is listed in `docs/ui-measurements.md` §8.
 - The analysis-only packages (Playwright, pixelmatch, pngjs, the comparison fonts and the icon libraries) are not app dependencies.
 - Visual tests need Docker Desktop; starting it (`Docker Desktop.exe`) when it isn't running is fine (user, 2026-11-08).
