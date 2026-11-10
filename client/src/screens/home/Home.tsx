@@ -8,6 +8,8 @@ import { MODULES, type ModuleKey } from '@spacebasic/shared';
 import { useMe } from '../../auth/AuthContext';
 import { HOME_APPS, QUICK_ACTIONS, type QuickActionIcon } from '../../config/quickActions';
 import { greetingFor, greetingName, homeDate, isLongAppLabel } from './homeText';
+import { seasonalHomeAt } from './seasonal';
+import { DiwaliGreeting, DiwaliLamps, diwaliAfterCardClass, diwaliHeaderClass } from './DiwaliHome';
 import s from './Home.module.css';
 
 // Icon weights and sizes: docs/ui-measurements.md §4 (Phosphor, one import per icon).
@@ -33,17 +35,21 @@ function useNow(): Date {
   return now;
 }
 
-/** Screen 4 (reference-ui/04-home.png). */
+/** Screen 4 (reference-ui/04-home.png). With the seasonal switch on (config/seasonal.ts), the Diwali look
+ * (reference-ui/home-diwali-dark.png) adds to it; with it off, nothing below differs from the normal Home. */
 export function Home() {
   const me = useMe();
   const now = useNow();
   const enabled = new Set(me.institution.enabledModules);
   const actions = QUICK_ACTIONS.filter((a) => enabled.has(a.module));
   const apps = HOME_APPS.filter((m) => enabled.has(m));
+  const diwali = seasonalHomeAt(now) === 'diwali';
+  // Seasonal: the first section label after the greeting card sits closer to it.
+  const afterCard = diwali ? ` ${diwaliAfterCardClass}` : '';
 
   return (
     <div className="app-screen">
-      <header className={s.header}>
+      <header className={diwali ? `${s.header} ${diwaliHeaderClass}` : s.header}>
         <div className={s.brand}>
           <span className={s.tile}>
             {me.institution.logoUrl && <img className={s.logo} src={me.institution.logoUrl} alt="" />}
@@ -52,12 +58,14 @@ export function Home() {
         </div>
         <h1 className={s.greeting}>{greetingFor(now)}, {greetingName(me.firstName)}</h1>
         <p className={s.date}>{homeDate(now)}</p>
+        {diwali && <DiwaliLamps />}
       </header>
 
       <main className={s.body}>
+        {diwali && <DiwaliGreeting name={greetingName(me.firstName)} />}
         {actions.length > 0 && (
           <>
-            <h2 className={s.section}>Quick actions</h2>
+            <h2 className={`${s.section}${afterCard}`}>Quick actions</h2>
             <div className={s.chips} data-testid="quick-actions">
               {actions.map((a) => (
                 <Link key={a.module} to={`/m/${a.module}`} className={s.chip}>
@@ -70,7 +78,7 @@ export function Home() {
         )}
         {apps.length > 0 && (
           <>
-            <h2 className={`${s.section} ${s.apps}`}>Apps</h2>
+            <h2 className={`${s.section} ${s.apps}${actions.length === 0 ? afterCard : ''}`}>Apps</h2>
             <nav className={s.card} aria-label="Apps">
               {apps.map((m) => (
                 <Link key={m} to={`/m/${m}`} className={s.app}>

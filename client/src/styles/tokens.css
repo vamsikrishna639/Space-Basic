@@ -71,6 +71,13 @@
   --hero-text: #ffffff;         /* greeting */
   --hero-date: #b7bdf8;
 
+  /* Seasonal Home, Diwali (§10a, home-diwali-dark.png): the same in both themes, like the normal header. Gradient
+   * fitted on 539 header rows (max residual 3/255); the tile is the gradient's top colour (the small lamp is cut
+   * out on it). */
+  --diwali-hero-top: #3a2380;
+  --diwali-hero-bottom: #22165a;
+  --diwali-tile: #3a2280;
+
   /* in-app type scale (fontfit.ts, h-* samples) */
   --fs-greeting: 23.6px;        /* 400 */
   --fs-chip: 14px;              /* 500 */
@@ -106,6 +113,9 @@
   --chip-shadow: rgb(0 0 0 / 0.35);
   --chevron: #494f5d;           /* list-row chevrons (Notifications, Help) */
   --dot-unread: #4a5ce6;
+  /* Diwali greeting card (§10a), measured: a slightly purple card and ring (not --surface-card / --card-border) */
+  --diwali-card: #1b1c2e;
+  --diwali-card-ring: #2c2e3d;
   /* Help "Contact us" card (§12): 140deg gradient fitted on a grid of samples, glow fitted from its falloff */
   --promo-bg: linear-gradient(140deg, #4457e1 0%, #4a5ce6 55.5%, #3e50da 100%);
   --promo-glow: 0 8px 32px rgb(74 92 230 / 0.32);
@@ -163,6 +173,8 @@
   --chip-shadow: rgb(19 22 31 / 0.08); /* provisional */
   --chevron: #c2c2c2;           /* Settings link rows (settings-light.png) */
   --dot-unread: #4a5ce6;
+  --diwali-card: var(--surface-card);      /* not from a screenshot: the light card and ring (not-from-reference.md) */
+  --diwali-card-ring: var(--card-border);
   --promo-bg: linear-gradient(140deg, #4457e1 0%, #4a5ce6 55.5%, #3e50da 100%); /* provisional (same as dark) */
   --promo-glow: 0 8px 32px rgb(74 92 230 / 0.22); /* provisional */
   --promo-tile: rgb(255 255 255 / 0.16);
