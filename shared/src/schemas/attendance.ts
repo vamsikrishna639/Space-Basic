@@ -10,6 +10,12 @@ export type AttendanceKind = (typeof ATTENDANCE_KINDS)[number];
 export const QR_REFRESH_AFTER_MS = 10_000;
 /** A pass token is accepted for this long after it is issued (the scanner allows 5 s of clock skew on top). */
 export const QR_TOKEN_TTL_SECONDS = 15;
+/**
+ * The pass token's shape: base64url(39-byte body) "." base64url(32-byte HMAC), always 96 characters. The server
+ * verifies it; the warden's scanner uses the shape only to skip QR codes that aren't passes before asking the API.
+ */
+export const QR_TOKEN_LENGTH = 96;
+export const QR_TOKEN_SHAPE = /^([A-Za-z0-9_-]{52})\.([A-Za-z0-9_-]{43})$/;
 
 /** GET /attendance/qr-token */
 export interface QrTokenResult {

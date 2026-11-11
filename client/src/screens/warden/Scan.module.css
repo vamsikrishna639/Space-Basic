@@ -1,0 +1,169 @@
+/*
+ * Warden scanner (FREE DESIGN, docs/not-from-reference.md): the app's tokens in both themes, phone-first inside
+ * the warden's 560 px column. Result colours reuse the admin screens' notice (tile + accent) and error (danger).
+ */
+
+/* The camera picture: square, as wide as the column, never taller than about half the screen. */
+.viewport {
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 56dvh);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #000; /* the camera's own black while it starts, not a theme colour */
+}
+
+.videoBox {
+  position: absolute;
+  inset: 0;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The middle two-thirds is where qr-scanner looks (its default scan region); everything else is dimmed. */
+.frame {
+  position: absolute;
+  inset: 16.67%;
+  border-radius: 16px;
+  box-shadow: 0 0 0 100vmax var(--scrim), inset 0 0 0 3px var(--qr-card);
+  pointer-events: none;
+}
+
+.cameraNote,
+.cameraProblem {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 24px;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+}
+
+.cameraProblem {
+  background: var(--surface-card);
+  color: var(--text-1);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  border-radius: 20px;
+}
+
+.cameraProblem svg {
+  color: var(--danger);
+}
+
+.problemTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.problemText {
+  max-width: 34ch;
+  margin: 0 0 6px;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.status {
+  min-height: 20px;
+  margin: 14px 0;
+  color: var(--text-2);
+  font-size: 14px;
+  text-align: center;
+}
+
+.result {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.ok,
+.warn {
+  background: var(--tile-bg);
+  color: var(--text-1);
+}
+
+.ok .resultIcon,
+.warn .resultIcon {
+  color: var(--accent);
+}
+
+.error {
+  background: var(--danger-tile);
+  color: var(--danger);
+}
+
+.resultIcon {
+  flex: none;
+}
+
+.resultText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.resultTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.resultName {
+  margin: 0;
+  color: var(--text-1);
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.resultLine {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.ok .resultLine,
+.warn .resultLine {
+  color: var(--text-2);
+}
+
+/* The admin screens' secondary button (AdminUsers.module.css .btn), full width: themed in light and dark. */
+.next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tile-bg);
+  color: var(--text-1);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.next:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

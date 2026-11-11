@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
-import { ACCESS_TOKEN_TTL_SECONDS, QR_TOKEN_TTL_SECONDS, ROLES, type Role } from '@spacebasic/shared';
+import { ACCESS_TOKEN_TTL_SECONDS, QR_TOKEN_LENGTH, QR_TOKEN_SHAPE, QR_TOKEN_TTL_SECONDS, ROLES, type Role } from '@spacebasic/shared';
 import { env } from '../../config/env';
 import { errors } from '../http/errors';
 
@@ -42,10 +42,10 @@ export function verifyAccessToken(token: string): AccessClaims {
 // keeps these MACs apart from anything else the secret might ever sign.
 
 const QR_CLOCK_TOLERANCE_SECONDS = 5;
-export const QR_TOKEN_LENGTH = 96;
+export { QR_TOKEN_LENGTH }; // defined in shared with the shape (the warden's scanner checks it too)
 const QR_FORMAT = 0x01;
 const QR_MAC_CONTEXT = Buffer.from('spacebasic-qr/v1\0', 'utf8');
-const QR_SHAPE = /^([A-Za-z0-9_-]{52})\.([A-Za-z0-9_-]{43})$/;
+const QR_SHAPE = QR_TOKEN_SHAPE;
 const OBJECT_ID = /^[0-9a-f]{24}$/;
 
 export interface QrClaims { sub: string; inst: string; jti: string; exp: number }

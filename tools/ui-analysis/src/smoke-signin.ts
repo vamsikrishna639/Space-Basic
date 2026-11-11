@@ -45,7 +45,8 @@ check(true, 'student signs in and lands on Home');
 const greeting = await page.getByRole('heading', { level: 1 }).textContent();
 check(/^Good (morning|afternoon|evening), ARJUN$/.test(greeting ?? ''), `greeting: "${greeting}"`);
 check((await page.getByText('Presidency University').count()) === 1, 'institution name from the API');
-const logoLoaded = await page.locator('header img').evaluate((img: HTMLImageElement) =>
+// The logo, not the Diwali lamp strip (decorative, aria-hidden) that the seasonal Home adds to the header.
+const logoLoaded = await page.locator('header img:not([aria-hidden="true"])').evaluate((img: HTMLImageElement) =>
   img.complete ? img.naturalWidth > 0 : new Promise<boolean>((r) => { img.onload = () => r(img.naturalWidth > 0); img.onerror = () => r(false); }));
 check(logoLoaded, 'institution logo loads from /api/v1/institutions/:id/logo');
 const badge = await page.getByRole('navigation', { name: 'Main' }).locator('[aria-label$="unread"]').textContent().catch(() => null);

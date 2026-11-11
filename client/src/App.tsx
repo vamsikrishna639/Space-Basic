@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, useParams } from 'react-router';
 import { MODULE_KEYS, MODULES, type ModuleKey } from '@spacebasic/shared';
 import { AuthProvider, useAuth, useMe } from './auth/AuthContext';
@@ -25,6 +25,8 @@ import { AddUser, EditUser } from './screens/admin/users/UserEditor';
 import { ImportUsers } from './screens/admin/users/ImportUsers';
 import { HostelPage } from './screens/admin/hostel/HostelPage';
 import { syncStatusBar } from './theme/statusBar';
+// Wardens only: loaded on demand, so qr-scanner isn't in every student's download.
+const ScanScreen = lazy(() => import('./screens/warden/ScanScreen').then((m) => ({ default: m.ScanScreen })));
 
 /**
  * Signed-out area: Welcome, Sign in, the code screen and Forgot password. A signed-in user goes to their own app:
@@ -116,7 +118,7 @@ const router = createBrowserRouter([
         element: <RequireArea area="warden" />,
         children: [
           { path: '/warden', element: <WardenHome /> },
-          { path: '/warden/scan', element: <StaffSoon area="warden" title="Scan entry passes" back="/warden" /> },
+          { path: '/warden/scan', element: <Suspense fallback={<div className="app-screen" aria-busy="true" />}><ScanScreen /></Suspense> },
           { path: '/warden/attendance', element: <StaffSoon area="warden" title="Today's attendance" back="/warden" /> },
           { path: '/warden/lookup', element: <StaffSoon area="warden" title="Find a student or room" back="/warden" /> },
           { path: '/warden/*', element: <Navigate to="/warden" replace /> },

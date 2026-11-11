@@ -9,10 +9,16 @@
 param(
   [Parameter(Mandatory = $true)][string]$Keystore,
   [Parameter(Mandatory = $true)][string]$Unsigned,
-  [string]$Out = (Join-Path $PSScriptRoot '..\client\public\downloads\Space-Basic.apk'),
-  [string]$BuildTools = (Join-Path $env:LOCALAPPDATA 'Android\Sdk\build-tools\36.0.0')
+  [string]$Out = '',
+  [string]$BuildTools = ''
 )
 $ErrorActionPreference = 'Stop'
+# Defaults are computed here, not in param(): Windows PowerShell 5.1 leaves $PSScriptRoot empty while it binds
+# parameter defaults (PowerShell 7 doesn't), which broke the -Out default.
+$here = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$repo = Split-Path -Parent $here
+if (-not $Out) { $Out = Join-Path $repo 'client\public\downloads\Space-Basic.apk' }
+if (-not $BuildTools) { $BuildTools = Join-Path $env:LOCALAPPDATA 'Android\Sdk\build-tools\36.0.0' }
 $apksigner = Join-Path $BuildTools 'apksigner.bat'
 if (-not (Test-Path $apksigner)) { throw "apksigner not found in $BuildTools" }
 if (-not (Test-Path $Keystore)) { throw "Keystore not found: $Keystore" }
@@ -41,7 +47,7 @@ Remove-Item "$tmp.idsig" -ErrorAction SilentlyContinue
 $certs = & $apksigner verify --print-certs $tmp
 $sha = ($certs | Select-String 'certificate SHA-256 digest: ([0-9a-f]+)').Matches[0].Groups[1].Value.ToUpper()
 $colon = ($sha -split '(..)' | Where-Object { $_ }) -join ':'
-$links = Get-Content (Join-Path $PSScriptRoot '..\client\public\.well-known\assetlinks.json') -Raw | ConvertFrom-Json
+$links = Get-Content (Join-Path $repo 'client\public\.well-known\assetlinks.json') -Raw | ConvertFrom-Json
 $expected = $links[0].target.sha256_cert_fingerprints[0]
 if ($colon -eq $expected) {
   Move-Item -Force $tmp $Out
