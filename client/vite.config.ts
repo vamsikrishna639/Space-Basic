@@ -50,8 +50,6 @@ function buildStamp() {
     __APP_VERSION__: JSON.stringify(process.env.SB_APP_VERSION ?? pkg.version),
     __BUILD_TIME__: JSON.stringify(process.env.SB_BUILD_TIME ?? new Date().toISOString()),
     __BUILD_SHA__: JSON.stringify(sha.slice(0, 8)),
-    // Visual-test build only (scripts/visual-build.mjs): lets the test pick the seasonal Home per screen.
-    __VISUAL_TEST__: JSON.stringify(process.env.SB_VISUAL_TEST === '1'),
   };
 }
 

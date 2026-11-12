@@ -101,10 +101,6 @@ export const SAMPLES: Sample[] = [
   { id: 'r-section', file: '07-profile.png', text: 'ACCOUNT', r: [45, 982, 210, 40], caps: true },
   { id: 'r-signout', file: '07-profile(1).png', text: 'Sign Out', r: [245, 1885, 190, 55] },
   { id: 'h-badge', file: '04-home.png', text: '99+', r: [424, 2182, 60, 34] },
-  // Seasonal Home, Diwali greeting card (§10a). The title sample stops before the name (personal data).
-  { id: 'hd-title', file: 'home-diwali-dark.png', text: 'Happy Diwali,', r: [245, 632, 298, 58] },
-  { id: 'hd-sub-1', file: 'home-diwali-dark.png', text: 'Wishing you light, joy and a safe', r: [243, 692, 590, 52] },
-  { id: 'hd-sub-2', file: 'home-diwali-dark.png', text: 'celebration.', r: [243, 748, 240, 44] },
   { id: 's-beta', file: 'settings-dark.png', text: 'BETA', r: [375, 1668, 100, 40], caps: true },
   { id: 's-beta-light', file: 'settings-light.png', text: 'BETA', r: [375, 772, 100, 40], caps: true },
   { id: 's-appearance', file: 'settings-dark.png', text: 'Appearance', r: [95, 1665, 260, 60] },

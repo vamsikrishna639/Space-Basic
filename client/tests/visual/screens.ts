@@ -160,41 +160,6 @@ export const SCREENS: ScreenSpec[] = [
     ],
   },
   {
-    // Seasonal Home, Diwali (switch in client/src/config/seasonal.ts). The visual-test build ignores the switch and
-    // takes the season from this localStorage key, so 'home' above always tests the normal design. The chip row is
-    // not scrolled in this screenshot. Everything from QUICK ACTIONS down is 'home' moved 340 device px down.
-    id: 'home-diwali',
-    ref: 'home-diwali-dark.png',
-    route: '/home',
-    ...IN_APP,
-    colorScheme: 'dark',
-    time: '2026-11-10T20:59:00+05:30',
-    timezone: 'Asia/Kolkata',
-    fixture: 'home',
-    localStorage: { 'sb.visual.seasonalHome': 'diwali' },
-    fakeMasks: [
-      { name: 'first name in the greeting', rect: [548, 155, 532, 95] },
-      { name: 'first name in the card title', rect: [546, 528, 220, 64] },
-    ],
-    regions: [
-      { name: 'header gradient', rect: [0, 0, 1080, 434] },
-      { name: 'header edge', rect: [0, 418, 1080, 34], zoom: true },
-      { name: 'lamps', rect: [40, 320, 1000, 115], zoom: true },
-      { name: 'lamp 1', rect: [45, 325, 130, 112], zoom: true },
-      { name: 'greeting card', rect: [40, 476, 1000, 240], zoom: true },
-      { name: 'tile', rect: [90, 545, 135, 130], zoom: true },
-      { name: 'card title (no name)', rect: [245, 527, 300, 60] },
-      { name: 'card line 1', rect: [243, 587, 590, 52] },
-      { name: 'card line 2', rect: [243, 643, 240, 44] },
-      { name: 'QUICK ACTIONS', rect: [45, 790, 315, 45] },
-      { name: 'chips row', rect: [0, 855, 1080, 140] },
-      { name: 'APPS', rect: [45, 1057, 160, 45] },
-      { name: 'apps card', rect: [30, 1210, 1020, 430] },
-      { name: 'tab icons', rect: [0, 2065, 1080, 85] },
-      { name: 'tab labels', rect: [0, 2150, 1080, 60] },
-    ],
-  },
-  {
     id: 'notifications',
     ref: '05-notifications.png',
     route: '/notifications',

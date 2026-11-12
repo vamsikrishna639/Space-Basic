@@ -3,22 +3,19 @@
 // In the installed Android app (a Trusted Web Activity) Chrome paints the status bar with the page's theme-color
 // on the verified origin; the APK's own colour is only the fallback before the page sets one. In the original app
 // the screens are edge-to-edge, so the status bar shows whatever is at the top of the screen. Measured on the
-// screenshots (ui-measurements.md §16): the page background, the Home header (normal or Diwali), the dimmed page
+// screenshots (ui-measurements.md §16): the page background, the Home header, the dimmed page
 // under the Entry Pass sheet, and #FAFAFA on the sign-in screens. The colours live in tokens.css; this only picks
 // which token is at the top of the current screen and copies its value into the meta tag.
 //
 // The navigation bar (bottom) can't be set from a page: it comes from the APK alone (android/twa-manifest.json).
 
-import { seasonalHomeAt } from '../screens/home/seasonal';
-
-export type TopEdge = 'auth' | 'page' | 'hero' | 'diwali' | 'sheet';
+export type TopEdge = 'auth' | 'page' | 'hero' | 'sheet';
 
 /** The token whose colour is at the top of each kind of screen. */
 export const TOP_EDGE_TOKEN: Record<TopEdge, string> = {
   auth: '--statusbar-auth',
   page: '--app-bg',
   hero: '--hero-top',
-  diwali: '--diwali-hero-top',
   sheet: '--statusbar-sheet',
 };
 
@@ -26,9 +23,9 @@ export const TOP_EDGE_TOKEN: Record<TopEdge, string> = {
 const AUTH = /^\/(?:$|sign-in(?:\/|$)|forgot-password(?:\/|$))/;
 
 /** What is at the top of the screen at `pathname`. Unknown routes redirect, so they get the page colour. */
-export function topEdgeFor(pathname: string, diwali: boolean): TopEdge {
+export function topEdgeFor(pathname: string): TopEdge {
   if (AUTH.test(pathname)) return 'auth';
-  if (pathname === '/home') return diwali ? 'diwali' : 'hero';
+  if (pathname === '/home') return 'hero';
   if (pathname === '/profile/entry-pass') return 'sheet';
   return 'page';
 }
@@ -47,8 +44,8 @@ function themeMeta(): HTMLMetaElement {
 }
 
 /** Set theme-color for `pathname` from the tokens of the theme currently on <html data-theme>. */
-export function applyStatusBar(pathname: string, now: Date = new Date()): void {
-  const edge = topEdgeFor(pathname, seasonalHomeAt(now) === 'diwali');
+export function applyStatusBar(pathname: string): void {
+  const edge = topEdgeFor(pathname);
   const value = getComputedStyle(document.documentElement).getPropertyValue(TOP_EDGE_TOKEN[edge]).trim();
   if (!value) return; // tokens not loaded yet: keep the current colour
   const tag = themeMeta();

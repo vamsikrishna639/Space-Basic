@@ -5,19 +5,18 @@ import { TOP_EDGE_TOKEN, topEdgeFor } from './statusBar';
 describe('status bar colour per screen (theme-color)', () => {
   it('sign-in screens use the sign-in bar', () => {
     for (const p of ['/', '/sign-in/email', '/sign-in/mobile', '/sign-in/code', '/forgot-password', '/forgot-password/code']) {
-      expect(topEdgeFor(p, false), p).toBe('auth');
+      expect(topEdgeFor(p), p).toBe('auth');
     }
   });
-  it('Home uses its header: normal or Diwali', () => {
-    expect(topEdgeFor('/home', false)).toBe('hero');
-    expect(topEdgeFor('/home', true)).toBe('diwali');
+  it('Home uses its header', () => {
+    expect(topEdgeFor('/home')).toBe('hero');
   });
   it('the Entry Pass dims the status bar like the page', () => {
-    expect(topEdgeFor('/profile/entry-pass', false)).toBe('sheet');
+    expect(topEdgeFor('/profile/entry-pass')).toBe('sheet');
   });
   it('every other screen, staff included, uses the page background', () => {
     for (const p of ['/notifications', '/support', '/support/faqs', '/profile', '/settings', '/m/leave', '/warden', '/admin/users', '/choose', '/homework', '/sign-inx']) {
-      expect(topEdgeFor(p, true), p).toBe('page');
+      expect(topEdgeFor(p), p).toBe('page');
     }
   });
   it('every token it reads is defined, in both themes where the theme changes it', () => {
