@@ -127,17 +127,6 @@ The web app is installable (manifest, icons, a service worker that stores nothin
 5. Sign with the existing key: `powershell -ExecutionPolicy Bypass -File android\sign-apk.ps1 -Keystore <signing.keystore> -Unsigned <aligned.apk>`. It asks for the passwords (hidden), and replaces `client/public/downloads/Space-Basic.apk` only if the certificate matches `assetlinks.json`.
 6. On the phone, open the new APK and tap **Update**: same package and key with a higher version code installs over the old app and keeps sign-ins. Don't uninstall first.
 
-## Seasonal Home
-
-A temporary festive look for the student Home screen only, switched in `client/src/config/seasonal.ts`:
-
-```ts
-export const SEASONAL_HOME: SeasonalHome | null = 'diwali'; // null = the normal Home, exactly as before
-export const SEASONAL_HOME_ENDS: string = '';                // 'YYYY-MM-DD': last day shown (phone's date); '' = no end
-```
-
-Changing either needs a deploy; an end date that has passed switches the look off by itself. Nothing else (other screens, manifest, icons, service worker) depends on it.
-
 ## Visual tests (Docker)
 
 Visual comparisons run **only** inside Playwright's official Linux image. Its Chromium renders text the same way as Android Chrome, where the reference screenshots were captured, and every run gets the same browser, fonts and settings. Mismatch numbers from Windows or macOS are not comparable and are not reported.
@@ -179,7 +168,6 @@ npm run test:visual -- welcome       # one or more screen ids, comma-separated
 - The runner (`tools/ui-analysis/src/visual.ts`) serves `client/dist` inside the container, renders at 360 CSS px with a real device scale factor of 3 (`--force-device-scale-factor=3`; Playwright's emulated DPR snaps to CSS px, unlike a phone), crops both images to the app band (no status or navigation bar), and runs pixelmatch.
 - Output (gitignored) in `client/tests/visual/__output__/`: `<id>-sheet.png` (reference, render and diff side by side), `<id>-render.png`, `<id>-diff.png` and `results.json`. The console also prints each named element's offset from the reference in CSS px.
 - Pass is under 1%; the ceiling is 3% when only text or edge rendering differs. The command fails above 3%.
-- The seasonal Home (`home-diwali`) and the normal Home (`home`) are both tested from the same build: the visual-test build ignores `SEASONAL_HOME` and each spec picks the season through `localStorage['sb.visual.seasonalHome']` (see "Seasonal Home" below).
 - In-app screens mock the API in the browser from a fixture. When a screenshot shows personal data, the exact data lives in the gitignored `client/tests/fixtures/private/<name>.json`; without it the committed fake fixture is used (same character counts) and those regions are masked.
 
 ### Sign-in smoke test

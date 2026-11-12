@@ -421,7 +421,6 @@ Each one reads the gitignored reference screenshots, which are mounted into the 
 | `trace-icons.ts` | §4 the 17 cut-out SVGs, with thresholds pinned in `FIXED_T` | **Yes**. Byte-identical on re-run |
 | `avatar-measure.ts` | §5 / §7 Profile avatar circle and Home tab-bar avatar geometry | No |
 | `avatar-v2.ts` | §5 `avatar-default.png` | **Yes**. Byte-identical on re-run |
-| `diwali-assets.ts` | §10a the Diwali cut-outs `reference-ui/assets/seasonal/diwali-lamps.png` and `diwali-lamp-small.png` (transparent, un-composited from the known background), plus close-up sheets `out/diwali-*-sheet.png` (original, checkerboard, white, back on the background). Needs no browser: plain `node tools/ui-analysis/src/diwali-assets.ts` works too | **Yes**. Byte-identical on re-run |
 | `app-icons.ts` | The app icons `client/public/icons/{icon,maskable}-{192,512}.png` from the supplied logos (scaled evenly, never recoloured), plus a sheet under circle and squircle masks (`out/linux/app-icons-sheet.png`) | **Yes**. Byte-identical on re-run |
 | `badge.ts` | §6 CameraBadge geometry, plus the prototype diff with `camera.svg` | No |
 | `probe.ts` | §9 box edges (sub-pixel), ink bands and stroke colours of a screenshot (no browser) | No |
@@ -441,7 +440,7 @@ Shared modules:
 - `dev-stack.ts`: starts the dev stack for a smoke script with relaxed sign-in limits (`RELAX_RATE_LIMITS=true`, development only), or reuses a running one
 - `run-in-docker.mjs`: the Docker runner. It pins the image to the installed Playwright version and sets `--font-render-hinting=none`.
 
-One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`, and for Settings (§15) `settings-shadow.ts`, `pjs-metrics.ts`, `menu-probe.ts`, `nav-probe.ts`, `refresh-race.ts`, `entry-states.ts`, and for the Diwali Home (§10a) `diwali-probe.ts`, `diwali-measure.ts`, `diwali-shift.ts`, `diwali-card.ts`, `diwali-gaps.ts`, `diwali-glow.ts`, `diwali-crops.ts`, `diwali-six.ts`, `side.ts`, and for the system bars (§16) `bars-measure.mjs`, `bars-edges.mjs`, `bars-shot.mjs`, and for the warden scanner `scan-probe.ts`, `canvas-cam-probe.ts`, `decode-probe.ts`, `pass-canvas.ts`, `gum-probe.ts`.
+One-off debug probes live in `tools/ui-analysis/scratch/`, which is gitignored and not part of the reproducible set: `avatar-probe.ts`, `avatar-zoom.ts`, `avatar.ts` (the superseded v1 avatar generator), `badge-debug.ts`, `bands.ts`, `measure-pill.ts`, `measure-pill2.ts`, `border-snap.ts`, `text-snap.ts`, `dsf-test.ts`, `layout-dump.ts`, `side.ts` (two screenshots side by side), and for the Entry Pass (§14) `qr-grid.ts`, `qr-edges.ts`, `qr-scrim.ts`, `qr-ring.ts`, `qr-cols.ts`, `qr-dim.ts`, `qr-zoom.ts`, `qr-zoom2.ts`, `notif-read.ts`, and for Settings (§15) `settings-shadow.ts`, `pjs-metrics.ts`, `menu-probe.ts`, `nav-probe.ts`, `refresh-race.ts`, `entry-states.ts`, and for the system bars (§16) `bars-measure.mjs`, `bars-edges.mjs`, `bars-shot.mjs`, and for the warden scanner `scan-probe.ts`, `canvas-cam-probe.ts`, `decode-probe.ts`, `pass-canvas.ts`, `gum-probe.ts`.
 
 `fontfit.ts` reads the Settings device ID from the gitignored `tools/ui-analysis/private/screenshot-text.json` (`{ "deviceId": "..." }`); without it, those samples are skipped.
 
@@ -519,26 +518,6 @@ Measured with `probe.ts` and `fontfit.ts` (`h-*` samples), then corrected from `
 **In-app colours.** Dark (measured): page #101116, card #181B24, border #2A2D36, text #EDEEF3 / #A3A9B7, header divider #232429. Light (from `settings-light.png`): page #F5F6FA, card #FFFFFF, border #EEEFF4, text #13161F / #6D717D; the rest is provisional (`tokens.css`).
 
 **Visual result (Linux image, real DPR 3, 2026-11-08).** Home **1.34%** with the private fixture (exact screenshot data), **1.25%** with the fake fixture and the name masked. Every region's box is within 1 device px. Highest regions: the logo tile (15.5%: the supplied Presidency file differs from the app's mark) and text edges (10–11% on the greeting, date and institution name).
-
-## 10a. Seasonal Home: Diwali (dark)
-
-`reference-ui/home-diwali-dark.png` (1080 × 2400, DPR 3 like the others; it shows a real first name, so it stays gitignored). Switch: `SEASONAL_HOME` and `SEASONAL_HOME_ENDS` in `client/src/config/seasonal.ts`. Measured with scratch probes (pngjs, no browser), `fontfit.ts` (`hd-*` samples) and `diwali-assets.ts`, then checked with `visual.ts`. Only the differences from §10 are listed; the brand row, greeting, date, chips, Apps card and tab bar are unchanged (tab bar rows identical to `04-home.png`, 0 difference).
-
-| Element | Measurement |
-|---|---|
-| Header | 0 → 179.667 (§10: 149.667), vertical gradient #3A2380 → #22165A, fitted on 539 rows at x 1075 (max residual 3/255). Same 4-row edge pattern as §10 (rows 537–540 vs 447–450: the phone's sharpening halo), so the edge is at device row 539 |
-| Lamp row | Six lamps, each 36 wide, 57.2 apart (device x 57, 229, 400, 572, 743, 915), bowls identical but **flames and glow differ** (flame tops at device rows 443–448; max pixel difference ~240 between lamps). Cut as one strip, 326 × 36.667 (978 × 110 device px from (51, 429)), centred (17 px in at 360), bottom on the header edge |
-| Lamp glow | Additive warm light ≈ #FFD673 at up to ~0.19 alpha around each flame |
-| Greeting card | x 16 → 344, y 195.667 → 279 (16 below the header), radius 20 (fitted on the ring's curve), 1 px ring #2C2E3D, fill #1B1C2E (both a little more purple than `--card-border` / `--surface-card`) |
-| Tile | 38 × 38 at (33, 218.333), radius 12.667, #3A2280 (the header's top colour), vertically centred in the card; small lamp 19.333 × 18.667 at (9.333, 9.333) inside it |
-| Title | "Happy Diwali, {NAME}": 15 / 500 (`hd-title`), ink from (84, 213.667), `--text-1` (measured #EEEEF6) |
-| Line | "Wishing you light, joy and a safe / celebration.": 13 / 400 (`hd-sub-1`, `hd-sub-2`), line 18.333, ink tops 233.667 and 252, from x 83; `--text-2` (measured #A4AABA) |
-| Below the card | Everything from QUICK ACTIONS down is §10 moved 340 device px (113.333 CSS px) down: QUICK ACTIONS ink top 301.667 (19.333 below the card, not 35.333) |
-| Chip row | Not scrolled in this screenshot (§10's was scrolled 27.333 px): a scroll position, not a design change |
-
-**Cut-outs** (`diwali-assets.ts`, approved raster crops, never redrawn): the background behind each pixel is known (the header row's colour from the lamp-free side columns; the tile's flat colour), so each pixel is un-composited: lamp body (more than 80 from the background) opaque; its anti-aliased edge gets alpha from the nearest body colour; the glow gets the smallest alpha that keeps the colour in range. Composited back on the same background, both files reproduce the screenshot within 3/255 per channel (the background's own noise is 3.46). They keep the screenshot's thin dark rim (the same sharpening halo as the header edge); it only shows if the lamps are put on a background other than this purple, which the app never does.
-
-**Visual result (Linux image, real DPR 3, 2026-11-10).** Home Diwali **1.38%** with the private fixture. Every region's box is within 0 device px; the lamp strip and header edge 0% mismatch, card 0.4%, tile 0.84%, card text 0.96–1.88%. What remains is the header text and the logo tile, as on the normal Home (1.32%).
 
 ## 11. Notifications (dark)
 
@@ -656,7 +635,6 @@ Measured with `scratch/bars-measure.mjs` and `scratch/bars-edges.mjs` (device px
 | `bars-pwa-notifications.png` (our TWA, v1) | #384BD5 (brand blue) | #384BD5 |
 | `01`–`03` sign-in screens | #FAFAFA → `--statusbar-auth` | #FAFAFA |
 | `04-home.png` | #3D4FD7 = `--hero-top` | #181B24 |
-| `home-diwali-dark.png` | #3A2280 ≈ `--diwali-hero-top` #3A2380 | #181B24 |
 | `05`, `06`, `07` (Notifications, Help, My Profile), `settings-dark.png` | #101116 | #181B24 |
 | `QR_entry-pass.png` (sheet open) | #090A0E → dark `--statusbar-sheet` (the scrim over the page) | #181B24 |
 | `settings-light.png` | #F5F6FA = light `--app-bg` | (content) |
@@ -665,4 +643,4 @@ Measured with `scratch/bars-measure.mjs` and `scratch/bars-edges.mjs` (device px
 - **Status bar = the page's `theme-color`.** On a verified origin Chrome uses it in preference to the APK's colour (Chromium commit 71357f7, "Allow TWA sites to theme the status bar color"), and follows changes at run time: setting the meta to #FF0000 from DevTools turned the bar red. The APK's `themeColor` / `themeColorDark` only show before the page sets one. `client/src/theme/statusBar.ts` sets it per screen and theme from the tokens above; light `--statusbar-sheet` #939496 is provisional (the scrim over the light `--app-bg`).
 - **Navigation bar = the APK only** (`navigationColor` / `navigationColorDark` in `android/twa-manifest.json`; Android's light / dark mode picks one). A page can't change it, so it follows the phone's dark mode, not Settings > Appearance; with Appearance = System (the default) they agree.
 
-Measured on the emulator with the new APK (`scratch/bars-shot.mjs`, corner pixels): dark mode — Diwali Home #3A2380, Notifications / My Profile / Settings #101116, Entry Pass #090A0E, navigation bar #181B24 on all; light mode — sign-in #FAFAFA, Notifications #F5F6FA, Home #3A2380, navigation bar #FFFFFF. All equal the original's values above.
+Measured on the emulator with the new APK (`scratch/bars-shot.mjs`, corner pixels): dark mode — Home (then the Diwali Home) #3A2380, Notifications / My Profile / Settings #101116, Entry Pass #090A0E, navigation bar #181B24 on all; light mode — sign-in #FAFAFA, Notifications #F5F6FA, Home (Diwali) #3A2380, navigation bar #FFFFFF. All equal the original's values above. The Diwali Home was removed on 2026-11-12: Home's status bar is `--hero-top` #3D4FD7 again (as on `04-home.png`; same mechanism, checked by `statusBar.test.ts`, not re-measured on the emulator).
